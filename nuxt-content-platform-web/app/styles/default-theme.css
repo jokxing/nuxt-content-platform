@@ -1,0 +1,115 @@
+:root:root {
+  --van-primary-color: var(--c-primary);
+  --van-cell-group-inset-padding: 0;
+  
+  /* Tabbar Theme */
+  --van-tabbar-background: var(--c-primary);
+  --van-tabbar-item-text-color: rgba(255, 255, 255, 0.6);
+  --van-tabbar-item-active-text-color: #ffeb3b;
+  --van-tabbar-item-active-background: var(--c-primary);
+  
+  /* Custom font sizes */
+  --font-size-xs: 14px;
+  --font-size-sm: 16px;
+  --font-size-base: 18px;
+  --font-size-lg: 20px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 28px;
+  --font-size-3xl: 32px;
+  --font-size-4xl: 40px;
+  --font-size-5xl: 48px;
+
+  /* Line heights */
+  --line-height-none: 1;
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+}
+
+/* UnoCSS font size utilities override */
+.text-xs { 
+  font-size: var(--font-size-xs) !important;
+  line-height: var(--line-height-normal) !important;
+}
+.text-sm { 
+  font-size: var(--font-size-sm) !important;
+  line-height: var(--line-height-normal) !important;
+}
+.text-base { 
+  font-size: var(--font-size-base) !important;
+  line-height: var(--line-height-normal) !important;
+}
+.text-lg { 
+  font-size: var(--font-size-lg) !important;
+  line-height: var(--line-height-normal) !important;
+}
+.text-xl { 
+  font-size: var(--font-size-xl) !important;
+  line-height: var(--line-height-tight) !important;
+}
+.text-2xl { 
+  font-size: var(--font-size-2xl) !important;
+  line-height: var(--line-height-tight) !important;
+}
+.text-3xl { 
+  font-size: var(--font-size-3xl) !important;
+  line-height: var(--line-height-tight) !important;
+}
+.text-4xl { 
+  font-size: var(--font-size-4xl) !important;
+  line-height: var(--line-height-none) !important;
+}
+.text-5xl { 
+  font-size: var(--font-size-5xl) !important;
+  line-height: var(--line-height-none) !important;
+}
+
+/* Font weight utilities override */
+.font-thin { font-weight: 100 !important; }
+.font-extralight { font-weight: 200 !important; }
+.font-light { font-weight: 300 !important; }
+.font-normal { font-weight: 400 !important; }
+.font-medium { font-weight: 500 !important; }
+.font-semibold { font-weight: 600 !important; }
+.font-bold { font-weight: 700 !important; }
+.font-extrabold { font-weight: 800 !important; }
+.font-black { font-weight: 900 !important; }
+
+/* Heading elements styling */
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.2 !important;
+  margin-top: 0 !important;
+  margin-bottom: 16px !important;
+  font-weight: 600 !important;
+}
+
+h1 {
+  font-size: 22px !important;
+  margin-bottom: 24px !important;
+}
+
+h2 {
+  font-size: 20px !important;
+  margin-bottom: 20px !important;
+}
+
+h3 {
+  font-size: 18px !important;
+  margin-bottom: 16px !important;
+}
+
+h4 {
+  font-size: 16px !important;
+  margin-bottom: 12px !important;
+}
+
+h5 {
+  font-size: 14px !important;
+  margin-bottom: 8px !important;
+}
+
+h6 {
+  font-size: 14px !important;
+  margin-bottom: 8px !important;
+}
+

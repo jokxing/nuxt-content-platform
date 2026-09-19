@@ -1,0 +1,95 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import process from 'node:process'
+
+const require = createRequire(import.meta.url)
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright')
+const base = process.env.DEMO_CHECK_URL || 'http://127.0.0.1:4370'
+assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname))
+const browser = await chromium.launch({ channel: 'msedge', headless: true })
+const results = []
+const errors = []
+try {
+  for (const prefix of ['', '/zh-CN', '/en-US']) {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
+    page.on('pageerror', e => errors.push(e.message))
+    await page.goto(`${base}${prefix}/`)
+    await page.locator('.countdown-number').first().waitFor()
+    const time = await page.locator('.countdown-number').allTextContents()
+    await page.waitForTimeout(1200)
+    assert.notDeepEqual(await page.locator('.countdown-number').allTextContents(), time)
+    const homeCard = page.locator('.group.cursor-pointer').last()
+    await homeCard.scrollIntoViewIfNeeded()
+    const savedScroll = await page.evaluate(() => window.scrollY)
+    await homeCard.click()
+    await page.waitForURL(/\/article\/105$/)
+    await page.goBack()
+    await page.waitForTimeout(600)
+    assert.ok(Math.abs(await page.evaluate(() => window.scrollY) - savedScroll) < 5)
+    await page.evaluate(() => window.scrollTo(0, 0))
+    // Theme setting stays available with no tracking consent UI.
+    await page.locator('.van-nav-bar__left').click()
+    await page.locator('.van-switch').click()
+    await page.waitForTimeout(300)
+    assert.equal(await page.locator('html').evaluate(el => el.classList.contains('dark')), true)
+    await page.locator('.van-switch').click()
+    await page.locator('.van-overlay').first().click({ position: { x: 380, y: 100 }, force: true })
+    await page.goto(`${base}${prefix}/news/education`)
+    await page.locator('.article-card').first().click()
+    await page.waitForURL(/\/article\/101$/)
+    await page.locator('.back_button').click()
+    await page.waitForURL(url => url.pathname.startsWith(`${prefix}/news/education`) && !url.pathname.includes('/article/'))
+    await page.locator('.article-card').first().waitFor()
+    await page.locator('.news_main_tabs .van-tab').nth(1).click()
+    await page.waitForURL(url => url.pathname === `${prefix}/news/analysis`)
+    await page.locator('.article-card').first().click()
+    await page.waitForURL(/\/article\/103$/)
+    assert.ok(page.url().includes(`${prefix}/news/analysis/article/103`))
+    results.push(`${prefix || 'zh-HK'}: countdown, theme, article and return`)
+    await page.goto(`${base}${prefix}/statistics/type/2`)
+    // Prerendered records may be visible before Vue attaches field click handlers.
+    await page.waitForFunction(() => Boolean(document.querySelector('#__nuxt')?.__vue_app__))
+    await page.locator('.record_item').first().waitFor()
+    await page.locator('.van-field').first().click()
+    await page.locator('.van-picker-column__item').filter({ hasText: '50' }).click()
+    await page.locator('.van-picker__confirm').click()
+    await page.locator('.submit-btn').click()
+    await page.locator('.pagination').waitFor()
+    await page.locator('.pagination__pages button').filter({ hasText: /^2$/ }).click()
+    await page.waitForFunction(() => document.querySelector('.record_item__id')?.textContent?.trim() === '2026070')
+    assert.equal(await page.locator('.record_item').count(), 20)
+    results.push(`${prefix || 'zh-HK'}: browser back scroll restoration, history 50 periods and page 2`)
+    // Inject deterministic empty/failure responses only into the browser, never production code.
+    await page.route('**/api/advanced-stats*', route => route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ statusCode: 503, message: 'Review simulated failure' }) }))
+    await page.goto(`${base}${prefix}/statistics/type/3`)
+    await page.locator('.state_box__error').waitFor()
+    await page.unroute('**/api/advanced-stats*')
+    await page.reload()
+    await page.locator('#chart-tail').waitFor()
+    await page.locator('.period_selector .van-cell').click()
+    await page.locator('.van-picker-column__item').filter({ hasText: '30' }).click()
+    const response = page.waitForResponse(r => r.url().includes('advanced-stats?period=30'))
+    await page.locator('.van-picker__confirm').click()
+    assert.equal((await response).status(), 200)
+    await page.locator('.analysis_module').first().locator('button').nth(1).click()
+    await page.locator('#chart-tail').screenshot({ path: `../docs/browser-review/interaction-${prefix.slice(1) || 'zh-HK'}-advanced.png` })
+    // Switch to another client route, letting the browser intercept the list query.
+    await page.route('**/api/articles?*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [], total: 0, page: 1, page_size: 10, total_pages: 1 }) }))
+    await page.locator('.van-tabbar-item').last().click()
+    await page.waitForURL(url => url.pathname.includes('/news/'))
+    await page.waitForTimeout(400)
+    assert.equal(await page.locator('.article-card').count(), 0)
+    await page.unroute('**/api/articles?*')
+    await page.reload()
+    await page.locator('.article-card').first().waitFor()
+    results.push(`${prefix || 'zh-HK'}: failure recovery, period 30, bar chart, empty list recovery`)
+    await page.close()
+  }
+}
+finally {
+  await browser.close()
+  await fs.writeFile('../docs/browser-review/interactions.json', JSON.stringify({ results, errors }, null, 2))
+}
+console.log(JSON.stringify({ results, errors }, null, 2))
+assert.equal(errors.length, 0)

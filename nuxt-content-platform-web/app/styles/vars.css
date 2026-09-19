@@ -1,0 +1,15 @@
+:root {
+  --c-primary: rgb(var(--c-primary-500));
+  --c-primary-active: rgb(var(--c-primary-600));
+
+  /* main color ratio */
+  --c-primary-100: 252 233 227;
+  --c-primary-200: 249 211 199;
+  --c-primary-300: 246 170 144;
+  --c-primary-400: 243 129 89;
+  --c-primary-500: 238 105 58;  /* #ee693a */
+  --c-primary-600: 214 84 41;
+  --c-primary-700: 190 63 24;
+  --c-primary-800: 166 42 7;
+  --c-primary-900: 142 21 0;
+}

@@ -1,0 +1,234 @@
+{
+  "results": [
+    {
+      "path": "/",
+      "title": "訊覽｜多語言資訊與數據展示平台（演示）",
+      "schemaTypes": [
+        "WebSite"
+      ]
+    },
+    {
+      "path": "/news/education",
+      "title": "訊覽指南｜入門與進階內容（演示）",
+      "schemaTypes": [
+        "WebSite",
+        "CollectionPage"
+      ]
+    },
+    {
+      "path": "/news/analysis",
+      "title": "訊覽分析｜期次回顧與指標觀察（演示）",
+      "schemaTypes": [
+        "WebSite",
+        "CollectionPage"
+      ]
+    },
+    {
+      "path": "/news/education/type/1",
+      "title": "訊覽｜新手指南（演示）",
+      "schemaTypes": [
+        "WebSite",
+        "CollectionPage"
+      ]
+    },
+    {
+      "path": "/news/education/article/101",
+      "title": "如何閱讀數據面板｜訊覽",
+      "schemaTypes": [
+        "WebSite",
+        "Article"
+      ]
+    },
+    {
+      "path": "/news/education/article/102",
+      "title": "篩選與對比技巧｜訊覽",
+      "schemaTypes": [
+        "WebSite",
+        "Article"
+      ]
+    },
+    {
+      "path": "/statistics/type/1",
+      "title": "訊覽｜頻次分佈（演示）",
+      "schemaTypes": [
+        "WebSite",
+        "WebPage"
+      ]
+    },
+    {
+      "path": "/statistics/type/2",
+      "title": "訊覽｜歷史記錄（演示）",
+      "schemaTypes": [
+        "WebSite",
+        "WebPage"
+      ]
+    },
+    {
+      "path": "/pick",
+      "title": "訊覽資訊｜指南 · 分析 · 動態（演示）",
+      "schemaTypes": [
+        "WebSite",
+        "WebPage"
+      ]
+    },
+    {
+      "path": "/zh-CN",
+      "title": "讯览｜多语言资讯与数据展示平台（演示）",
+      "schemaTypes": [
+        "WebSite"
+      ]
+    },
+    {
+      "path": "/zh-CN/news/education",
+      "title": "讯览指南｜入门与进阶内容（演示）",
+      "schemaTypes": [
+        "WebSite",
+        "CollectionPage"
+      ]
+    },
+    {
+      "path": "/zh-CN/news/analysis",
+      "title": "讯览分析｜期次回顾与指标观察（演示）",
+      "schemaTypes": [
+        "WebSite",
+        "CollectionPage"
+      ]
+    },
+    {
+      "path": "/zh-CN/news/education/type/1",
+      "title": "讯览｜新手指南（演示）",
+      "schemaTypes": [
+        "WebSite",
+        "CollectionPage"
+      ]
+    },
+    {
+      "path": "/zh-CN/news/education/article/101",
+      "title": "如何阅读数据面板｜讯览",
+      "schemaTypes": [
+        "WebSite",
+        "Article"
+      ]
+    },
+    {
+      "path": "/zh-CN/news/education/article/102",
+      "title": "筛选与对比技巧｜讯览",
+      "schemaTypes": [
+        "WebSite",
+        "Article"
+      ]
+    },
+    {
+      "path": "/zh-CN/statistics/type/1",
+      "title": "讯览｜频次分布（演示）",
+      "schemaTypes": [
+        "WebSite",
+        "WebPage"
+      ]
+    },
+    {
+      "path": "/zh-CN/statistics/type/2",
+      "title": "讯览｜历史记录（演示）",
+      "schemaTypes": [
+        "WebSite",
+        "WebPage"
+      ]
+    },
+    {
+      "path": "/zh-CN/pick",
+      "title": "讯览资讯｜指南 · 分析 · 动态（演示）",
+      "schemaTypes": [
+        "WebSite",
+        "WebPage"
+      ]
+    },
+    {
+      "path": "/en-US",
+      "title": "ContentPulse｜Multilingual News & Data Demo",
+      "schemaTypes": [
+        "WebSite"
+      ]
+    },
+    {
+      "path": "/en-US/news/education",
+      "title": "ContentPulse Guides｜Getting started (Demo)",
+      "schemaTypes": [
+        "WebSite",
+        "CollectionPage"
+      ]
+    },
+    {
+      "path": "/en-US/news/analysis",
+      "title": "ContentPulse Analysis｜Reviews and notes (Demo)",
+      "schemaTypes": [
+        "WebSite",
+        "CollectionPage"
+      ]
+    },
+    {
+      "path": "/en-US/news/education/type/1",
+      "title": "ContentPulse｜Getting started (Demo)",
+      "schemaTypes": [
+        "WebSite",
+        "CollectionPage"
+      ]
+    },
+    {
+      "path": "/en-US/news/education/article/101",
+      "title": "How to read the data dashboard｜ContentPulse",
+      "schemaTypes": [
+        "WebSite",
+        "Article"
+      ]
+    },
+    {
+      "path": "/en-US/news/education/article/102",
+      "title": "Filtering and comparison tips｜ContentPulse",
+      "schemaTypes": [
+        "WebSite",
+        "Article"
+      ]
+    },
+    {
+      "path": "/en-US/statistics/type/1",
+      "title": "ContentPulse｜Frequency Distribution (Demo)",
+      "schemaTypes": [
+        "WebSite",
+        "WebPage"
+      ]
+    },
+    {
+      "path": "/en-US/statistics/type/2",
+      "title": "ContentPulse｜History Records (Demo)",
+      "schemaTypes": [
+        "WebSite",
+        "WebPage"
+      ]
+    },
+    {
+      "path": "/en-US/pick",
+      "title": "ContentPulse｜Smart Recommendations (Demo)",
+      "schemaTypes": [
+        "WebSite",
+        "WebPage"
+      ]
+    },
+    {
+      "path": "/zh-CN/pick",
+      "title": "讯览资讯｜指南 · 分析 · 动态（演示）",
+      "schemaTypes": [
+        "WebSite",
+        "WebPage"
+      ]
+    }
+  ],
+  "ssrResults": [
+    "/",
+    "/news/education/article/101",
+    "/zh-CN",
+    "/zh-CN/news/education/article/101",
+    "/en-US",
+    "/en-US/news/education/article/101"
+  ],
+  "errors": []
+}

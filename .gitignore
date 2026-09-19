@@ -1,0 +1,43 @@
+# Dependencies and generated outputs (frontend and backend)
+node_modules/
+.nuxt/
+.output/
+.nitro/
+.data/
+.cache/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Local environment files; commit sanitized examples only
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Logs, database dumps and local archives
+logs/
+*.log
+*.sql
+*.sql.gz
+*.bak
+*.zip
+*.7z
+# Prisma migration SQL belongs in source control
+!**/prisma/migrations/**/migration.sql
+
+# Local editor, agent and OS files
+.idea/
+.fleet/
+.cursor/
+.codex/
+.agents/
+.vscode/
+.DS_Store
+Thumbs.db

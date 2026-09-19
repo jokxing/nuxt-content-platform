@@ -1,0 +1,650 @@
+{
+  "menu": {
+    "home": "ContentPulse",
+    "profile": "Profile",
+    "statistics": "Statistics",
+    "pick": "Combinations",
+    "news": "News",
+    "darkMode": "🌗 Dark Mode",
+    "language": "📚 Language",
+    "404Demo": "🙅 404 Page Demo",
+    "unocssExample": "🎨 Unocss Example",
+    "keepAlive": "🧡 KeepAlive Demo",
+    "persistPiniaState": "💾 Persist Pinia State",
+    "fetch": "🏄 Network Request",
+    "latestResult": "Latest period data",
+    "last20Results": "Last 20 history records",
+    "platformInfo": "Platform Info",
+    "aboutUs": "About Us",
+    "contactUs": "Contact Us",
+    "disclaimer": "Disclaimer",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfUse": "Terms of Use",
+    "apiDoc": "API Doc"
+  },
+  "language": "Language",
+  "darkMode": "Dark Mode",
+  "confirm": "Confirm",
+  "cancel": "Cancel",
+  "tabbar": {
+    "home": "Home",
+    "statistics": "Stats",
+    "pick": "Combinations",
+    "news": "News",
+    "profile": "Profile"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": {
+      "network": "Network error, please try again later"
+    },
+    "no_data": "No data available"
+  },
+  "home": {
+    "latest_result": {
+      "title": "Latest Period Dataset",
+      "winning_numbers": "Data Item IDs",
+      "draw_number": "Period ID",
+      "draw_date": "Publish Date",
+      "data_updated_at": "Data Updated At",
+      "total_investment": "Published Volume",
+      "first_prize": "Tier-1 Metric",
+      "second_prize": "Tier-2 Metric",
+      "third_prize": "Tier-3 Metric",
+      "winners": "items"
+    },
+    "next_draw": {
+      "title": "Next Publish Countdown",
+      "draw_time": "Scheduled Time",
+      "period": "{period}",
+      "period_prefix": "Period ",
+      "period_suffix": "",
+      "days": "d",
+      "hours": "h",
+      "minutes": "m",
+      "seconds": "s",
+      "jackpot": "Target Metric"
+    },
+    "recommend": {
+      "numbers_title": "Smart Recommendation Set",
+      "articles_title": "Featured Articles",
+      "update_time": "Updated",
+      "view_more": "More articles",
+      "recommendation_explanation": "Recommendation Notes",
+      "fetch_failed": "Failed to load recommendations"
+    },
+    "history": {
+      "title": "Recent History",
+      "view_more": "View More",
+      "fetch_failed": "Failed to load history"
+    },
+    "now_play": "Try Now"
+  },
+  "unocss_page": {
+    "hello": "Hello {0}",
+    "desc": "This is a simple example of unocss.",
+    "btn_txt": "Button"
+  },
+  "error_page": {
+    "title": "{brand}｜Page not found",
+    "description": "The requested page does not exist. Go back or return to the ContentPulse home page.",
+    "back_btn": "Go back",
+    "home_btn": "Back to home",
+    "txt": "Page not found",
+    "hint": "The link may be broken, or the address was typed incorrectly."
+  },
+  "profile_page": {
+    "txt": "Unfinished"
+  },
+  "keepalive_page": {
+    "label": "This component will be cached"
+  },
+  "counter_page": {
+    "label": "This is a simple example of persisting Pinia state. To verify it works, you can refresh the page and observe.",
+    "label_num": "Number",
+    "btn_add": "Add"
+  },
+  "prose_page": {
+    "btn_fetch": "Fetch",
+    "btn_clear": "Clear",
+    "btn_empty_desc": "No Data"
+  },
+  "statistics": {
+    "tabs": {
+      "cold_hot": "Frequency",
+      "history": "History",
+      "advanced": "Advanced"
+    },
+    "period_selector": {
+      "title": "Query Range",
+      "picker_title": "Select Query Range",
+      "recent": "Last {count} Draws"
+    },
+    "cold_hot": {
+      "hot_numbers": "High frequency",
+      "cold_numbers": "Low frequency",
+      "cold_numbers_subtitle": "(fewest occurrences)",
+      "rising_numbers": "Consecutive runs",
+      "rising_numbers_subtitle": "(3+ consecutive periods)",
+      "double_numbers": "Same-tail groups",
+      "consecutive_numbers": "Adjacent pairs",
+      "times": "×",
+      "periods": "periods",
+      "consecutive_periods": "{count} consecutive",
+      "empty_rising": "No items with 3+ consecutive appearances",
+      "empty_double": "No same-tail group data",
+      "empty_consecutive": "No adjacent pair data",
+      "fetch_failed": "Failed to load frequency distribution"
+    },
+    "chart": {
+      "title": "Interval metrics chart",
+      "occurrence": "Gap analysis",
+      "heatmap": "Distribution heat",
+      "heatmap_title": "Item interval heatmap",
+      "heatmap_desc": "Shows interval distribution per data item. Darker cells mean larger gap metrics. Fixed mock data.",
+      "heatmap_tip": "Tip: tap an item group to switch ranges",
+      "miss_range": "Interval range",
+      "number": "Item",
+      "current_miss": "Current gap",
+      "max_miss": "Max gap",
+      "max_streak": "Max streak",
+      "avg_streak": "Average gap",
+      "current_streak": "Current gap",
+      "most_frequent_streak": "Most common gap",
+      "indicators_title": "Metric notes:",
+      "current_miss_desc": "Current gap: periods since this item last appeared (e.g. 7 means absent for 7 periods).",
+      "max_miss_desc": "Max gap: the longest historical streak of absence for this item.",
+      "avg_miss_desc": "Average gap: mean periods between appearances.",
+      "most_freq_miss_desc": "Most common gap: the most frequent gap length between appearances.",
+      "loading": "Loading chart…",
+      "fetch_failed": "Failed to load chart data"
+    },
+    "advanced": {
+      "tail_distribution": "Last-digit distribution",
+      "group_distribution": "Category groups",
+      "odd_even_ratio": "Odd-even ratio",
+      "consecutive_analysis": "Adjacent-item analysis",
+      "combination_analysis": "Combination frequency",
+      "pie_chart": "Pie",
+      "bar_chart": "Bar",
+      "single": "Odd",
+      "double": "Even",
+      "consecutive_count": "Adjacent occurrences",
+      "tail_description": "Shows how data items distribute by last digit (0–9). Fixed mock data.",
+      "group_description": "Shows share by category groups (G01–G12), a generic mapping of former group labels. Fixed mock data.",
+      "odd_even_description": "Shows the overall odd vs even share among data items. Fixed mock data.",
+      "consecutive_description": "In the last {total} periods, adjacent items appeared {count} times ({ratio}%). The chart shows frequency per adjacent pair.",
+      "combination_description": "Shows higher-frequency data-item combinations (fixed mock) for share demos.",
+      "loading": "Loading advanced stats…",
+      "fetch_failed": "Failed to load advanced stats",
+      "empty": "No advanced stats yet"
+    },
+    "history": {
+      "form": {
+        "year": "Year",
+        "period": "Period",
+        "specific_number": "Data item",
+        "special_type": "Extra field",
+        "year_label": "Year {year}",
+        "period_label": "Period {period}",
+        "recent": "Recent periods",
+        "recent_10": "Last 10",
+        "recent_20": "Last 20",
+        "recent_30": "Last 30",
+        "recent_50": "Last 50",
+        "recent_100": "Last 100"
+      },
+      "sort": {
+        "by_date": "Sort by date",
+        "by_period": "Sort by period"
+      },
+      "fetch_failed": "Failed to load history records",
+      "prev_page": "Previous",
+      "next_page": "Next"
+    }
+  },
+  "weekdays": {
+    "MON": "Monday",
+    "TUE": "Tuesday",
+    "WED": "Wednesday",
+    "THU": "Thursday",
+    "FRI": "Friday",
+    "SAT": "Saturday",
+    "SUN": "Sunday"
+  },
+  "wave_types": {
+    "RED": "Red Wave",
+    "BLUE": "Blue Wave",
+    "GREEN": "Green Wave"
+  },
+  "number_types": {
+    "SINGLE": "Single",
+    "DOUBLE": "Double",
+    "COMPOSITE": "Composite"
+  },
+  "pick": {
+    "prediction_title": "Smart recommendation sets (demo)",
+    "demo_note": "Fixed mock combinations for portfolio display only — not real predictions.",
+    "refresh_example": "Refresh example",
+    "ai_analyzing": "Generating…",
+    "group_label": "Set {n}",
+    "fetch_failed": "Failed to load recommendations. Please try again.",
+    "empty": "No recommendations yet"
+  },
+  "news": {
+    "tabs": {
+      "tutorial": "Guides",
+      "analysis": "Analysis",
+      "stories": "Updates"
+    },
+    "detail": {
+      "not_found": "Article not found",
+      "back": "Back"
+    },
+    "forecasting": {
+      "last_review": "Previous review",
+      "current_prediction": "Current notes",
+      "special_pattern": "Metric patterns"
+    },
+    "story": {
+      "lottery_news": "Platform updates",
+      "winning_stories": "Case studies",
+      "activity_news": "Events"
+    },
+    "teaching": {
+      "beginner_guide": "Getting started",
+      "betting_skills": "Advanced tips",
+      "game_rules": "How it works"
+    },
+    "fetch_failed": "Failed to load articles. Please try again later.",
+    "invalid_category": "This news category was not found",
+    "back_to_guides": "Back to Guides",
+    "invalid_type": "This topic was not found"
+  },
+  "seo": {
+    "home": {
+      "title": "ContentPulse｜Multilingual News & Data Demo",
+      "description": "ContentPulse demo: browse the latest period dataset, history records, smart recommendation sets, and featured articles. Fixed mock data for portfolio use only.",
+      "keywords": "ContentPulse, news platform, data dashboard, multilingual, demo",
+      "og": {
+        "title": "ContentPulse｜Multilingual News & Data Demo",
+        "description": "Explore period datasets, history records, and recommendation sets on this multilingual demo (mock data)."
+      },
+      "twitter": {
+        "title": "ContentPulse",
+        "description": "Multilingual news and data demo: period datasets, history, and featured articles."
+      },
+      "schema": {
+        "name": "ContentPulse",
+        "description": "Demo multilingual news and data platform with period datasets, history records, and content recommendations (mock).",
+        "publisher": {
+          "name": "ContentPulse",
+          "address": {
+            "addressLocality": "Guangzhou"
+          }
+        }
+      }
+    },
+    "news": {
+      "title": "ContentPulse News｜Guides · Analysis · Updates (Demo)",
+      "description": "Browse guides, analysis, and platform updates on the ContentPulse demo. Categories and article IDs are fixed mock data for portfolio use.",
+      "keywords": "ContentPulse, news, guides, analysis, updates, demo"
+    },
+    "statistics-hot-cold": {
+      "title": "ContentPulse｜Frequency Distribution (Demo)",
+      "description": "Frequency and distribution panel for the ContentPulse demo. Fixed mock numbers for portfolio use only.",
+      "keywords": "ContentPulse, frequency, distribution, statistics, demo",
+      "og": {
+        "title": "ContentPulse｜Frequency Distribution (Demo)",
+        "description": "Browse demo frequency and distribution metrics (mock)."
+      },
+      "twitter": {
+        "title": "Frequency｜ContentPulse",
+        "description": "Demo frequency distribution panel (mock)."
+      },
+      "schema": {
+        "name": "Frequency Distribution",
+        "description": "Frequency and distribution panel for the ContentPulse demo. Fixed mock numbers for portfolio use only."
+      }
+    },
+    "statistics-history": {
+      "title": "ContentPulse｜History Records (Demo)",
+      "description": "Historical period records list on the ContentPulse demo. Fixed mock data for portfolio use only.",
+      "keywords": "ContentPulse, history, period records, statistics, demo",
+      "og": {
+        "title": "ContentPulse｜History Records (Demo)",
+        "description": "Browse demo historical period records (mock)."
+      },
+      "twitter": {
+        "title": "History｜ContentPulse",
+        "description": "Demo history records list (mock)."
+      },
+      "schema": {
+        "name": "History Records",
+        "description": "Historical period records list on the ContentPulse demo. Fixed mock data for portfolio use only."
+      }
+    },
+    "statistics-advanced": {
+      "title": "ContentPulse｜Advanced Stats (Demo)",
+      "description": "Combination and share advanced stats panel on the ContentPulse demo. Fixed mock numbers for portfolio use only.",
+      "keywords": "ContentPulse, advanced stats, combinations, shares, demo",
+      "og": {
+        "title": "ContentPulse｜Advanced Stats (Demo)",
+        "description": "Browse demo advanced combination and share metrics (mock)."
+      },
+      "twitter": {
+        "title": "Advanced Stats｜ContentPulse",
+        "description": "Demo advanced statistics panel (mock)."
+      },
+      "schema": {
+        "name": "Advanced Stats",
+        "description": "Combination and share advanced stats panel on the ContentPulse demo. Fixed mock numbers for portfolio use only."
+      }
+    },
+    "ai-pick": {
+      "title": "ContentPulse｜Smart Recommendations (Demo)",
+      "description": "Smart recommendation tool on the ContentPulse demo. Fixed mock sets for portfolio display only — not real predictions.",
+      "keywords": "ContentPulse, smart pick, recommendations, demo, mock",
+      "og": {
+        "title": "ContentPulse｜Smart Recommendations (Demo)",
+        "description": "Browse fixed mock recommendation sets on the demo site (not real predictions)."
+      },
+      "twitter": {
+        "title": "Smart Pick｜ContentPulse",
+        "description": "Demo recommendation tool (mock)."
+      },
+      "schema": {
+        "name": "Smart Recommendations",
+        "description": "Smart recommendation tool on the ContentPulse demo. Fixed mock sets for portfolio display only — not real predictions."
+      },
+      "faq": {
+        "breadcrumb": {
+          "home": "Home",
+          "ai_pick": "Smart Pick"
+        },
+        "questions": {
+          "how_ai_predict": {
+            "question": "How are recommendation sets generated?",
+            "answer": "The demo builds sample sets from fixed mock frequency, interval, and range patterns to show the filter UI. It is not a real prediction model."
+          },
+          "ai_accuracy": {
+            "question": "Can I use these results for decisions?",
+            "answer": "No. All numbers and copy are for portfolio demonstration only and are not advice for betting, investing, or any other decision."
+          },
+          "update_frequency": {
+            "question": "How often does the data update?",
+            "answer": "Mock data is fixed and reproducible. Refresh example re-fetches the same demo payload so you can see the loading state."
+          }
+        }
+      }
+    },
+    "teaching": {
+      "title": "ContentPulse News｜Guides · Analysis · Updates (Demo)",
+      "description": "Browse guides, analysis, and platform updates on the ContentPulse demo. Categories and article IDs are fixed mock data for portfolio use.",
+      "keywords": "ContentPulse, news, guides, analysis, updates, demo"
+    },
+    "teaching-beginner": {
+      "title": "ContentPulse News｜Guides · Analysis · Updates (Demo)",
+      "description": "Browse guides, analysis, and platform updates on the ContentPulse demo. Categories and article IDs are fixed mock data for portfolio use.",
+      "keywords": "ContentPulse, news, guides, analysis, updates, demo"
+    },
+    "teaching-tips": {
+      "title": "ContentPulse News｜Guides · Analysis · Updates (Demo)",
+      "description": "Browse guides, analysis, and platform updates on the ContentPulse demo. Categories and article IDs are fixed mock data for portfolio use.",
+      "keywords": "ContentPulse, news, guides, analysis, updates, demo"
+    },
+    "teaching-rules": {
+      "title": "ContentPulse News｜Guides · Analysis · Updates (Demo)",
+      "description": "Browse guides, analysis, and platform updates on the ContentPulse demo. Categories and article IDs are fixed mock data for portfolio use.",
+      "keywords": "ContentPulse, news, guides, analysis, updates, demo"
+    },
+    "analysis": {
+      "title": "ContentPulse News｜Guides · Analysis · Updates (Demo)",
+      "description": "Browse guides, analysis, and platform updates on the ContentPulse demo. Categories and article IDs are fixed mock data for portfolio use.",
+      "keywords": "ContentPulse, news, guides, analysis, updates, demo"
+    },
+    "analysis-previous": {
+      "title": "ContentPulse News｜Guides · Analysis · Updates (Demo)",
+      "description": "Browse guides, analysis, and platform updates on the ContentPulse demo. Categories and article IDs are fixed mock data for portfolio use.",
+      "keywords": "ContentPulse, news, guides, analysis, updates, demo"
+    },
+    "analysis-current": {
+      "title": "ContentPulse News｜Guides · Analysis · Updates (Demo)",
+      "description": "Browse guides, analysis, and platform updates on the ContentPulse demo. Categories and article IDs are fixed mock data for portfolio use.",
+      "keywords": "ContentPulse, news, guides, analysis, updates, demo"
+    },
+    "analysis-special": {
+      "title": "ContentPulse News｜Guides · Analysis · Updates (Demo)",
+      "description": "Browse guides, analysis, and platform updates on the ContentPulse demo. Categories and article IDs are fixed mock data for portfolio use.",
+      "keywords": "ContentPulse, news, guides, analysis, updates, demo"
+    },
+    "story": {
+      "title": "ContentPulse News｜Guides · Analysis · Updates (Demo)",
+      "description": "Browse guides, analysis, and platform updates on the ContentPulse demo. Categories and article IDs are fixed mock data for portfolio use.",
+      "keywords": "ContentPulse, news, guides, analysis, updates, demo"
+    },
+    "story-news": {
+      "title": "ContentPulse News｜Guides · Analysis · Updates (Demo)",
+      "description": "Browse guides, analysis, and platform updates on the ContentPulse demo. Categories and article IDs are fixed mock data for portfolio use.",
+      "keywords": "ContentPulse, news, guides, analysis, updates, demo"
+    },
+    "story-winning": {
+      "title": "ContentPulse News｜Guides · Analysis · Updates (Demo)",
+      "description": "Browse guides, analysis, and platform updates on the ContentPulse demo. Categories and article IDs are fixed mock data for portfolio use.",
+      "keywords": "ContentPulse, news, guides, analysis, updates, demo"
+    },
+    "story-events": {
+      "title": "ContentPulse News｜Guides · Analysis · Updates (Demo)",
+      "description": "Browse guides, analysis, and platform updates on the ContentPulse demo. Categories and article IDs are fixed mock data for portfolio use.",
+      "keywords": "ContentPulse, news, guides, analysis, updates, demo"
+    },
+    "news-education": {
+      "title": "ContentPulse Guides｜Getting started (Demo)",
+      "description": "Browse guide articles on the ContentPulse demo: dashboard reading and filter tips. Fixed mock content for portfolio use.",
+      "keywords": "ContentPulse, guides, tutorial, demo",
+      "og": {
+        "title": "ContentPulse Guides (Demo)",
+        "description": "Guide category article list powered by local mock data."
+      },
+      "twitter": {
+        "title": "ContentPulse Guides",
+        "description": "Multilingual demo: guides entry."
+      },
+      "schema": {
+        "name": "ContentPulse Guides",
+        "description": "Guide category article list on the ContentPulse demo (mock)."
+      }
+    },
+    "news-analysis": {
+      "title": "ContentPulse Analysis｜Reviews and notes (Demo)",
+      "description": "Browse analysis articles on the ContentPulse demo: period reviews and metric notes. Fixed mock content for portfolio use.",
+      "keywords": "ContentPulse, analysis, metrics, demo",
+      "og": {
+        "title": "ContentPulse Analysis (Demo)",
+        "description": "Analysis category article list powered by local mock data."
+      },
+      "twitter": {
+        "title": "ContentPulse Analysis",
+        "description": "Multilingual demo: analysis entry."
+      },
+      "schema": {
+        "name": "ContentPulse Analysis",
+        "description": "Analysis category article list on the ContentPulse demo (mock)."
+      }
+    },
+    "news-story": {
+      "title": "ContentPulse Updates｜Platform notes (Demo)",
+      "description": "Browse update articles on the ContentPulse demo: platform notes and case studies. Fixed mock content for portfolio use.",
+      "keywords": "ContentPulse, updates, news, demo",
+      "og": {
+        "title": "ContentPulse Updates (Demo)",
+        "description": "Updates category article list powered by local mock data."
+      },
+      "twitter": {
+        "title": "ContentPulse Updates",
+        "description": "Multilingual demo: updates entry."
+      },
+      "schema": {
+        "name": "ContentPulse Updates",
+        "description": "Updates category article list on the ContentPulse demo (mock)."
+      }
+    },
+    "news-education-beginner": {
+      "title": "ContentPulse｜Getting started (Demo)",
+      "description": "Getting-started guides on the ContentPulse demo. Fixed mock articles for portfolio use.",
+      "keywords": "ContentPulse, guides, getting started, demo",
+      "og": {
+        "title": "ContentPulse｜Getting started (Demo)",
+        "description": "Getting-started guides on the ContentPulse demo. Fixed mock articles for portfolio use."
+      },
+      "twitter": {
+        "title": "Getting started",
+        "description": "Getting-started guides on the ContentPulse demo. Fixed mock articles for portfolio use."
+      },
+      "schema": {
+        "name": "Getting started",
+        "description": "Getting-started guides on the ContentPulse demo. Fixed mock articles for portfolio use."
+      }
+    },
+    "news-education-skills": {
+      "title": "ContentPulse｜Advanced tips (Demo)",
+      "description": "Advanced tips on the ContentPulse demo: filtering and comparison. Fixed mock articles.",
+      "keywords": "ContentPulse, advanced tips, demo",
+      "og": {
+        "title": "ContentPulse｜Advanced tips (Demo)",
+        "description": "Advanced tips on the ContentPulse demo: filtering and comparison. Fixed mock articles."
+      },
+      "twitter": {
+        "title": "Advanced tips",
+        "description": "Advanced tips on the ContentPulse demo: filtering and comparison. Fixed mock articles."
+      },
+      "schema": {
+        "name": "Advanced tips",
+        "description": "Advanced tips on the ContentPulse demo: filtering and comparison. Fixed mock articles."
+      }
+    },
+    "news-education-rules": {
+      "title": "ContentPulse｜How it works (Demo)",
+      "description": "How-it-works notes on the ContentPulse demo. Fixed mock articles for portfolio use.",
+      "keywords": "ContentPulse, how it works, demo",
+      "og": {
+        "title": "ContentPulse｜How it works (Demo)",
+        "description": "How-it-works notes on the ContentPulse demo. Fixed mock articles for portfolio use."
+      },
+      "twitter": {
+        "title": "How it works",
+        "description": "How-it-works notes on the ContentPulse demo. Fixed mock articles for portfolio use."
+      },
+      "schema": {
+        "name": "How it works",
+        "description": "How-it-works notes on the ContentPulse demo. Fixed mock articles for portfolio use."
+      }
+    },
+    "news-analysis-review": {
+      "title": "ContentPulse｜Previous review (Demo)",
+      "description": "Previous-period review articles aligned with statistics mock data.",
+      "keywords": "ContentPulse, review, analysis, demo",
+      "og": {
+        "title": "ContentPulse｜Previous review (Demo)",
+        "description": "Previous-period review articles aligned with statistics mock data."
+      },
+      "twitter": {
+        "title": "Previous review",
+        "description": "Previous-period review articles aligned with statistics mock data."
+      },
+      "schema": {
+        "name": "Previous review",
+        "description": "Previous-period review articles aligned with statistics mock data."
+      }
+    },
+    "news-analysis-prediction": {
+      "title": "ContentPulse｜Current notes (Demo)",
+      "description": "Current-period observation notes. Fixed mock articles for portfolio use.",
+      "keywords": "ContentPulse, notes, analysis, demo",
+      "og": {
+        "title": "ContentPulse｜Current notes (Demo)",
+        "description": "Current-period observation notes. Fixed mock articles for portfolio use."
+      },
+      "twitter": {
+        "title": "Current notes",
+        "description": "Current-period observation notes. Fixed mock articles for portfolio use."
+      },
+      "schema": {
+        "name": "Current notes",
+        "description": "Current-period observation notes. Fixed mock articles for portfolio use."
+      }
+    },
+    "news-analysis-pattern": {
+      "title": "ContentPulse｜Metric patterns (Demo)",
+      "description": "Metric pattern notes on distribution and trends. Fixed mock articles.",
+      "keywords": "ContentPulse, patterns, analysis, demo",
+      "og": {
+        "title": "ContentPulse｜Metric patterns (Demo)",
+        "description": "Metric pattern notes on distribution and trends. Fixed mock articles."
+      },
+      "twitter": {
+        "title": "Metric patterns",
+        "description": "Metric pattern notes on distribution and trends. Fixed mock articles."
+      },
+      "schema": {
+        "name": "Metric patterns",
+        "description": "Metric pattern notes on distribution and trends. Fixed mock articles."
+      }
+    },
+    "news-story-news": {
+      "title": "ContentPulse｜Platform updates (Demo)",
+      "description": "Platform update notes for the ContentPulse demo (mock).",
+      "keywords": "ContentPulse, updates, demo",
+      "og": {
+        "title": "ContentPulse｜Platform updates (Demo)",
+        "description": "Platform update notes for the ContentPulse demo (mock)."
+      },
+      "twitter": {
+        "title": "Platform updates",
+        "description": "Platform update notes for the ContentPulse demo (mock)."
+      },
+      "schema": {
+        "name": "Platform updates",
+        "description": "Platform update notes for the ContentPulse demo (mock)."
+      }
+    },
+    "news-story-winning": {
+      "title": "ContentPulse｜Case studies (Demo)",
+      "description": "Case-study articles on the ContentPulse demo. Fixed mock content.",
+      "keywords": "ContentPulse, case studies, demo",
+      "og": {
+        "title": "ContentPulse｜Case studies (Demo)",
+        "description": "Case-study articles on the ContentPulse demo. Fixed mock content."
+      },
+      "twitter": {
+        "title": "Case studies",
+        "description": "Case-study articles on the ContentPulse demo. Fixed mock content."
+      },
+      "schema": {
+        "name": "Case studies",
+        "description": "Case-study articles on the ContentPulse demo. Fixed mock content."
+      }
+    },
+    "news-story-activity": {
+      "title": "ContentPulse｜Events (Demo)",
+      "description": "Event notes on the ContentPulse demo. Fixed mock articles.",
+      "keywords": "ContentPulse, events, demo",
+      "og": {
+        "title": "ContentPulse｜Events (Demo)",
+        "description": "Event notes on the ContentPulse demo. Fixed mock articles."
+      },
+      "twitter": {
+        "title": "Events",
+        "description": "Event notes on the ContentPulse demo. Fixed mock articles."
+      },
+      "schema": {
+        "name": "Events",
+        "description": "Event notes on the ContentPulse demo. Fixed mock articles."
+      }
+    }
+  },
+  "site": {
+    "name": "ContentPulse",
+    "description": "Multilingual content and data demo"
+  }
+}

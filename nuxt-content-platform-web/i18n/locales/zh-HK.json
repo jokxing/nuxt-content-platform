@@ -1,0 +1,618 @@
+{
+  "menu": {
+    "home": "訊覽",
+    "profile": "我的",
+    "statistics": "數據統計",
+    "pick": "組合工具",
+    "news": "資訊",
+    "darkMode": "🌗 暗黑模式",
+    "language": "📚 語言",
+    "404Demo": "🙅 404頁 演示",
+    "unocssExample": "🎨 Unocss 示例",
+    "keepAlive": "🧡 KeepAlive 演示",
+    "persistPiniaState": "💾 持久化 Pinia 狀態",
+    "fetch": "🏄 網絡請求",
+    "latestResult": "最新期次數據",
+    "last20Results": "近20期歷史記錄",
+    "platformInfo": "平台資料",
+    "aboutUs": "關於我們",
+    "contactUs": "聯絡我們",
+    "disclaimer": "免責聲明",
+    "privacyPolicy": "隱私政策",
+    "termsOfUse": "使用條款",
+    "apiDoc": "API使用說明"
+  },
+  "language": "語言",
+  "darkMode": "暗黑模式",
+  "confirm": "確定",
+  "cancel": "取消",
+  "tabbar": {
+    "home": "首頁",
+    "statistics": "數據",
+    "pick": "組合工具",
+    "news": "資訊",
+    "profile": "我的"
+  },
+  "common": {
+    "loading": "加載中...",
+    "error": {
+      "network": "網絡錯誤，請稍後重試"
+    },
+    "no_data": "暫無數據"
+  },
+  "home": {
+    "latest_result": {
+      "title": "最新期次數據",
+      "winning_numbers": "數據項編號",
+      "draw_number": "期次編號",
+      "draw_date": "發布日期",
+      "data_updated_at": "數據更新時間",
+      "total_investment": "發布總量",
+      "first_prize": "一檔指標",
+      "second_prize": "二檔指標",
+      "third_prize": "三檔指標",
+      "winners": "項"
+    },
+    "next_draw": {
+      "title": "下期發布倒計時",
+      "draw_time": "計劃發布時間",
+      "period": "{period}",
+      "period_prefix": "第",
+      "period_suffix": "期",
+      "days": "天",
+      "hours": "時",
+      "minutes": "分",
+      "seconds": "秒",
+      "jackpot": "目標指標值"
+    },
+    "recommend": {
+      "numbers_title": "智能推薦組合",
+      "articles_title": "精選文章推薦",
+      "update_time": "更新時間",
+      "view_more": "查看更多文章",
+      "recommendation_explanation": "推薦說明",
+      "fetch_failed": "獲取推薦組合失敗"
+    },
+    "history": {
+      "title": "近期歷史記錄",
+      "view_more": "查看更多",
+      "fetch_failed": "獲取歷史記錄失敗"
+    },
+    "now_play": "立即體驗"
+  },
+  "unocss_page": {
+    "hello": "你好 {0}",
+    "desc": "這是 unocss 一個簡單例子。",
+    "btn_txt": "按鈕"
+  },
+  "error_page": {
+    "title": "{brand}｜頁面未找到",
+    "description": "請求的頁面不存在。可返回上一頁或回到訊覽首頁。",
+    "back_btn": "返回上一頁",
+    "home_btn": "回到首頁",
+    "txt": "沒有找到該頁面",
+    "hint": "連結可能已失效，或地址輸入有誤。"
+  },
+  "profile_page": {
+    "txt": "未完成"
+  },
+  "keepalive_page": {
+    "label": "當前組件將會被緩存"
+  },
+  "counter_page": {
+    "label": "這是一個簡單的持久化 Pinia 狀態的例子。為了驗證其有效性，你可以刷新界面並觀察它。",
+    "label_num": "數字",
+    "btn_add": "增加"
+  },
+  "prose_page": {
+    "btn_fetch": "拉取",
+    "btn_clear": "清空",
+    "btn_empty_desc": "暫無數據"
+  },
+  "weekdays": {
+    "MON": "星期一",
+    "TUE": "星期二",
+    "WED": "星期三",
+    "THU": "星期四",
+    "FRI": "星期五",
+    "SAT": "星期六",
+    "SUN": "星期日"
+  },
+  "wave_types": {
+    "RED": "紅波",
+    "BLUE": "藍波",
+    "GREEN": "綠波"
+  },
+  "number_types": {
+    "SINGLE": "單號",
+    "DOUBLE": "雙號",
+    "COMPOSITE": "合數"
+  },
+  "statistics": {
+    "tabs": {
+      "cold_hot": "頻次分佈",
+      "history": "歷史記錄",
+      "advanced": "進階統計"
+    },
+    "period_selector": {
+      "title": "查詢範圍",
+      "picker_title": "選擇查詢範圍",
+      "recent": "近{count}期"
+    },
+    "cold_hot": {
+      "hot_numbers": "高頻數據項",
+      "cold_numbers": "低頻數據項",
+      "cold_numbers_subtitle": "（出現次數最少）",
+      "rising_numbers": "連續出現",
+      "rising_numbers_subtitle": "（近3期以上連續）",
+      "double_numbers": "同尾分組",
+      "consecutive_numbers": "相鄰項",
+      "times": "次",
+      "periods": "期",
+      "consecutive_periods": "連續{count}期",
+      "empty_rising": "暫無連續出現3期以上的數據項",
+      "empty_double": "暫無同尾分組數據",
+      "empty_consecutive": "暫無相鄰項數據",
+      "fetch_failed": "獲取頻次分佈失敗"
+    },
+    "chart": {
+      "title": "間隔指標圖表",
+      "occurrence": "間隔分析",
+      "heatmap": "分佈熱力",
+      "heatmap_title": "數據項間隔熱力圖",
+      "heatmap_desc": "展示各數據項的間隔分佈；顏色越深表示間隔指標越大。數據為固定 Mock。",
+      "heatmap_tip": "提示：可點擊數據項分組切換不同區間",
+      "miss_range": "間隔區間",
+      "number": "數據項",
+      "current_miss": "當前間隔",
+      "max_miss": "最大間隔",
+      "max_streak": "最大連續值",
+      "avg_streak": "平均間隔",
+      "current_streak": "當前間隔",
+      "most_frequent_streak": "最常間隔",
+      "indicators_title": "指標說明：",
+      "current_miss_desc": "當前間隔：該數據項自上次出現後已間隔的期數，例如 7 表示已連續 7 期未出現。",
+      "max_miss_desc": "最大間隔：該數據項歷史上最大連續未出現期數。",
+      "avg_miss_desc": "平均間隔：該數據項每次出現之間的平均期數。",
+      "most_freq_miss_desc": "最常間隔：該數據項最常見的間隔期數。",
+      "loading": "加載圖表中…",
+      "fetch_failed": "獲取圖表數據失敗"
+    },
+    "advanced": {
+      "tail_distribution": "末位分佈",
+      "group_distribution": "類別分組",
+      "odd_even_ratio": "奇偶比例",
+      "consecutive_analysis": "相鄰項分析",
+      "combination_analysis": "組合頻次",
+      "pie_chart": "餅圖",
+      "bar_chart": "柱狀圖",
+      "single": "奇數",
+      "double": "偶數",
+      "consecutive_count": "相鄰出現次數",
+      "tail_description": "展示數據項末位（0–9）的分佈佔比，便於觀察末位分桶結構。數據為固定 Mock。",
+      "group_description": "展示類別分組（G01–G12）的佔比分佈，對應原分組標籤的通用化展示。數據為固定 Mock。",
+      "odd_even_description": "分析奇數與偶數數據項的整體佔比，用於觀察奇偶結構。數據為固定 Mock。",
+      "consecutive_description": "在最近 {total} 期中，出現了 {count} 次相鄰項，佔比為 {ratio}%。下圖展示各相鄰組合的出現頻率。",
+      "combination_description": "展示歷史出現次數較多的數據項組合（固定 Mock），用於組合佔比演示。",
+      "loading": "加載進階統計中…",
+      "fetch_failed": "獲取進階統計失敗",
+      "empty": "暫無進階統計數據"
+    },
+    "history": {
+      "form": {
+        "year": "年份",
+        "period": "期次",
+        "specific_number": "指定數據項",
+        "special_type": "附加項分類",
+        "year_label": "{year}年",
+        "period_label": "第{period}期",
+        "recent": "近期選擇",
+        "recent_10": "近10期",
+        "recent_20": "近20期",
+        "recent_30": "近30期",
+        "recent_50": "近50期",
+        "recent_100": "近100期"
+      },
+      "sort": {
+        "by_date": "按日期排序",
+        "by_period": "按期次排序"
+      },
+      "fetch_failed": "獲取歷史記錄失敗",
+      "prev_page": "上一頁",
+      "next_page": "下一頁"
+    }
+  },
+  "pick": {
+    "prediction_title": "智能推薦組合（演示）",
+    "demo_note": "以下為固定 Mock 組合，僅供作品展示，非真實預測。",
+    "refresh_example": "重新整理範例",
+    "ai_analyzing": "生成推薦中…",
+    "group_label": "第 {n} 組",
+    "fetch_failed": "獲取推薦組合失敗，請稍後重試",
+    "empty": "暫無推薦組合"
+  },
+  "news": {
+    "tabs": {
+      "tutorial": "指南",
+      "analysis": "分析",
+      "stories": "動態"
+    },
+    "detail": {
+      "not_found": "沒有找到該文章",
+      "back": "返回"
+    },
+    "forecasting": {
+      "last_review": "上期回顧",
+      "current_prediction": "本期觀察",
+      "special_pattern": "指標規律"
+    },
+    "story": {
+      "lottery_news": "平台動態",
+      "winning_stories": "案例分享",
+      "activity_news": "活動快訊"
+    },
+    "teaching": {
+      "beginner_guide": "新手指南",
+      "betting_skills": "進階技巧",
+      "game_rules": "功能說明"
+    },
+    "fetch_failed": "獲取文章失敗，請稍後重試",
+    "invalid_category": "未找到該資訊分類",
+    "back_to_guides": "返回指南",
+    "invalid_type": "未找到該資訊專題"
+  },
+  "seo": {
+    "home": {
+      "title": "訊覽｜多語言資訊與數據展示平台（演示）",
+      "description": "訊覽（ContentPulse）演示站：瀏覽最新期次數據、歷史記錄、智能推薦組合與精選資訊。數據為固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, ContentPulse, 資訊平台, 數據展示, 多語言, 演示站",
+      "og": {
+        "title": "訊覽｜多語言資訊與數據展示平台（演示）",
+        "description": "查看最新期次數據、歷史記錄與推薦組合，體驗多語言資訊與數據面板（演示 Mock）。"
+      },
+      "twitter": {
+        "title": "訊覽 ContentPulse",
+        "description": "多語言資訊與數據展示平台演示：期次數據、歷史記錄與精選文章。"
+      },
+      "schema": {
+        "name": "訊覽",
+        "description": "多語言資訊與數據展示平台演示站，提供期次數據、歷史記錄與內容推薦（Mock）。",
+        "publisher": {
+          "name": "訊覽",
+          "address": {
+            "addressLocality": "廣州"
+          }
+        }
+      }
+    },
+    "news": {
+      "title": "訊覽資訊｜指南 · 分析 · 動態（演示）",
+      "description": "瀏覽訊覽演示站的指南、分析與平台動態文章。分類與文章 ID 固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 資訊, 指南, 分析, 動態, ContentPulse"
+    },
+    "statistics-hot-cold": {
+      "title": "訊覽｜頻次分佈（演示）",
+      "description": "訊覽演示站的數據項頻次與分佈面板。數值為固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 頻次分佈, 數據統計, ContentPulse, 演示",
+      "og": {
+        "title": "訊覽｜頻次分佈（演示）",
+        "description": "查看演示站數據項出現頻次與分佈概況（Mock）。"
+      },
+      "twitter": {
+        "title": "頻次分佈｜訊覽",
+        "description": "演示站頻次與分佈統計面板（Mock）。"
+      },
+      "schema": {
+        "name": "頻次分佈",
+        "description": "訊覽演示站的數據項頻次與分佈面板。數值為固定 Mock，僅供作品展示。"
+      }
+    },
+    "statistics-history": {
+      "title": "訊覽｜歷史記錄（演示）",
+      "description": "訊覽演示站的歷史期次記錄列表。數據為固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 歷史記錄, 期次數據, ContentPulse, 演示",
+      "og": {
+        "title": "訊覽｜歷史記錄（演示）",
+        "description": "瀏覽演示站歷史期次記錄（Mock）。"
+      },
+      "twitter": {
+        "title": "歷史記錄｜訊覽",
+        "description": "演示站歷史期次記錄列表（Mock）。"
+      },
+      "schema": {
+        "name": "歷史記錄",
+        "description": "訊覽演示站的歷史期次記錄列表。數據為固定 Mock，僅供作品展示。"
+      }
+    },
+    "statistics-advanced": {
+      "title": "訊覽｜進階統計（演示）",
+      "description": "訊覽演示站的組合與佔比類進階統計面板。數值為固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 進階統計, 組合佔比, ContentPulse, 演示",
+      "og": {
+        "title": "訊覽｜進階統計（演示）",
+        "description": "查看演示站進階組合與佔比指標（Mock）。"
+      },
+      "twitter": {
+        "title": "進階統計｜訊覽",
+        "description": "演示站進階統計面板（Mock）。"
+      },
+      "schema": {
+        "name": "進階統計",
+        "description": "訊覽演示站的組合與佔比類進階統計面板。數值為固定 Mock，僅供作品展示。"
+      }
+    },
+    "ai-pick": {
+      "title": "訊覽資訊｜指南 · 分析 · 動態（演示）",
+      "description": "瀏覽訊覽演示站的指南、分析與平台動態文章。分類與文章 ID 固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 資訊, 指南, 分析, 動態, ContentPulse"
+    },
+    "teaching": {
+      "title": "訊覽資訊｜指南 · 分析 · 動態（演示）",
+      "description": "瀏覽訊覽演示站的指南、分析與平台動態文章。分類與文章 ID 固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 資訊, 指南, 分析, 動態, ContentPulse"
+    },
+    "teaching-beginner": {
+      "title": "訊覽資訊｜指南 · 分析 · 動態（演示）",
+      "description": "瀏覽訊覽演示站的指南、分析與平台動態文章。分類與文章 ID 固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 資訊, 指南, 分析, 動態, ContentPulse"
+    },
+    "teaching-tips": {
+      "title": "訊覽資訊｜指南 · 分析 · 動態（演示）",
+      "description": "瀏覽訊覽演示站的指南、分析與平台動態文章。分類與文章 ID 固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 資訊, 指南, 分析, 動態, ContentPulse"
+    },
+    "teaching-rules": {
+      "title": "訊覽資訊｜指南 · 分析 · 動態（演示）",
+      "description": "瀏覽訊覽演示站的指南、分析與平台動態文章。分類與文章 ID 固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 資訊, 指南, 分析, 動態, ContentPulse"
+    },
+    "analysis": {
+      "title": "訊覽資訊｜指南 · 分析 · 動態（演示）",
+      "description": "瀏覽訊覽演示站的指南、分析與平台動態文章。分類與文章 ID 固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 資訊, 指南, 分析, 動態, ContentPulse"
+    },
+    "analysis-previous": {
+      "title": "訊覽資訊｜指南 · 分析 · 動態（演示）",
+      "description": "瀏覽訊覽演示站的指南、分析與平台動態文章。分類與文章 ID 固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 資訊, 指南, 分析, 動態, ContentPulse"
+    },
+    "analysis-current": {
+      "title": "訊覽資訊｜指南 · 分析 · 動態（演示）",
+      "description": "瀏覽訊覽演示站的指南、分析與平台動態文章。分類與文章 ID 固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 資訊, 指南, 分析, 動態, ContentPulse"
+    },
+    "analysis-special": {
+      "title": "訊覽資訊｜指南 · 分析 · 動態（演示）",
+      "description": "瀏覽訊覽演示站的指南、分析與平台動態文章。分類與文章 ID 固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 資訊, 指南, 分析, 動態, ContentPulse"
+    },
+    "story": {
+      "title": "訊覽資訊｜指南 · 分析 · 動態（演示）",
+      "description": "瀏覽訊覽演示站的指南、分析與平台動態文章。分類與文章 ID 固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 資訊, 指南, 分析, 動態, ContentPulse"
+    },
+    "story-news": {
+      "title": "訊覽資訊｜指南 · 分析 · 動態（演示）",
+      "description": "瀏覽訊覽演示站的指南、分析與平台動態文章。分類與文章 ID 固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 資訊, 指南, 分析, 動態, ContentPulse"
+    },
+    "story-winning": {
+      "title": "訊覽資訊｜指南 · 分析 · 動態（演示）",
+      "description": "瀏覽訊覽演示站的指南、分析與平台動態文章。分類與文章 ID 固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 資訊, 指南, 分析, 動態, ContentPulse"
+    },
+    "story-events": {
+      "title": "訊覽資訊｜指南 · 分析 · 動態（演示）",
+      "description": "瀏覽訊覽演示站的指南、分析與平台動態文章。分類與文章 ID 固定 Mock，僅供作品展示。",
+      "keywords": "訊覽, 資訊, 指南, 分析, 動態, ContentPulse"
+    },
+    "news-education": {
+      "title": "訊覽指南｜入門與進階內容（演示）",
+      "description": "瀏覽訊覽演示站的指南類文章：面板閱讀、篩選對比等固定 Mock 內容，僅供作品展示。",
+      "keywords": "訊覽, 指南, 入門, ContentPulse, 演示",
+      "og": {
+        "title": "訊覽指南｜入門與進階（演示）",
+        "description": "指南分類下的演示文章列表，數據為本地 Mock。"
+      },
+      "twitter": {
+        "title": "訊覽指南",
+        "description": "多語言資訊演示：指南類文章入口。"
+      },
+      "schema": {
+        "name": "訊覽指南",
+        "description": "訊覽演示站指南分類文章列表（Mock）。"
+      }
+    },
+    "news-analysis": {
+      "title": "訊覽分析｜期次回顧與指標觀察（演示）",
+      "description": "瀏覽訊覽演示站的分析類文章：上期回顧、本期觀察等固定 Mock 內容，僅供作品展示。",
+      "keywords": "訊覽, 分析, 指標, ContentPulse, 演示",
+      "og": {
+        "title": "訊覽分析｜回顧與觀察（演示）",
+        "description": "分析分類下的演示文章列表，數據為本地 Mock。"
+      },
+      "twitter": {
+        "title": "訊覽分析",
+        "description": "多語言資訊演示：分析類文章入口。"
+      },
+      "schema": {
+        "name": "訊覽分析",
+        "description": "訊覽演示站分析分類文章列表（Mock）。"
+      }
+    },
+    "news-story": {
+      "title": "訊覽動態｜平台更新與案例（演示）",
+      "description": "瀏覽訊覽演示站的動態類文章：平台更新、案例分享等固定 Mock 內容，僅供作品展示。",
+      "keywords": "訊覽, 動態, 更新, ContentPulse, 演示",
+      "og": {
+        "title": "訊覽動態｜更新與案例（演示）",
+        "description": "動態分類下的演示文章列表，數據為本地 Mock。"
+      },
+      "twitter": {
+        "title": "訊覽動態",
+        "description": "多語言資訊演示：動態類文章入口。"
+      },
+      "schema": {
+        "name": "訊覽動態",
+        "description": "訊覽演示站動態分類文章列表（Mock）。"
+      }
+    },
+    "news-education-beginner": {
+      "title": "訊覽｜新手指南（演示）",
+      "description": "訊覽演示站新手指南專題：面板閱讀入門等固定 Mock 文章。",
+      "keywords": "訊覽, 新手指南, ContentPulse, 演示",
+      "og": {
+        "title": "訊覽｜新手指南（演示）",
+        "description": "訊覽演示站新手指南專題：面板閱讀入門等固定 Mock 文章。"
+      },
+      "twitter": {
+        "title": "新手指南專題",
+        "description": "訊覽演示站新手指南專題：面板閱讀入門等固定 Mock 文章。"
+      },
+      "schema": {
+        "name": "新手指南",
+        "description": "訊覽演示站新手指南專題：面板閱讀入門等固定 Mock 文章。"
+      }
+    },
+    "news-education-skills": {
+      "title": "訊覽｜進階技巧（演示）",
+      "description": "訊覽演示站進階技巧專題：篩選與對比等固定 Mock 文章。",
+      "keywords": "訊覽, 進階技巧, ContentPulse, 演示",
+      "og": {
+        "title": "訊覽｜進階技巧（演示）",
+        "description": "訊覽演示站進階技巧專題：篩選與對比等固定 Mock 文章。"
+      },
+      "twitter": {
+        "title": "進階技巧專題",
+        "description": "訊覽演示站進階技巧專題：篩選與對比等固定 Mock 文章。"
+      },
+      "schema": {
+        "name": "進階技巧",
+        "description": "訊覽演示站進階技巧專題：篩選與對比等固定 Mock 文章。"
+      }
+    },
+    "news-education-rules": {
+      "title": "訊覽｜功能說明（演示）",
+      "description": "訊覽演示站功能說明專題：固定 Mock 文章，僅供作品展示。",
+      "keywords": "訊覽, 功能說明, ContentPulse, 演示",
+      "og": {
+        "title": "訊覽｜功能說明（演示）",
+        "description": "訊覽演示站功能說明專題：固定 Mock 文章，僅供作品展示。"
+      },
+      "twitter": {
+        "title": "功能說明專題",
+        "description": "訊覽演示站功能說明專題：固定 Mock 文章，僅供作品展示。"
+      },
+      "schema": {
+        "name": "功能說明",
+        "description": "訊覽演示站功能說明專題：固定 Mock 文章，僅供作品展示。"
+      }
+    },
+    "news-analysis-review": {
+      "title": "訊覽｜上期回顧（演示）",
+      "description": "訊覽演示站上期回顧專題：與統計 Mock 對齊的演示文章。",
+      "keywords": "訊覽, 上期回顧, 分析, 演示",
+      "og": {
+        "title": "訊覽｜上期回顧（演示）",
+        "description": "訊覽演示站上期回顧專題：與統計 Mock 對齊的演示文章。"
+      },
+      "twitter": {
+        "title": "上期回顧專題",
+        "description": "訊覽演示站上期回顧專題：與統計 Mock 對齊的演示文章。"
+      },
+      "schema": {
+        "name": "上期回顧",
+        "description": "訊覽演示站上期回顧專題：與統計 Mock 對齊的演示文章。"
+      }
+    },
+    "news-analysis-prediction": {
+      "title": "訊覽｜本期觀察（演示）",
+      "description": "訊覽演示站本期觀察專題：指標筆記類固定 Mock 文章。",
+      "keywords": "訊覽, 本期觀察, 分析, 演示",
+      "og": {
+        "title": "訊覽｜本期觀察（演示）",
+        "description": "訊覽演示站本期觀察專題：指標筆記類固定 Mock 文章。"
+      },
+      "twitter": {
+        "title": "本期觀察專題",
+        "description": "訊覽演示站本期觀察專題：指標筆記類固定 Mock 文章。"
+      },
+      "schema": {
+        "name": "本期觀察",
+        "description": "訊覽演示站本期觀察專題：指標筆記類固定 Mock 文章。"
+      }
+    },
+    "news-analysis-pattern": {
+      "title": "訊覽｜指標規律（演示）",
+      "description": "訊覽演示站指標規律專題：分布與趨勢解讀類 Mock 文章。",
+      "keywords": "訊覽, 指標規律, 分析, 演示",
+      "og": {
+        "title": "訊覽｜指標規律（演示）",
+        "description": "訊覽演示站指標規律專題：分布與趨勢解讀類 Mock 文章。"
+      },
+      "twitter": {
+        "title": "指標規律專題",
+        "description": "訊覽演示站指標規律專題：分布與趨勢解讀類 Mock 文章。"
+      },
+      "schema": {
+        "name": "指標規律",
+        "description": "訊覽演示站指標規律專題：分布與趨勢解讀類 Mock 文章。"
+      }
+    },
+    "news-story-news": {
+      "title": "訊覽｜平台動態（演示）",
+      "description": "訊覽演示站平台動態專題：版本與內容更新說明（Mock）。",
+      "keywords": "訊覽, 平台動態, 演示",
+      "og": {
+        "title": "訊覽｜平台動態（演示）",
+        "description": "訊覽演示站平台動態專題：版本與內容更新說明（Mock）。"
+      },
+      "twitter": {
+        "title": "平台動態專題",
+        "description": "訊覽演示站平台動態專題：版本與內容更新說明（Mock）。"
+      },
+      "schema": {
+        "name": "平台動態",
+        "description": "訊覽演示站平台動態專題：版本與內容更新說明（Mock）。"
+      }
+    },
+    "news-story-winning": {
+      "title": "訊覽｜案例分享（演示）",
+      "description": "訊覽演示站案例分享專題：固定 Mock 文章，僅供作品展示。",
+      "keywords": "訊覽, 案例分享, 演示",
+      "og": {
+        "title": "訊覽｜案例分享（演示）",
+        "description": "訊覽演示站案例分享專題：固定 Mock 文章，僅供作品展示。"
+      },
+      "twitter": {
+        "title": "案例分享專題",
+        "description": "訊覽演示站案例分享專題：固定 Mock 文章，僅供作品展示。"
+      },
+      "schema": {
+        "name": "案例分享",
+        "description": "訊覽演示站案例分享專題：固定 Mock 文章，僅供作品展示。"
+      }
+    },
+    "news-story-activity": {
+      "title": "訊覽｜活動快訊（演示）",
+      "description": "訊覽演示站活動快訊專題：固定 Mock 文章，僅供作品展示。",
+      "keywords": "訊覽, 活動快訊, 演示",
+      "og": {
+        "title": "訊覽｜活動快訊（演示）",
+        "description": "訊覽演示站活動快訊專題：固定 Mock 文章，僅供作品展示。"
+      },
+      "twitter": {
+        "title": "活動快訊專題",
+        "description": "訊覽演示站活動快訊專題：固定 Mock 文章，僅供作品展示。"
+      },
+      "schema": {
+        "name": "活動快訊",
+        "description": "訊覽演示站活動快訊專題：固定 Mock 文章，僅供作品展示。"
+      }
+    }
+  },
+  "site": {
+    "name": "訊覽",
+    "description": "多語言資訊與數據展示平台"
+  }
+}

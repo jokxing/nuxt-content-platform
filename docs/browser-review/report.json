@@ -1,0 +1,449 @@
+{
+  "pages": [
+    {
+      "width": 375,
+      "path": "/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/news/education",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/news/education/article/101",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/statistics/type/1",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/statistics/type/2",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/statistics/type/3",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/pick",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/missing-review-page",
+      "status": 404,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/zh-CN/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/zh-CN/news/education",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/zh-CN/news/education/article/101",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/zh-CN/statistics/type/1",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/zh-CN/statistics/type/2",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/zh-CN/statistics/type/3",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/zh-CN/pick",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/zh-CN/missing-review-page",
+      "status": 404,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/en-US/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/en-US/news/education",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/en-US/news/education/article/101",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/en-US/statistics/type/1",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/en-US/statistics/type/2",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/en-US/statistics/type/3",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/en-US/pick",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 375,
+      "path": "/en-US/missing-review-page",
+      "status": 404,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/news/education",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/news/education/article/101",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/statistics/type/1",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/statistics/type/2",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/statistics/type/3",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/pick",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/missing-review-page",
+      "status": 404,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/zh-CN/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/zh-CN/news/education",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/zh-CN/news/education/article/101",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/zh-CN/statistics/type/1",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/zh-CN/statistics/type/2",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/zh-CN/statistics/type/3",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/zh-CN/pick",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/zh-CN/missing-review-page",
+      "status": 404,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/en-US/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/en-US/news/education",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/en-US/news/education/article/101",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/en-US/statistics/type/1",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/en-US/statistics/type/2",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/en-US/statistics/type/3",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/en-US/pick",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/en-US/missing-review-page",
+      "status": 404,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/news/education",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/news/education/article/101",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/statistics/type/1",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/statistics/type/2",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/statistics/type/3",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/pick",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/missing-review-page",
+      "status": 404,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/zh-CN/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/zh-CN/news/education",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/zh-CN/news/education/article/101",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/zh-CN/statistics/type/1",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/zh-CN/statistics/type/2",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/zh-CN/statistics/type/3",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/zh-CN/pick",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/zh-CN/missing-review-page",
+      "status": 404,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/en-US/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/en-US/news/education",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/en-US/news/education/article/101",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/en-US/statistics/type/1",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/en-US/statistics/type/2",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/en-US/statistics/type/3",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/en-US/pick",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "path": "/en-US/missing-review-page",
+      "status": 404,
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "interactions": [
+    "375: period 10→20, matrix, last group",
+    "375/zh-CN: period 10→20, matrix, last group",
+    "375/en-US: period 10→20, matrix, last group",
+    "390: period 10→20, matrix, last group",
+    "390/zh-CN: period 10→20, matrix, last group",
+    "390/en-US: period 10→20, matrix, last group",
+    "1280: period 10→20, matrix, last group",
+    "1280/zh-CN: period 10→20, matrix, last group",
+    "1280/en-US: period 10→20, matrix, last group"
+  ]
+}
