@@ -215,7 +215,7 @@ Mock 实现：
 - 新增 scripts/check-mock.ts、check-browser.mjs、check-interactions.mjs。浏览器只读取现有 Playwright 安装，没有修改其所在项目或新增锁文件依赖。
 - 验证目录 nuxt-content-platform-web：npm run lint（0 错误/警告）、npm run typecheck、npm run build 通过；最终构建日志 build-p1-final2.log（忽略文件）。75 条预渲染与 Nitro 产物完成。
 - 本地生产服务 4373：check-demo.mjs 43 项通过；check-mock.ts 的五窗口统计不变量、90 个非法分页参数和合法边界通过；另在 4372 验证 14 个 HTTP 非法分页请求均为 400（之后只修复详情导航）。
-- 浏览器：三语、375/390/1280 宽度、72 页面与 9 组筛选图表检查；额外三语 9 组连续交互（含分类 Tab、详情返回、历史分页、滚动恢复、主题、倒计时、失败/空列表恢复）。结果及截图存 docs/browser-review；图表截图等待动画结束。中途测试发现串语言与详情返回错误，修复后重新构建复验。
+- 浏览器：三语、375/390/1280 宽度、72 页面与 9 组筛选图表检查；额外三语 9 组连续交互（含分类 Tab、详情返回、历史分页、滚动恢复、主题、倒计时、失败/空列表恢复）。结果及截图现存 docs/frontend/browser-review；图表截图等待动画结束。中途测试发现串语言与详情返回错误，修复后重新构建复验。
 - 更新 FRONTEND_REVIEW.md、MOCK_DATA_CONTRACT.md、前端 README。测试脚本仅允许本地目标；截图不代表实体设备验收。
 - 未验证/限制：实体手机与 Safari、任意位图 IPX、Docker/远程部署、完整秘密审计/图片 OCR、服务器出站流量。构建仍有 sharp Windows 二进制缺失、DEP0155；npm 有 pnpm 配置项提示，不影响本次命令通过。
 - 下一步：由用户选择 P2；建议先路由与 sitemap 共用目录、构建不改写 nuxt.config.ts，再 SEO 响应更新和 API 入口统一。暂不自动开始后端。
@@ -244,7 +244,7 @@ Mock 实现：
 - 首页、资讯父分类/子分类改为响应式调用；保留首页主题色变化；分类面包屑链接保留语言。useCurrentDomain.ts 统一使用 siteUrl，消除 SSR/客户端地址来源差异。
 - useSchema.ts、JsonLd.vue 改为 getter 注册；新增 serializeJsonLd.ts 安全序列化，文章/统计/工具页同步使用。文章 schema 使用稳定 key、封面绝对 URL；离开详情后旧 Article schema 清除。
 - 验证目录 nuxt-content-platform-web：npm run lint（0 错误/警告）、npm run typecheck、npm run build 通过，75 条预渲染完成。最终构建日志 build-seo-final2.log、类型日志 typecheck-seo.log 为忽略的本地文件。
-- 本地生产服务 4377：scripts/check-seo.mjs 28 次同 document 客户端切换（包括实际语言选择器）通过，覆盖标题、description、唯一 canonical、四条 alternate、OG URL/locale、html.lang、robots、schema 更新/清除；6 个禁用 JS 的 SSR 页面通过。无运行/水合/缺失翻译错误。报告 docs/browser-review/seo-report.json。
+- 本地生产服务 4377：scripts/check-seo.mjs 28 次同 document 客户端切换（包括实际语言选择器）通过，覆盖标题、description、唯一 canonical、四条 alternate、OG URL/locale、html.lang、robots、schema 更新/清除；6 个禁用 JS 的 SSR 页面通过。无运行/水合/缺失翻译错误。报告现存 docs/frontend/browser-review/seo-report.json。
 - check-demo.mjs 原有 43 项生产路由/API 回归通过。临时测试服务结束后停止。
 - 新增 SEO_REACTIVITY.md（设计、命令、限制、文字面试短答）；更新 FRONTEND_REVIEW.md、docs/README.md 及前端 README。
 - 限制：未做实体设备、搜索引擎抓取/富媒体验证，JsonLd 组件本身暂无实际页面引用，未宣称独立挂载验收；真实内容缺失译文时需按可用语言生成 alternate。当前仍禁止收录。

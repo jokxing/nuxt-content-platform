@@ -7,7 +7,7 @@
 ```text
 请接手 E:/project/nuxt-content-platform 的 Nuxt 全栈脱敏改造。
 
-首先依次读取 docs/STATUS.md、docs/IMPLEMENTATION_PLAN.md、docs/AI_HANDOFF_PROMPTS.md，并检查适用 AGENTS.md 与当前 Git 状态。以实际文件和最新用户要求为准，计划项不能当成已完成项。
+首先依次读取 docs/STATUS.md、docs/IMPLEMENTATION_PLAN.md、docs/frontend/AI_HANDOFF_PROMPTS.md，并检查适用 AGENTS.md 与当前 Git 状态。以实际文件和最新用户要求为准，计划项不能当成已完成项。
 
 项目根目录下两个独立子项目：nuxt-content-platform-web（现有 Nuxt 前端）与 nuxt-content-platform-backend（Node.js 后端）。共用一个根仓库，不改成 apps/web、apps/api，不给两个子项目分别初始化 Git。
 
@@ -34,7 +34,7 @@
 
 ```text
 请先阅读本项目 docs 的计划和状态，审查 nuxt-content-platform-web。
-输出 docs/source-audit.md：按页面、接口、构建脚本、配置、数据和素材列出保留/替换/删除/待核实项，每项给出真实文件依据。
+输出 docs/frontend/source-audit.md：按页面、接口、构建脚本、配置、数据和素材列出保留/替换/删除/待核实项，每项给出真实文件依据。
 重点找原品牌/域名/统计代码/真实数据及生产脚本，不在报告中泄露凭据。检查 SSR/预渲染的数据依赖和 pnpm build 前置脚本。
 本次只审查和准备，不批量改页面，不实现后端。先定义统一演示品牌、原业务到通用内容场景的映射，记录给后续页面复用；不可凭空删掉有价值的数据展示功能。
 处理全局域名、统计脚本及自动请求入口，审查并隔离旧监听/部署和构建前置外部请求。未迁移页面的请求也不能回退到原公司服务；必要时禁用请求或提供最小 Mock 兜底，不扩展页面改造。
@@ -48,7 +48,7 @@
 每次复制下面整段，将【本次页面】替换成 2.2 清单中的一项。一次只填一项，不把整个清单交给 AI 连续执行。
 
 ```text
-请在 E:/project/nuxt-content-platform 中工作，先阅读 docs/STATUS.md、docs/source-audit.md、docs/IMPLEMENTATION_PLAN.md 和适用 AGENTS.md。
+请在 E:/project/nuxt-content-platform 中工作，先阅读 docs/STATUS.md、docs/frontend/source-audit.md、docs/IMPLEMENTATION_PLAN.md 和适用 AGENTS.md。
 本次页面：【填入下面清单中的一项，包含起始文件、任务和检查重点】。
 本次只完成这一页或模块的前端脱敏，暂用本地 Mock，不做后端、数据库、管理端或发布系统。全局准备缺失时，只补当前页必要前置并记录，不顺带改整站。
 先检查当前页的真实依赖、请求、路由和交互，沿用 source-audit.md 的统一品牌与业务映射。替换原品牌、业务文案、真实数据、图片、域名、SEO 和外部请求；Mock 使用统一入口，不散落硬编码，不回退原公司接口。
@@ -83,7 +83,7 @@
 ### 2.3 全站脱敏收尾（逐页完成后单独执行）
 
 ```text
-请读取 E:/project/nuxt-content-platform/docs/STATUS.md 与 source-audit.md，确认每页已经完成或有明确删除/合并依据；有未完成页则记录下一页，不宣称全站完成。
+请读取 E:/project/nuxt-content-platform/docs/STATUS.md 与 docs/frontend/source-audit.md，确认每页已经完成或有明确删除/合并依据；有未完成页则记录下一页，不宣称全站完成。
 本次只收尾前端 Mock 脱敏，不接后端。复查公共布局、导航、页脚、多语言、SEO、sitemap/robots、素材、环境示例、旧文档/备份、构建脚本及敏感残留，不输出凭据。
 检查页面间 ID、链接、语言、统计数据一致；验证浏览器加载/预取、SSR 和预渲染不访问原公司服务。删除有依据的废弃代码，保留上游许可证。
 安全审查脚本后执行适用类型检查、lint、生产构建与核心页面回归，明确遗留失败与未验证项。

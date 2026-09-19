@@ -1,6 +1,6 @@
 # 前端面试导览
 
-这是一个使用 Nuxt 4、Vue 3、TypeScript、Vant 和 Pinia 的多语言资讯与数据展示项目。可以先运行前端，再沿下面五个主题阅读代码；启动步骤见 [前端 README](../nuxt-content-platform-web/README.md)。
+这是一个使用 Nuxt 4、Vue 3、TypeScript、Vant 和 Pinia 的多语言资讯与数据展示项目。可以先运行前端，再沿下面五个主题阅读代码；启动步骤见 [前端 README](../../nuxt-content-platform-web/README.md)。
 
 经历边界：在职阶段独立完成前端并与后端同事联调；当前展示版在离职后进行脱敏与个人改造。独立业务后端尚未实现，现在使用本地 Nitro Mock API，无真实认证、数据库持久化或内容发布闭环。组合工具展示固定示例，不是 AI 推理或真实预测。
 
@@ -18,7 +18,7 @@
 
 ## 1. API 入口与 SSR 实例隔离
 
-阅读：[Nuxt 插件](../nuxt-content-platform-web/app/plugins/content-api.ts) → [客户端工厂](../nuxt-content-platform-web/app/api/client.ts) → [页面获取入口](../nuxt-content-platform-web/app/composables/useContentApi.ts)。
+阅读：[Nuxt 插件](../../nuxt-content-platform-web/app/plugins/content-api.ts) → [客户端工厂](../../nuxt-content-platform-web/app/api/client.ts) → [页面获取入口](../../nuxt-content-platform-web/app/composables/useContentApi.ts)。
 
 页面在 setup 获取客户端，统一通过受限的本地 API 路径请求数据。客户端和 transport 在 Nuxt 插件内部创建，没有模块级可变客户端；SSR 相对路径由 Nitro 内部派发，浏览器使用同源请求。
 
@@ -28,11 +28,11 @@
 **问：这是否证明多租户权限已经安全？**  
 答：没有。当前验证的是实例和请求参数隔离；真实认证和租户权限需要后端实现后单独验收。
 
-证据与细节：[API_CLIENT.md](./API_CLIENT.md)、[并发客户端检查](../nuxt-content-platform-web/scripts/check-api-client.ts)、[SSR 并发检查](../nuxt-content-platform-web/scripts/check-ssr-isolation.mjs)。
+证据与细节：[API_CLIENT.md](./API_CLIENT.md)、[并发客户端检查](../../nuxt-content-platform-web/scripts/check-api-client.ts)、[SSR 并发检查](../../nuxt-content-platform-web/scripts/check-ssr-isolation.mjs)。
 
 ## 2. 路由与 sitemap 共用内容目录
 
-阅读：[内容目录](../nuxt-content-platform-web/scripts/content-directory.ts) → [预渲染路由](../nuxt-content-platform-web/scripts/generate-prerender-routes.ts) / [sitemap 生成](../nuxt-content-platform-web/scripts/generate-sitemaps.ts)。
+阅读：[内容目录](../../nuxt-content-platform-web/scripts/content-directory.ts) → [预渲染路由](../../nuxt-content-platform-web/scripts/generate-prerender-routes.ts) / [sitemap 生成](../../nuxt-content-platform-web/scripts/generate-sitemaps.ts)。
 
 两个构建产物消费同一份已发布内容快照，减少文章路由与 sitemap 各自维护造成的遗漏。目录校验文章 ID、分类和日期，并区分可预渲染页面与应写入 sitemap 的页面。
 
@@ -46,7 +46,7 @@
 
 ## 3. 多语言 SEO 响应更新
 
-阅读：[useSeo](../nuxt-content-platform-web/app/composables/useSeo.ts)、[文章详情页](../nuxt-content-platform-web/app/pages/news/%5Bcategory%5D/article/%5Bid%5D.vue)。
+阅读：[useSeo](../../nuxt-content-platform-web/app/composables/useSeo.ts)、[文章详情页](../../nuxt-content-platform-web/app/pages/news/%5Bcategory%5D/article/%5Bid%5D.vue)。
 
 SEO 在 computed 中读取路由、语言和动态输入，再交给 useHead。这样客户端切换页面时，标题、canonical 和语言链接会更新；canonical 不携带筛选 query/hash。模板翻译使用 setup 中的 `t`，避免依赖编辑器对全局翻译属性的识别。
 
@@ -56,11 +56,11 @@ SEO 在 computed 中读取路由、语言和动态输入，再交给 useHead。�
 **问：只验证首次打开页面够吗？**  
 答：不够。SSR 首屏正确，客户端跳转后仍可能残留旧标题或旧 URL，因此需要分别检查首屏输出和路由、语言切换后的 head。
 
-证据与细节：[SEO_REACTIVITY.md](./SEO_REACTIVITY.md)、[SEO 检查脚本](../nuxt-content-platform-web/scripts/check-seo.mjs)。
+证据与细节：[SEO_REACTIVITY.md](./SEO_REACTIVITY.md)、[SEO 检查脚本](../../nuxt-content-platform-web/scripts/check-seo.mjs)。
 
 ## 4. 筛选、分页与图表数据
 
-阅读：[历史记录模块](../nuxt-content-platform-web/app/pages/statistics/modules/historical-records.vue)、[图表模块](../nuxt-content-platform-web/app/pages/statistics/modules/chart-analysis.vue)、[统计计算](../nuxt-content-platform-web/app/mock/statistics.ts)、[参数校验](../nuxt-content-platform-web/app/mock/parameters.ts)。
+阅读：[历史记录模块](../../nuxt-content-platform-web/app/pages/statistics/modules/historical-records.vue)、[图表模块](../../nuxt-content-platform-web/app/pages/statistics/modules/chart-analysis.vue)、[统计计算](../../nuxt-content-platform-web/app/mock/statistics.ts)、[参数校验](../../nuxt-content-platform-web/app/mock/parameters.ts)。
 
 Mock 统计由固定历史样本计算，不是给每个筛选条件随便返回一组数字。统计窗口返回实际样本数，分页和非法参数有明确边界，方便复现结果和发现展示问题。
 
@@ -70,7 +70,7 @@ Mock 统计由固定历史样本计算，不是给每个筛选条件随便返回
 **问：原接口字段为什么没有全部改名？**  
 答：部分字段保留兼容，页面需要的通用语义在转换层处理，避免一次性改名破坏联动。后续接真实后端时再按明确契约迁移。
 
-阅读：[DTO 转换](../nuxt-content-platform-web/app/api/models.ts)、[MOCK_DATA_CONTRACT.md](./MOCK_DATA_CONTRACT.md)、[统计与分页检查](../nuxt-content-platform-web/scripts/check-mock.ts)。
+阅读：[DTO 转换](../../nuxt-content-platform-web/app/api/models.ts)、[MOCK_DATA_CONTRACT.md](./MOCK_DATA_CONTRACT.md)、[统计与分页检查](../../nuxt-content-platform-web/scripts/check-mock.ts)。
 
 ## 5. 脱敏与有依据的清理
 
@@ -93,6 +93,6 @@ Mock 统计由固定历史样本计算，不是给每个筛选条件随便返回
 ## 验证与当前限制
 
 - lint 和 typecheck 是不同检查：前者检查代码规则，后者检查类型；编辑器诊断还可能涉及语言服务状态。
-- 此前已执行构建、路由/API、SSR 并发、三语浏览器交互和 SEO 检查；具体批次及后续改动以 [STATUS.md](./STATUS.md) 为准，历史通过不等于每次修改都重新执行全部检查。
+- 此前已执行构建、路由/API、SSR 并发、三语浏览器交互和 SEO 检查；具体批次及后续改动以 [STATUS.md](../STATUS.md) 为准，历史通过不等于每次修改都重新执行全部检查。
 - Node 独立产物曾验证；Docker、实体设备及真实服务器部署未完成验证，见 [DEPLOYMENT.md](./DEPLOYMENT.md)。
 - 下一阶段是独立后端和真实数据闭环，完成后再补数据库、认证权限和发布流程导览。

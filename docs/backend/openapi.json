@@ -1,0 +1,888 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "ContentPulse 后端 API：第一批资讯查询",
+    "version": "0.1.0",
+    "description": "设计阶段，尚未实现。仅五个公开查询接口；统计、认证和发布待独立批次追加。规则与数据模型见 BACKEND_CONTRACT.md。"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:4000",
+      "description": "拟定本地 Express 地址，需先实现并启动"
+    }
+  ],
+  "tags": [
+    {
+      "name": "运行状态"
+    },
+    {
+      "name": "资讯查询"
+    }
+  ],
+  "security": [],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "服务与数据库就绪检查",
+        "tags": [
+          "运行状态"
+        ],
+        "description": "设计契约，尚未实现。拒绝未知/重复/数组/空 query 参数。公开内容只返回已发布、发布时间已到且三语齐全的记录。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                },
+                "example": {
+                  "status": "ok",
+                  "database": "up"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数不合法",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_ARGUMENT",
+                    "message": "参数不合法",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "内部服务错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "内部服务错误",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "服务暂不可用",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/categories": {
+      "get": {
+        "operationId": "listCategories",
+        "summary": "九个子分类的本地化名称",
+        "tags": [
+          "资讯查询"
+        ],
+        "description": "设计契约，尚未实现。拒绝未知/重复/数组/空 query 参数。公开内容只返回已发布、发布时间已到且三语齐全的记录。",
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "zh-HK",
+                "zh-CN",
+                "en-US",
+                "tc",
+                "sc",
+                "en"
+              ],
+              "default": "zh-HK"
+            },
+            "description": "tc/sc/en 分别映射 zh-HK/zh-CN/en-US；空值、重复或数组参数返回 400"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryList"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "slug": "how-to-play",
+                      "name": "新手指南",
+                      "parent_route": "education"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数不合法",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_ARGUMENT",
+                    "message": "参数不合法",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "内部服务错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "内部服务错误",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "服务暂不可用",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/articles": {
+      "get": {
+        "operationId": "listArticles",
+        "summary": "已发布文章列表",
+        "tags": [
+          "资讯查询"
+        ],
+        "description": "设计契约，尚未实现。拒绝未知/重复/数组/空 query 参数。公开内容只返回已发布、发布时间已到且三语齐全的记录。",
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "zh-HK",
+                "zh-CN",
+                "en-US",
+                "tc",
+                "sc",
+                "en"
+              ],
+              "default": "zh-HK"
+            },
+            "description": "tc/sc/en 分别映射 zh-HK/zh-CN/en-US；空值、重复或数组参数返回 400"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "education",
+                "analysis",
+                "story",
+                "how-to-play",
+                "skills",
+                "play-desc",
+                "this-predict",
+                "last-review",
+                "tema-rule",
+                "lottery-news",
+                "win-story",
+                "activity-news",
+                "lottery-teach",
+                "ai-predict",
+                "news-story"
+              ]
+            },
+            "description": "父类、子类或兼容别名；不传查询全部"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000,
+              "default": 1
+            },
+            "description": "默认 1；仅正十进制整数"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            },
+            "description": "默认 10；最大 50"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArticlePage"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "id": 101,
+                      "title": "如何阅读数据面板",
+                      "slug": "how-to-read-dashboard",
+                      "content": "<p>本篇介绍数据面板的结构与筛选方式。</p>",
+                      "publish_date": "2026-09-10T02:00:00.000Z",
+                      "author": "ContentPulse Editor",
+                      "cover_image": "/logo.svg",
+                      "status": 1,
+                      "category": "新手指南",
+                      "category_slug": "how-to-play",
+                      "parent_route": "education"
+                    }
+                  ],
+                  "total": 1,
+                  "page": 1,
+                  "page_size": 10,
+                  "total_pages": 1
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数不合法",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_ARGUMENT",
+                    "message": "参数不合法",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "内部服务错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "内部服务错误",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "服务暂不可用",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/articles/{id}": {
+      "get": {
+        "operationId": "getArticle",
+        "summary": "文章详情",
+        "tags": [
+          "资讯查询"
+        ],
+        "description": "设计契约，尚未实现。拒绝未知/重复/数组/空 query 参数。公开内容只返回已发布、发布时间已到且三语齐全的记录。",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "description": "仅数字 ID；非法 400，不存在或不可见 404"
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "zh-HK",
+                "zh-CN",
+                "en-US",
+                "tc",
+                "sc",
+                "en"
+              ],
+              "default": "zh-HK"
+            },
+            "description": "tc/sc/en 分别映射 zh-HK/zh-CN/en-US；空值、重复或数组参数返回 400"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Article"
+                },
+                "example": {
+                  "id": 101,
+                  "title": "如何阅读数据面板",
+                  "slug": "how-to-read-dashboard",
+                  "content": "<p>本篇介绍数据面板的结构与筛选方式。</p>",
+                  "publish_date": "2026-09-10T02:00:00.000Z",
+                  "author": "ContentPulse Editor",
+                  "cover_image": "/logo.svg",
+                  "status": 1,
+                  "category": "新手指南",
+                  "category_slug": "how-to-play",
+                  "parent_route": "education"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数不合法",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_ARGUMENT",
+                    "message": "参数不合法",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "文章不存在或不可见",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "ARTICLE_NOT_FOUND",
+                    "message": "文章不存在或不可见",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "内部服务错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "内部服务错误",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "服务暂不可用",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/content-directory": {
+      "get": {
+        "operationId": "getContentDirectory",
+        "summary": "构建用完整内容快照",
+        "tags": [
+          "资讯查询"
+        ],
+        "description": "设计契约，尚未实现。拒绝未知/重复/数组/空 query 参数。公开内容只返回已发布、发布时间已到且三语齐全的记录。 按 id 升序，一致读快照，上限 10000 篇；超过时 503 CONTENT_DIRECTORY_LIMIT_EXCEEDED，不能截断。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentDirectory"
+                },
+                "example": {
+                  "generated_at": "2026-09-19T00:00:00.000Z",
+                  "articles": [
+                    {
+                      "id": 101,
+                      "parent_route": "education",
+                      "status": 1,
+                      "publish_date": "2026-09-10T02:00:00.000Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数不合法",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_ARGUMENT",
+                    "message": "参数不合法",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "内部服务错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "内部服务错误",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "服务暂不可用",
+                    "requestId": "example-request-id"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Article": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title",
+          "slug",
+          "content",
+          "publish_date",
+          "author",
+          "cover_image",
+          "status",
+          "category",
+          "category_slug",
+          "parent_route"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1
+          },
+          "slug": {
+            "type": "string",
+            "maxLength": 160,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 100000,
+            "minLength": 1,
+            "description": "白名单清理后的 HTML，列表也保留正文以兼容当前前端"
+          },
+          "publish_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "UTC ISO 8601"
+          },
+          "author": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "cover_image": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "仅 /logo.svg 或本站 /images/ 相对路径，不含 .."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "category_slug": {
+            "type": "string",
+            "enum": [
+              "how-to-play",
+              "skills",
+              "play-desc",
+              "this-predict",
+              "last-review",
+              "tema-rule",
+              "lottery-news",
+              "win-story",
+              "activity-news"
+            ]
+          },
+          "parent_route": {
+            "type": "string",
+            "enum": [
+              "education",
+              "analysis",
+              "story"
+            ]
+          }
+        }
+      },
+      "ArticlePage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "total",
+          "page",
+          "page_size",
+          "total_pages"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Article"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          },
+          "total_pages": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "slug",
+          "name",
+          "parent_route"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "enum": [
+              "how-to-play",
+              "skills",
+              "play-desc",
+              "this-predict",
+              "last-review",
+              "tema-rule",
+              "lottery-news",
+              "win-story",
+              "activity-news"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "parent_route": {
+            "type": "string",
+            "enum": [
+              "education",
+              "analysis",
+              "story"
+            ]
+          }
+        }
+      },
+      "CategoryList": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Category"
+            }
+          }
+        }
+      },
+      "DirectoryArticle": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "parent_route",
+          "status",
+          "publish_date"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "parent_route": {
+            "type": "string",
+            "enum": [
+              "education",
+              "analysis",
+              "story"
+            ]
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "publish_date": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ContentDirectory": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "generated_at",
+          "articles"
+        ],
+        "properties": {
+          "generated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "articles": {
+            "type": "array",
+            "maxItems": 10000,
+            "items": {
+              "$ref": "#/components/schemas/DirectoryArticle"
+            }
+          }
+        }
+      },
+      "Health": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "database"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          },
+          "database": {
+            "type": "string",
+            "enum": [
+              "up"
+            ]
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "message",
+              "requestId"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "INVALID_ARGUMENT",
+                  "ARTICLE_NOT_FOUND",
+                  "INTERNAL_ERROR",
+                  "SERVICE_UNAVAILABLE",
+                  "CONTENT_DIRECTORY_LIMIT_EXCEEDED"
+                ]
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "requestId": {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

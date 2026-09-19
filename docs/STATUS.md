@@ -26,7 +26,7 @@
 
 **文档**
 
-- 新增 `docs/source-audit.md`
+- 新增 `docs/frontend/source-audit.md`（文档归类后的当前位置）
 - 更新 `docs/README.md`、`docs/STATUS.md`（本文件）
 
 **Mock**
@@ -107,7 +107,7 @@ Git 状态：按用户要求跳过
 - `app/utils/timezone.ts`：`calculateTimeDifference` 支持 Mock `nowMs`
 - i18n：`zh-CN` / `zh-HK` / `en-US` 的 `home.*`、`seo.home.*`、`menu.home`（及本页必要的 `menu.pick` 品牌向命名）
 - Mock 推荐说明微调：`app/mock/data/catalog.ts`
-- 文档：`docs/source-audit.md`；本文件仅追加本节
+- 文档：`docs/frontend/source-audit.md`；本文件仅追加本节
 
 **设计决定**
 
@@ -674,7 +674,7 @@ Git 状态：跳过
 
 本节是最新状态，前面的阶段记录为历史记录。
 
-已完成本轮代码检查、脱敏收尾和阻断修复；未达到全部质量门禁通过。完整报告见 [FRONTEND_REVIEW.md](./FRONTEND_REVIEW.md)。
+已完成本轮代码检查、脱敏收尾和阻断修复；未达到全部质量门禁通过。完整报告见 [FRONTEND_REVIEW.md](./frontend/FRONTEND_REVIEW.md)。
 
 - 清理旧 SEO、公开 sitemap/robots、退役脚本；补环境忽略规则与前端 README。
 - 修复 NewsMainTabs 类型语法、空值类型、首页类型递归、SSR window、SVG/IPX 预渲染 500、不存在文章页面 HTTP 200、虚构搜索/联系方式结构化数据。
@@ -717,7 +717,7 @@ Git 状态：跳过
 - 新增 scripts/check-mock.ts、check-browser.mjs、check-interactions.mjs。浏览器只读取现有 Playwright 安装，没有修改其所在项目或新增锁文件依赖。
 - 验证目录 nuxt-content-platform-web：npm run lint（0 错误/警告）、npm run typecheck、npm run build 通过；最终构建日志 build-p1-final2.log（忽略文件）。75 条预渲染与 Nitro 产物完成。
 - 本地生产服务 4373：check-demo.mjs 43 项通过；check-mock.ts 的五窗口统计不变量、90 个非法分页参数和合法边界通过；另在 4372 验证 14 个 HTTP 非法分页请求均为 400（之后只修复详情导航）。
-- 浏览器：三语、375/390/1280 宽度、72 页面与 9 组筛选图表检查；额外三语 9 组连续交互（含分类 Tab、详情返回、历史分页、滚动恢复、主题、倒计时、失败/空列表恢复）。结果及截图存 docs/browser-review；图表截图等待动画结束。中途测试发现串语言与详情返回错误，修复后重新构建复验。
+- 浏览器：三语、375/390/1280 宽度、72 页面与 9 组筛选图表检查；额外三语 9 组连续交互（含分类 Tab、详情返回、历史分页、滚动恢复、主题、倒计时、失败/空列表恢复）。结果及截图现存 docs/frontend/browser-review；图表截图等待动画结束。中途测试发现串语言与详情返回错误，修复后重新构建复验。
 - 更新 FRONTEND_REVIEW.md、MOCK_DATA_CONTRACT.md、前端 README。测试脚本仅允许本地目标；截图不代表实体设备验收。
 - 未验证/限制：实体手机与 Safari、任意位图 IPX、Docker/远程部署、完整秘密审计/图片 OCR、服务器出站流量。构建仍有 sharp Windows 二进制缺失、DEP0155；npm 有 pnpm 配置项提示，不影响本次命令通过。
 - 下一步：由用户选择 P2；建议先路由与 sitemap 共用目录、构建不改写 nuxt.config.ts，再 SEO 响应更新和 API 入口统一。暂不自动开始后端。
@@ -746,7 +746,7 @@ Git 状态：跳过
 - 首页、资讯父分类/子分类改为响应式调用；保留首页主题色变化；分类面包屑链接保留语言。useCurrentDomain.ts 统一使用 siteUrl，消除 SSR/客户端地址来源差异。
 - useSchema.ts、JsonLd.vue 改为 getter 注册；新增 serializeJsonLd.ts 安全序列化，文章/统计/工具页同步使用。文章 schema 使用稳定 key、封面绝对 URL；离开详情后旧 Article schema 清除。
 - 验证目录 nuxt-content-platform-web：npm run lint（0 错误/警告）、npm run typecheck、npm run build 通过，75 条预渲染完成。最终构建日志 build-seo-final2.log、类型日志 typecheck-seo.log 为忽略的本地文件。
-- 本地生产服务 4377：scripts/check-seo.mjs 28 次同 document 客户端切换（包括实际语言选择器）通过，覆盖标题、description、唯一 canonical、四条 alternate、OG URL/locale、html.lang、robots、schema 更新/清除；6 个禁用 JS 的 SSR 页面通过。无运行/水合/缺失翻译错误。报告 docs/browser-review/seo-report.json。
+- 本地生产服务 4377：scripts/check-seo.mjs 28 次同 document 客户端切换（包括实际语言选择器）通过，覆盖标题、description、唯一 canonical、四条 alternate、OG URL/locale、html.lang、robots、schema 更新/清除；6 个禁用 JS 的 SSR 页面通过。无运行/水合/缺失翻译错误。报告现存 docs/frontend/browser-review/seo-report.json。
 - check-demo.mjs 原有 43 项生产路由/API 回归通过。临时测试服务结束后停止。
 - 新增 SEO_REACTIVITY.md（设计、命令、限制、文字面试短答）；更新 FRONTEND_REVIEW.md、docs/README.md 及前端 README。
 - 限制：未做实体设备、搜索引擎抓取/富媒体验证，JsonLd 组件本身暂无实际页面引用，未宣称独立挂载验收；真实内容缺失译文时需按可用语言生成 alternate。当前仍禁止收录。
@@ -812,3 +812,21 @@ Git 状态：跳过
 - 验证：npm run lint、npm run typecheck 均通过；源文件全局扫描无剩余 `$t` 引用，导览所有相对文件链接存在。npm 的 shamefully-hoist 配置提示为既有提示。
 - 本轮未执行浏览器回归或生产构建，未直接验证用户编辑器红线刷新；.output 不是本轮源码产物。未修改后端、原项目或执行部署。
 - 下一步：后端数据模型与接口契约设计；后端功能完成后再扩展全栈导览。
+
+## 2026-09-19 — 后端第一批契约与逐项交接
+
+- 用户反馈根仓库已推送；本轮仅新增/修改 docs，不操作提交或远程。
+- 新增 BACKEND_CONTRACT.md 与 openapi.json（OpenAPI 3.0.3）：第一批五个 GET 为 health、categories、articles、articles/{id}、content-directory。以现有前端字段为依据保留列表/详情形状和语言别名，定义分页、三语完整性、可见性、错误和 UTC 时间；日期展示需联调核对。
+- 设计 Category/CategoryTranslation/Article/ArticleTranslation 四个模型、索引和种子边界；尚未生成 schema.prisma 或迁移。统计、认证、编辑发布明确后续分批设计，当前 OpenAPI 不覆盖这些接口。
+- 新增 BACKEND_HANDOFF_PROMPTS.md，B1-B7 每次只执行一项实现任务，B8/B9 仅设计下一批契约并继续拆分。每段读取状态、验证、更新记录后停止，不能自动连做。
+- 新增 MYSQL_SETUP.md：用户先确认已有 MySQL 的版本和位置，准备独立开发库/影子库及账号；不复用 AI 多模态库，不手工建业务表、不在聊天发送密码。未连接或操作数据库。
+- 更新文档导航和实施计划当前范围。JSON 解析、24 个内部引用和五个 operationId 唯一性检查通过；未实际导入 Apifox、未启动后端或进行 HTTP 验收。
+- 下一步由另一 AI 执行 B1 工程基础；数据库准备可同时由用户完成，B2 迁移前须核实专用连接和版本。
+- 补充验证：21 个响应示例的声明类型/必填项/枚举等基础检查及新增文档相对链接通过。未安装完整 OpenAPI 校验器（Python 命令不可用），不声称完成规范级校验；B6 要结合实际实现再验收。
+
+## 2026-09-19 — 文档按前端与后端归类
+
+- `docs/frontend/` 收纳前端审查、架构、SEO、Mock、部署、浏览器证据及前端接手提示词，并新增独立 README 导航。
+- `docs/backend/` 收纳接口契约、OpenAPI、MySQL 说明及后端逐项提示词，并新增独立 README 导航。
+- `docs/` 根目录只保留总导航、实施计划和本状态记录；同步更新前端 README、两类提示词及文档间相对路径。
+- 本轮只整理文档位置和链接，未改业务代码、数据库、Git 历史或远程仓库。
