@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Category {
+  id         Int                   @id @default(autoincrement())
+  slug       String                @unique @db.VarChar(50)
+  parentRoute String               @map("parent_route") @db.VarChar(20)
+  sortOrder  Int                   @map("sort_order")
+  translations CategoryTranslation[]
+  articles   Article[]
+
+  @@map("categories")
+}
+
+model CategoryTranslation {
+  categoryId Int      @map("category_id")
+  locale     String   @db.VarChar(10)
+  name       String   @db.VarChar(100)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([categoryId, locale])
+  @@map("category_translations")
+}
+
+model Article {
+  id          Int                  @id @default(autoincrement())
+  slug        String               @unique @db.VarChar(160)
+  categoryId  Int                  @map("category_id")
+  author      String               @db.VarChar(100)
+  coverImage  String               @default("/logo.svg") @map("cover_image") @db.VarChar(500)
+  status      ArticleStatus        @default(DRAFT)
+  publishedAt DateTime?            @map("published_at") @db.DateTime(3)
+  createdAt   DateTime             @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime             @updatedAt @map("updated_at") @db.DateTime(3)
+  category    Category             @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  translations ArticleTranslation[]
+
+  @@index([status, publishedAt, id], map: "articles_status_published_at_id_idx")
+  @@index([categoryId, status, publishedAt, id], map: "articles_category_status_published_at_id_idx")
+  @@map("articles")
+}
+
+model ArticleTranslation {
+  articleId Int     @map("article_id")
+  locale    String  @db.VarChar(10)
+  title     String  @db.VarChar(200)
+  content   String  @db.MediumText
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, locale])
+  @@map("article_translations")
+}

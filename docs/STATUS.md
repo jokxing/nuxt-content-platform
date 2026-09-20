@@ -830,3 +830,119 @@ Git 状态：跳过
 - `docs/backend/` 收纳接口契约、OpenAPI、MySQL 说明及后端逐项提示词，并新增独立 README 导航。
 - `docs/` 根目录只保留总导航、实施计划和本状态记录；同步更新前端 README、两类提示词及文档间相对路径。
 - 本轮只整理文档位置和链接，未改业务代码、数据库、Git 历史或远程仓库。
+
+## 2026-09-19 — B1 后端工程基础
+
+- 仓库内无适用 `AGENTS.md`（仅其他项目有）；已读 STATUS、BACKEND_CONTRACT、openapi.json、MYSQL_SETUP；Git 工作区执行前干净，本轮未 commit/push。
+- 在 `nuxt-content-platform-backend/` 新建 TypeScript + Express 模块化单体骨架（`src/config`、`middleware`、`lib`、`routes`、`app.ts`、`index.ts`）。独立子项目，未另建 Git，未改前端 / AI 多模态 / 公司项目。
+- **版本固定（依据见该包 README）**：Node `>=22.12.0`（本机验证 v22.22.0）；pnpm `10.11.0`（与前端一致）；Express `5.2.1`；Prisma CLI / `@prisma/client` `6.19.3`（仅锁定，未 generate/migrate）；TypeScript `5.9.2`；Zod `4.1.5`；dotenv `17.2.2`。锁文件 `pnpm-lock.yaml` 已写入工作区。
+- 能力：`pnpm dev|start|build|typecheck|lint`；Zod 校验 `NODE_ENV`/`PORT` 及可选 MySQL URL 形态（不连接、不打印连接串）；统一错误体 `{ error: { code, message, requestId } }`；`x-request-id` 中间件；无凭据 `.env.example`。
+- **刻意未做**：未安装/启动 MySQL；无 schema/迁移/种子；无文章业务；未实现契约 `GET /health`（避免冒充数据库已就绪）。探测 `/health` 现为 404 + requestId。
+- **已验证**：`pnpm typecheck`、`pnpm lint`、`pnpm build` 通过；`pnpm start` 监听 `127.0.0.1:4000`；非法 `PORT` 启动前失败；未知路径返回契约形错误与透传/生成的 requestId。
+- **未验证**：数据库连接、迁移、真实 `/health`、Apifox、文章接口。
+- **下一步**：用户检查后执行 **B2**（Prisma 四模型、迁移/种子、真实 DB 就绪检查 `/health`）。B2 前须按 MYSQL_SETUP 准备专用库/影子库与账号。
+
+## 2026-09-19 — B2 数据库模型与迁移（代码完成，库未连）
+
+- 确认 B1 完成；仓库无适用 AGENTS.md；已读契约/OpenAPI/MYSQL_SETUP；本机 `MySQL80` 服务为 Running，但 **`nuxt-content-platform-backend/.env` 尚不存在**，未持有凭据，故**未执行** `migrate deploy` / `db seed`，也未连接任何库（含 AI 多模态库）。
+- 新增 `prisma/schema.prisma`：Category / CategoryTranslation / Article / ArticleTranslation；枚举 `ArticleStatus`；联合主键；Category→Article `onDelete: Restrict`；翻译级联；索引与契约一致；`shadowDatabaseUrl` 指向 `SHADOW_DATABASE_URL`。
+- 提交迁移目录 `prisma/migrations/20260919100000_init/`（由 `prisma migrate diff --from-empty` 生成并审查）；幂等种子 `prisma/seed.ts` + `seed-data.ts`：九分类三语文案、文章 ID 101–105，上海本地时间转 UTC（例 `2026-09-10 10:00:00` → `2026-09-10T02:00:00.000Z`），仅插入缺失记录、不覆盖、不清库。
+- 新增 Prisma 生命周期（connect/disconnect）、`GET /health` 真实 `SELECT 1`；无 `DATABASE_URL` 或探测失败返回 `503 SERVICE_UNAVAILABLE`；拒绝任意 query → `400`。脚本：`db:generate` / `db:migrate:deploy` / `db:migrate:dev` / `db:seed` / `db:status`。
+- **已验证（无库）**：`pnpm typecheck`、`pnpm lint`、`pnpm build`；无 `.env` 时 `/health`→503、带 query→400；时区换算单测字符串通过。
+- **未验证**：建表约束、种子重复执行、数据库失败以外的连通 `/health` 200、`migrate deploy`。待用户按 MYSQL_SETUP 建库/账号并填写 `.env` 后再跑迁移与种子。
+- **下一步**：用户配置 `.env` 后告知，再验证迁移/种子/health；或直接执行 **B3**（分类查询）——仍须先有可用库。未实现分类/文章业务接口。
+
+## 2026-09-19 — B2 连接验证补完
+
+- 用户已配置本地 `.env`（未在日志或对话中打印连接串）。对 `content_platform_dev@127.0.0.1:3306` 执行 `pnpm db:migrate:deploy` 成功应用 `20260919100000_init`；`migrate status` 为 up to date。
+- `pnpm db:seed` 连续执行两次均成功（幂等）；库内计数：分类 9、分类翻译 27、文章 5、文章翻译 15；文章 ID 101–105；`publishedAt` 例 `2026-09-10T02:00:00.000Z`（上海 10:00 → UTC）。
+- 约束抽查：重复 `slug` → Prisma `P2002`；无效 `categoryId` → `P2003`。
+- `/health`：正常进程返回 `200 {"status":"ok","database":"up"}`；非法 query → `400`；故意错误凭据进程返回 `503 SERVICE_UNAVAILABLE`（不泄露连接细节）。
+- 未执行 `migrate reset` / `db push`。未实现分类/文章 API。
+- **下一步**：用户检查后执行 **B3**（`GET /api/categories`）。
+
+## 2026-09-19 — B3 分类查询
+
+- 确认 B2 已完成且开发库可用；实现 `GET /api/categories`：服务层 `listCategories` 查 Prisma（九子类 + 指定 locale 名称），不读前端 Mock。
+- `lang` 支持 zh-HK/zh-CN/en-US 及 tc/sc/en 别名，缺省 zh-HK；未知/空/重复/额外 query → `400 INVALID_ARGUMENT`；DB 失败 → `503 SERVICE_UNAVAILABLE`。排序：父类 education→analysis→story，再按 `sortOrder`。
+- **已验证**：`pnpm typecheck` / `lint` / `tsc` 构建；默认与 `sc`/`zh-CN`/`en` 返回 9 条且文案正确；非法 lang、空 lang、未知参数、重复 lang → 400；错误凭据进程 → 503。未改前端、未实现文章接口。
+- **下一步**：用户检查后执行 **B4**（`GET /api/articles`）。
+
+## 2026-09-19 — 分类成功响应补 code/msg
+
+- 按用户要求，`GET /api/categories` 成功体由 `{ data }` 改为 `{ code: 0, msg: "ok", data }`；同步 OpenAPI `CategoryList` 与 BACKEND_CONTRACT。错误体仍为 `{ error: { code, message, requestId } }`，未改 `/health`。
+- 原因：对齐常用业务外壳字段，便于客户端统一判断；后续列表/详情接口将沿用同一成功外壳。
+
+## 2026-09-19 — 响应外壳统一提示词调整
+
+- 复查 B1～B3：当前只有 categories 成功体为 `{ code: 0, msg: "ok", data }`；health 成功体及错误响应仍是旧结构，尚未真正统一。
+- 在 `docs/backend/BACKEND_HANDOFF_PROMPTS.md` 增加 B3.1，要求下一步先统一成功/失败外壳、数字业务码、HTTP 状态、requestId、全局 helper、契约和 OpenAPI，再进入 B4。
+- 统一目标：成功 `{ code: 0, msg: "ok", data: T }`；失败 `{ code: 非零数字, msg, data: null, requestId }`。HTTP 错误仍使用 400/404/500/503，不能全部返回 200。
+- B4～B9 提示词同步增加统一外壳约束；B7 要求前端 API 适配层集中判断 code 和解包 data，页面不重复处理。
+- 本轮只修改提示词和状态记录，未改后端实现、BACKEND_CONTRACT.md 或 openapi.json；这些由 B3.1 在同一任务中同步并验证。下一步应执行 B3.1，不直接执行 B4。
+
+## 2026-09-19 — B3.1 统一响应外壳
+
+- 全局 helper：`okResponse` / `failResponse`；`AppError.code` 改为数字业务码（40000/40400/40401/50000/50300/50301）；错误中间件与未知路由统一输出 ErrorEnvelope。
+- `GET /health` 成功：`{ code:0, msg:"ok", data:{ status:"ok", database:"up" } }`；`GET /api/categories` 仍为 code/msg + data 数组。成功体不含 requestId；失败体含 `data:null` + `requestId`。开发态保留 `GET /__debug/unhandled` 仅用于验证未处理异常外壳。
+- 同步 `BACKEND_CONTRACT.md` 与 `openapi.json`：五接口成功套 `*Response`，错误套 `ErrorEnvelope`；文章列表契约改为 `data: { items, total, page, page_size, total_pages }`（实现仍待 B4）。
+- **已验证**：typecheck/lint/build；health/categories 200 + code 0；非法 lang → HTTP 400/code 40000；未知路由 → 404/40400；未处理异常 → 500/50000；错误凭据 → health/categories 503/50300。未改前端、未实现文章接口、未 commit/push。
+- **下一步**：用户检查后执行 **B4**（文章列表，复用统一外壳）。
+
+## 2026-09-19 — B4 文章列表
+
+- 确认 B3.1 完成；实现 `GET /api/articles`。可见性与 DTO 在服务层：`PUBLISHED`、`publishedAt <= 当前 UTC`、三语 title/content 非空；排序 `publishedAt DESC, id DESC`；`count` 与列表同一 `REPEATABLE READ` 事务。
+- 分类支持父类、九种子类及旧别名（lottery-teach/ai-predict/news-story）。分页只接受十进制正整数字符串，默认 page=1、page_size=10，上限 1000000/50；越页返回空 `items`，`total_pages` 至少为 1。
+- 成功体 `{ code:0, msg:"ok", data:{ items, total, page, page_size, total_pages } }`；正文经标签白名单清理（去脚本、事件属性、危险 URL）；非法 cover 回落 `/logo.svg`；公开 `status` 恒为 1。失败走数字业务码外壳。
+- **已验证**（专用探测行 990001–990005，测完删除，未清空开发库、种子 101–105 仍在）：page=1/3 顺序与 total=5；page=4 空列表且 total_pages=3；education 与 lottery-teach 一致；how-to-play / en 标题；page=0、page_size=51、lang=xx、未知分类、空/重复/多余参数 → HTTP 400 / code 40000。草稿、未来时间、缺译、下线不出现；含 script 的探测文被清理且 cover 被替换。typecheck / lint / build 通过。
+- 未实现文章详情、管理端或前端联调；未 commit/push。
+- **下一步**：用户检查后执行 **B5**（`GET /api/articles/{id}`）。
+
+## 2026-09-20 — B5 文章详情
+
+- 确认 B3.1/B4 完成；实现 `GET /api/articles/{id}`，复用 `visibleArticleWhere` 与列表同一 DTO/HTML 清理。成功 `{ code:0, msg:"ok", data: Article }`；非法 ID（0/前导零/非整数/超 INT 上限等）→ HTTP 400 / code 40000；不存在、草稿、未来时间、缺译、下线 → HTTP 404 / code 40401（不区分原因）。
+- **已验证**：101 的 en/sc/tc 标题与 UTC `publish_date`；无 Prisma 内部字段；非法 ID 与非法/多余 query → 40000；999999 及草稿/未来/缺译探测 → 40401；含 script 的可见探测文被清理且 cover 回落 `/logo.svg`。探测行测完删除，种子 101–105 仍在。typecheck / lint / build 通过。
+- 未实现 content-directory、前端或管理端；未 commit/push。
+- **下一步**：用户检查后执行 **B5.1**（Route/Controller 分层），再 B6。
+
+## 2026-09-20 — 增加 B5.1 Route/Controller 分层提示词
+
+- 复查当前代码：B5 已完成；`services` 与 Prisma 已分开，但 health/categories/articles 的 `routes/*.ts` 仍内联参数解析、调用 service、响应和错误转交，实际是 Route + Controller 混合。
+- 在 `docs/backend/BACKEND_HANDOFF_PROMPTS.md` 插入 B5.1，当前下一步改为只做结构整理：`Route → Controller → Service → Prisma`。采用现有顶层 routes/controllers/services/db 目录，暂不增加 Repository/DAO/DI 或大规模迁移到 modules。
+- B5.1 要求四个既有接口及统一响应完全保持不变，并验证成功、非法参数、404、未知路由、数据库不可用、typecheck、lint 和 build；完成后停止，不推进 B6。
+- B6～B9 提示词同步要求沿用该分层。B6 前置条件改为 B3.1～B5.1 已完成。
+- 本轮仅调整提示词与状态记录，未修改后端业务代码、数据库、接口契约或 OpenAPI。下一步应执行 B5.1，不直接执行 B6。
+
+## 2026-09-20 — B5.1 Route/Controller 分层
+
+- 结构：`routes` 仅注册 URL 与 `asyncHandler(controller)`；新增 `controllers/healthController.ts`、`categoryController.ts`、`articleController.ts`（参数校验、调 service、`okResponse`）；新增 `services/healthService.ts`（就绪检查，不再在 route/controller 直接 `pingDatabase`）；`lib/asyncHandler.ts` 统一把 AppError / DB 错误交给全局中间件。
+- 未新增 Repository/DAO/DI，未搬 modules；契约与 OpenAPI 未改；四个接口路径/状态/数字 code/data 形状保持不变。
+- 静态核对：`services` 无 Express 引用，`controllers` 无 Prisma，`routes` 无业务/参数/响应内联。
+- **已验证**：typecheck / lint / build；health、categories、articles 列表/详情成功；非法 lang/ID → 40000；未知文章 → 40401；未知路由 → 40400；错误凭据下 health/categories → 50300。未执行 B6、未改前端、未 commit/push。
+- **下一步**：用户检查后执行 **B6**（内容目录与契约验收）。
+
+## 2026-09-20 — B6 内容目录与第一批契约验收
+
+- 按 `Route → Controller → Service → Prisma` 实现 `GET /api/content-directory`：`routes/contentDirectory.ts`、`controllers/contentDirectoryController.ts`、`services/contentDirectoryService.ts`；可见性复用 `visiblePublishedWhere`（已发布 + 发布时间已到 + 三语齐全）；`REPEATABLE READ` 快照；`id ASC`；成功 `{ code:0, msg:"ok", data:{ generated_at, articles } }`，项含 `id/parent_route/status/publish_date`；任意 query → 40000；可见篇数 > 10000 → HTTP 503 / code 50301，不截断。
+- 同步 `BACKEND_CONTRACT.md` Apifox 调试步骤；OpenAPI 中 content-directory 描述改为已实现。OpenAPI `$ref` 与五路径齐全检查通过。
+- **已验证**：health / categories?lang=sc / articles 分页 / articles/101?lang=en / content-directory（5 篇 id 升序、UTC 时间）；目录忽略草稿与未来探测行；用 service `limit:2` 触发 50301；种子 101–105 保留。typecheck / lint / build 通过。
+- **限制**：未称完整后端；未跑前端构建/联调；未安装完整 OpenAPI 规范校验器（以 `$ref`/结构自检代替）；未 commit/push。
+- **下一步**：用户检查后执行 **B7**（资讯前后端联调）。
+
+## 2026-09-20 — B6 后优化任务拆分与提示词调整
+
+- 复盘 B1～B6 后，将下一步改为 B6.1：API 的 publish_date/generated_at 统一为 13 位 Unix 毫秒时间戳；数据库仍使用 UTC DateTime(3)，不建迁移；日志时间允许保留 ISO 字符串。
+- B6.1 同时要求按面试阅读价值整理注释：解释设计取舍、职责边界、可见性、一致性和安全原因的注释改为简洁中文；普通技术提示、协议名和代码标识符保留英文，不机械翻译或增加无价值注释。
+- B6.1 要求更新已过期的后端 README、BACKEND_CONTRACT.md、openapi.json、Apifox 示例及时间字段类型，并复验统一响应、排序和可见性；完成后停止，再执行 B7。
+- B7 明确前端集中处理毫秒时间戳和 sitemap lastmod 转换。B7 后另拆 B7.1 HTML 清理安全加固、B7.2 OpenAPI/接口测试自动化、B7.3 分类完整性/领域常量/调试路由收口；每项单独执行并停止。
+- B8/B9 后续契约统一继承数字业务码、毫秒时间戳和 Route→Controller→Service→Prisma 分层。
+- 本轮仅更新提示词、后端文档导航和状态记录，未修改后端代码、数据库、接口契约或 OpenAPI。当前下一步是 B6.1，不直接执行 B7。
+
+## 2026-09-20 — B6.1 毫秒时间戳、关键注释与文档收尾
+
+- 新增 `src/lib/time.ts` 的 `toUnixMillis`；`publish_date` / `generated_at` 改为 number 毫秒。数据库仍为 UTC DateTime(3)，无迁移。内容目录的 `generated_at` 与可见性查询共用同一个 `now`；日志 `time` 继续 ISO（已注释说明例外）。
+- 同步 ArticleDto/ContentDirectoryDto、`BACKEND_CONTRACT.md`、`openapi.json`（`integer` + `format: int64`，示例改为毫秒整数，无残留 date-time/ISO 业务时间示例）；后端 README 改为中文并反映五个已实现接口与分层/毫秒约定。
+- 按面试阅读价值整理可见性、目录快照、health、响应外壳、asyncHandler、queryGuard、htmlSanitize、env、app、routes 等关键中文注释；标识符与协议名保持英文。
+- **已验证**：typecheck / lint / build；`articles/101` 的 `publish_date === 1789005600000`（对应 `2026-09-10T02:00:00.000Z`）；content-directory 字段均为 13 位安全整数毫秒，排序仍为 101–105；注入固定 now 时 `generated_at` 一致；OpenAPI 时间字段不再为 string/date-time。统一外壳与可见性未改。
+- 未执行 B7、未改前端、未 commit/push。
+- **下一步**：用户检查后执行 **B7**（资讯前后端联调；前端集中格式化毫秒时间戳）。
