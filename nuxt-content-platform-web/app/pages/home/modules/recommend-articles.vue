@@ -7,15 +7,16 @@ const router = useRouter()
 const { locale, t } = useI18n()
 
 const { data: articles, error, pending } = await useAsyncData(() => `recommendArticles-${locale.value}`, async () => {
-  const lang = locale.value === 'zh-CN' ? 'sc' : locale.value === 'en-US' ? 'en' : 'tc'
-  const data: any = await api.get('/api/articles', {
+  const data = await api.get<{ items: Array<Record<string, any>> }>('/api/articles', {
     params: {
       page: 1,
       page_size: 5,
-      lang,
+      lang: locale.value,
     },
   })
-  return data.data
+  if (!data?.items || !Array.isArray(data.items))
+    throw new Error('Invalid articles data structure')
+  return data.items
 })
 
 function handleViewMore() {

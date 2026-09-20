@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { createContentApi } from '../app/api/client'
+import { ContentApiError } from '../app/api/envelope'
 
 const observations: unknown[] = []
 function instance(owner: string) {
@@ -35,4 +36,28 @@ await assert.rejects(createContentApi(async () => {
 for (const path of ['https://example.test/api/articles', '//example.test/api/latest', '/api/articles?lang=en', '/api/../private', '/api/articles/abc'])
   await assert.rejects(a.get(path), /Unsupported/)
 assert.equal(observations.length, 40, 'Invalid paths must never reach the transport')
-console.log('PASS: 40 concurrent isolated client calls, query ownership, error preservation and rejected external/invalid paths')
+
+const unwrapped = await createContentApi(async () => ({
+  code: 0,
+  msg: 'ok',
+  data: { items: [{ id: 1 }], total: 1, page: 1, page_size: 10, total_pages: 1 },
+})).get('/api/articles')
+assert.deepEqual(unwrapped, { items: [{ id: 1 }], total: 1, page: 1, page_size: 10, total_pages: 1 })
+
+await assert.rejects(
+  createContentApi(async () => {
+    throw Object.assign(new Error('fail'), {
+      statusCode: 404,
+      data: { code: 40401, msg: 'Article not found', data: null, requestId: 'req-1' },
+    })
+  }).get('/api/articles/999'),
+  (err: unknown) => err instanceof ContentApiError
+    && err.statusCode === 404
+    && err.code === 40401
+    && err.requestId === 'req-1',
+)
+
+await createContentApi(async () => ({ ok: true })).get('/api/categories')
+await createContentApi(async () => ({ ok: true })).get('/api/content-directory')
+
+console.log('PASS: 40 concurrent isolated client calls, query ownership, envelope unwrap, error preservation and rejected external/invalid paths')

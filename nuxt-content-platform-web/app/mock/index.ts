@@ -1,7 +1,7 @@
 /**
- * Mock 异步适配入口
- * - Nitro `server/api/*` 与本模块共用同一数据源，保证 SSR/浏览器一致
- * - 后续接真实后端时：页面改为调用 service，或在此按开关切换实现
+ * Mock ??????
+ * - Nitro `server/api/*` ?????????????? SSR/?????
+ * - ??????????????? service???????????
  */
 
 import { MOCK_ARTICLE_IDS } from './brand'
@@ -89,7 +89,7 @@ export async function mockGetLuckyNumber(locale?: string) {
   if (locale === 'en' || locale === 'en-US') {
     return delay({ ...MOCK_LUCKY_NUMBER, tags: ['Frequency sample', 'Balanced ranges', 'Adjacent sample'], reason: 'Fixed sample for portfolio demonstration only; not a prediction.' })
   }
-  return delay({ ...MOCK_LUCKY_NUMBER, reason: '固定组合仅用于演示布局与交互，不代表真实统计推荐或预测。' })
+  return delay({ ...MOCK_LUCKY_NUMBER, reason: '????????????????????????????' })
 }
 
 export async function mockGetNumberMiss(params: Record<string, any> = {}) {
@@ -117,21 +117,34 @@ export async function mockGetArticles(params: Record<string, any> = {}, lang?: s
     .slice(start, start + pageSize)
     .map(a => pickLocalizedArticle(a, lang || params.lang))
 
+  // ??? SuccessEnvelope ?????????????????? items?
   return delay({
-    data,
-    total,
-    page,
-    page_size: pageSize,
-    total_pages: Math.max(1, Math.ceil(total / pageSize) || 1),
+    code: 0,
+    msg: 'ok',
+    data: {
+      items: data,
+      total,
+      page,
+      page_size: pageSize,
+      total_pages: Math.max(1, Math.ceil(total / pageSize) || 1),
+    },
   })
 }
 
 export async function mockGetArticleDetail(id: number | string, lang?: string) {
   const article = MOCK_ARTICLES.find(a => a.id === Number(id) || a.slug === String(id))
   if (!article) {
-    throw createError({ statusCode: 404, statusMessage: `Article ${id} not found in mock` })
+    throw createError({
+      statusCode: 404,
+      statusMessage: `Article ${id} not found in mock`,
+      data: { code: 40401, msg: 'Article not found', data: null, requestId: 'mock' },
+    })
   }
-  return delay(pickLocalizedArticle(article, lang))
+  return delay({
+    code: 0,
+    msg: 'ok',
+    data: pickLocalizedArticle(article, lang),
+  })
 }
 
 export async function mockGetArticleIds() {
@@ -142,7 +155,7 @@ export async function mockGetProse() {
   return delay(MOCK_PROSE)
 }
 
-/** 供 Nitro 路由按路径分发 */
+/** ? Nitro ??????? */
 export async function mockHandleApi(path: string, query: Record<string, any> = {}) {
   const withoutQuery = path.split('?')[0] || path
   const clean = withoutQuery.replace(/^\/api\/?/, '').replace(/\/$/, '')
@@ -178,9 +191,11 @@ export async function mockHandleApi(path: string, query: Record<string, any> = {
   throw createError({ statusCode: 404, statusMessage: `Mock API path not found: ${withoutQuery}` })
 }
 
-function createError(opts: { statusCode: number, statusMessage: string }) {
+function createError(opts: { statusCode: number, statusMessage: string, data?: unknown }) {
   const err: any = new Error(opts.statusMessage)
   err.statusCode = opts.statusCode
   err.statusMessage = opts.statusMessage
+  if (opts.data !== undefined)
+    err.data = opts.data
   return err
 }

@@ -5,6 +5,7 @@ export const BusinessCode = {
   ROUTE_NOT_FOUND: 40400,
   ARTICLE_NOT_FOUND: 40401,
   INTERNAL_ERROR: 50000,
+  DATA_INTEGRITY_ERROR: 50001,
   SERVICE_UNAVAILABLE: 50300,
   CONTENT_DIRECTORY_LIMIT_EXCEEDED: 50301,
 } as const
@@ -20,7 +21,7 @@ export class AppError extends Error {
     statusCode: number,
     code: number,
     message: string,
-    options?: { expose?: boolean; cause?: unknown },
+    options?: { expose?: boolean, cause?: unknown },
   ) {
     super(message, options?.cause !== undefined ? { cause: options.cause } : undefined)
     this.name = 'AppError'
@@ -44,6 +45,11 @@ export function articleNotFound(message = '文章不存在'): AppError {
 
 export function internalError(message = '内部服务错误', cause?: unknown): AppError {
   return new AppError(500, BusinessCode.INTERNAL_ERROR, message, { expose: false, cause })
+}
+
+/** 已知数据残缺（如分类缺译）；对外短句，不泄露库细节。 */
+export function dataIntegrityError(message = '数据不完整', cause?: unknown): AppError {
+  return new AppError(500, BusinessCode.DATA_INTEGRITY_ERROR, message, { expose: true, cause })
 }
 
 export function serviceUnavailable(message = '服务暂不可用', cause?: unknown): AppError {

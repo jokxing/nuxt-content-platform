@@ -946,3 +946,60 @@ Git 状态：跳过
 - **已验证**：typecheck / lint / build；`articles/101` 的 `publish_date === 1789005600000`（对应 `2026-09-10T02:00:00.000Z`）；content-directory 字段均为 13 位安全整数毫秒，排序仍为 101–105；注入固定 now 时 `generated_at` 一致；OpenAPI 时间字段不再为 string/date-time。统一外壳与可见性未改。
 - 未执行 B7、未改前端、未 commit/push。
 - **下一步**：用户检查后执行 **B7**（资讯前后端联调；前端集中格式化毫秒时间戳）。
+
+## 2026-09-20 — B7 资讯前后端联调
+
+- **配置**：私有 `runtimeConfig.contentApiBaseUrl` / `contentApiUseReal`（`CONTENT_API_BASE_URL`、`CONTENT_API_USE_REAL`）；不进入 public。`.env.example` 已说明。
+- **Nitro**：`server/api/[...].ts` 对 `articles` / `articles/:id` / `categories` / `content-directory` 白名单代理到 Express；仅允许固定查询键；不转发 Cookie/Authorization；失败不回退 Mock。统计等路径继续 Mock。
+- **适配层**：`app/api/envelope.ts` + `client.ts` 统一解包 `code===0` 的 `data`；错误保留 HTTP 状态、msg、requestId（`ContentApiError`）。Mock 资讯响应改为 SuccessEnvelope + 列表 `items`，与后端对齐；页面改为使用 `items`，禁止各自解包。
+- **时间**：`app/utils/publishTime.ts` 集中处理毫秒/Mock 字符串 → 展示、JSON-LD ISO、sitemap lastmod；详情/列表/ArticleCard 已接入，禁止直接展示毫秒数。
+- **构建**：`prepare:content` 写入 `.nuxt/content-directory-snapshot.json`（Mock 离线或真实一次拉取）；prerender 与 sitemap 共用；真实模式失败中止。`package.json` build/update-sitemaps 已串 prepare。
+- **文档**：更新 API_CLIENT（直连 vs 代理）、ROUTES_AND_SITEMAP、FRONTEND_GUIDE、前端 README、BACKEND_CONTRACT 状态句。
+- **已验证**：check-api-client / check-content-directory；lint / typecheck / build（Mock）；产物服务 4378 上 check-demo 43 项；真实 prepare 拉到 5 篇毫秒 `publish_date`；4379 + `NUXT_CONTENT_API_USE_REAL` 代理详情毫秒、页面已格式化且无裸毫秒、`/api/latest` 仍 Mock。
+- 未实现登录/发布/推送部署；未执行 B7.1+；未 commit/push。
+- **下一步**：用户检查后可执行 **B7.1**（文章 HTML 清理安全加固），或按需选择 B7.2 / B7.3。
+
+## 2026-09-20 — B7.1 文章 HTML 清理安全加固
+
+- 用仍维护且适配 Node≥22.12 的 `sanitize-html@2.17.7`（+ `@types/sanitize-html@2.16.1`）替换手写正则解析；清理仍在 `src/lib/htmlSanitize.ts`，由 `articleService` 映射时调用，不进 route/controller。
+- 保留原允许标签（p/br/strong/em/b/i/ul/ol/li/blockquote/h2/h3/a）、`a.href` 协议规则与 `normalizeCoverImage`；拒绝脚本、事件属性、危险协议、SVG/MathML、协议相对 URL、路径穿越；未扩大允许范围。
+- 新增 `src/lib/htmlSanitize.test.ts` 与 `pnpm test:sanitize`（大小写 script、事件属性、嵌套危险标签、实体编码、不完整标签、安全相对/HTTPS/mailto、cover 回退等）。
+- **已验证**：typecheck / lint / test:sanitize（12）/ `tsc` build；五种子正文经清理前后一致；`GET /api/articles/101?lang=zh-CN` 与列表 5 篇 content 仍为安全 `<p>` 片段。
+- 未执行 B7.2、未改数据库、未 commit/push。
+- **下一步**：用户检查后可执行 **B7.2**（OpenAPI/接口自动化验证）。
+
+## 2026-09-20 — B7.2 接口契约自动化验证
+
+- 引入 `@apidevtools/swagger-parser@13.0.0` 与 `pnpm openapi:validate`（`scripts/openapi-validate.ts`）；修正 OpenAPI 3.0 下 `ErrorEnvelope.data` 的非法 `type: null` 为 `nullable: true`。
+- 新增 `src/api.integration.test.ts` + `src/test/httpHarness.ts`：`createApp` 临时端口、高位探测行 990301–990304 测完删除，覆盖成功/失败外壳、40000/40400/40401、毫秒时间戳、草稿/未来/缺译不可见、列表详情 DTO 一致、目录升序、50301（service `limit` 钩子）、数据库失败响应不泄密。
+- 脚本：`openapi:validate`、`test:integration`、`test`（sanitize + integration）。
+- **已验证**：typecheck / lint / openapi:validate / test（sanitize 12 + integration 7）/ tsc build。
+- **Apifox**：本轮未实际执行人工导入；以 `openapi:validate` 与集成测试为准。
+- 未执行 B7.3、未 commit/push。
+- **下一步**：用户检查后可执行 **B7.3**（数据完整性与领域常量收口）。
+
+## 2026-09-20 — B7.3 数据完整性与领域常量收口
+
+- 新增业务码 **50001** `DATA_INTEGRITY_ERROR`（HTTP 500）；`listCategories` 在分类数≠9 或请求语言缺任一分类名时抛错，禁止静默少返回。契约与 OpenAPI 已同步。
+- 新增 `src/lib/domainConstants.ts`：`Locale` / `ParentRoute` / `CategorySlug`、九 slug、旧别名、`PARENT_ORDER`；`lang` / `categoryQuery` / `articleVisibility` / seed-data 改为引用，避免多处硬编码漂移。
+- `/__debug`：仅 `NODE_ENV=test` 或 `ENABLE_DEBUG_ROUTES=true`；production 开启则 `loadEnv` 失败。`.env.example` 已说明。
+- 测试：categories 9 条、缺译 50001、env 门控；`pnpm test` 覆盖。
+- **已验证**：typecheck / lint / openapi:validate / test（unit 14 + integration 9）/ tsc build。
+- 未执行 B8、未 commit/push。
+- **下一步**：由用户决定是否进入 **B8**（统计契约设计，只设计）。
+
+## 2026-09-20 — B7.4 前后端联调收口与真实构建验证
+
+- 前端真实资讯配置统一为私有 `NUXT_CONTENT_API_USE_REAL` / `NUXT_CONTENT_API_BASE_URL`；构建脚本、Nuxt runtimeConfig、示例环境和文档使用同一命名。构建脚本会读取本地 `.env`，快照来源与当前 Mock/真实模式不一致时直接失败，避免复用旧快照。
+- 新增统一 `ArticleDto` / `ArticlePage` 和 `ArticleList.vue`；三个资讯列表共用展示组件，移除旧 `publish_time`、`as any`、重复卡片样式及挂载后延迟 1.5 秒的 `v-html`。列表只显示纯文本摘要，正文 HTML 留在详情页。
+- 后端分类完整性扩展为九个固定 slug、parent_route、sortOrder 映射校验；正文超过 100000 字符返回 50001，不再用 `slice` 截断清理后的 HTML。新增两项集成测试。
+- **验证**：前后端 lint/typecheck 通过；OpenAPI 校验通过；单元测试 14、集成测试 11 全通过；后端 `tsc -p tsconfig.build.json` 通过。`prisma generate` 曾因 Windows Prisma DLL 被占用出现 EPERM，属于本机文件锁，非 TypeScript 构建错误。
+- **真实构建验证**：Express 连接 MySQL 后生成 `source=content-directory` 的 5 篇快照；Nuxt 完成 75 路由预渲染。最终 HTML 含真实接口文章标题、正文、canonical/hreflang/JSON-LD 和正式站点 URL；sitemap 含同一文章 URL 与 `lastmod`。Nitro 输出完成后本机进程未自动退出，人工结束悬挂进程；产物已完整生成。
+- 未 commit/push；统计仍为 Mock。下一步可进入 **B8**（统计契约设计，只设计）。
+
+## 2026-09-20 — B7.4 SEO 产物审计与资讯子分类 sitemap 修正
+
+- 修正九个 `/news/{category}/type/{1..3}` 子分类页未进入 sitemap：这些页面有独立筛选结果及 title/description、canonical、四组 hreflang、CollectionPage JSON-LD，应作为可收录 URL。三语展开后 sitemap 从 39 增至 66 个 URL。
+- 新增 `scripts/audit-seo-output.mjs` / `npm run audit:seo`，以 `.output/public/sitemap.xml` 为基准逐页核对预渲染 `index.html`、唯一且匹配的 canonical、zh-HK/zh-CN/en-US/x-default hreflang 和 JSON-LD JSON 语法。
+- **产物审计结果**：66/66 sitemap URL 均有对应 HTML、canonical、四组 hreflang 和合法 JSON-LD。另有 9 个预渲染路由未进 sitemap，全部是 `/news`、`/statistics` 重定向入口及 `/news/detail/101` 兼容入口的三语版本，排除合理。
+- 当前 robots 仍为作品演示阶段既定的 `noindex,nofollow`；正式公开收录前需改为环境控制并在生产构建开启索引。

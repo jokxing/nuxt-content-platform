@@ -1,5 +1,6 @@
 import express from 'express'
 import type { Env } from './config/env.js'
+import { shouldMountDebugRoutes } from './config/env.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { requestIdMiddleware } from './middleware/requestId.js'
 import { createApiRouter } from './routes/index.js'
@@ -15,8 +16,8 @@ export function createApp(env: Env) {
   // /health 挂在根路径，与 OpenAPI 一致（不在 /api 前缀下）。
   app.use(createApiRouter())
 
-  // 非生产环境才挂调试路由，便于验证未处理异常外壳。
-  if (env.NODE_ENV !== 'production') {
+  // 仅 test 或 ENABLE_DEBUG_ROUTES=true；不得仅凭非 production 公开。
+  if (shouldMountDebugRoutes(env)) {
     app.use('/__debug', createDebugErrorRouter())
   }
 

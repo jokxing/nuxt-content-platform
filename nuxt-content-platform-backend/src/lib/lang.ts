@@ -1,22 +1,14 @@
 import { invalidArgument } from './errors.js'
+import { LANG_ALIASES, type Locale } from './domainConstants.js'
 
-export type Locale = 'zh-HK' | 'zh-CN' | 'en-US'
-
-const LANG_MAP: Record<string, Locale> = {
-  'zh-HK': 'zh-HK',
-  'zh-CN': 'zh-CN',
-  'en-US': 'en-US',
-  tc: 'zh-HK',
-  sc: 'zh-CN',
-  en: 'en-US',
-}
+export type { Locale } from './domainConstants.js'
 
 /** Resolve contract lang / aliases; default zh-HK when omitted. */
 export function resolveLang(raw: string | undefined): Locale {
   if (raw === undefined) {
     return 'zh-HK'
   }
-  const locale = LANG_MAP[raw]
+  const locale = LANG_ALIASES[raw as keyof typeof LANG_ALIASES]
   if (!locale) {
     throw invalidArgument('参数不合法')
   }

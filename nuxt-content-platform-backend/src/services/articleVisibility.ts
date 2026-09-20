@@ -1,8 +1,6 @@
 import type { Prisma } from '@prisma/client'
 import type { CategoryFilter } from '../lib/categoryQuery.js'
-import type { Locale } from '../lib/lang.js'
-
-const REQUIRED_LOCALES: Locale[] = ['zh-HK', 'zh-CN', 'en-US']
+import { LOCALES, type Locale } from '../lib/domainConstants.js'
 
 /**
  * 公开可见的基础条件：已发布、发布时间已到，且三语 title/content 均非空。
@@ -12,7 +10,7 @@ export function visiblePublishedWhere(now: Date): Prisma.ArticleWhereInput {
   return {
     status: 'PUBLISHED',
     publishedAt: { lte: now },
-    AND: REQUIRED_LOCALES.map(requiredLocale => ({
+    AND: LOCALES.map(requiredLocale => ({
       translations: {
         some: {
           locale: requiredLocale,

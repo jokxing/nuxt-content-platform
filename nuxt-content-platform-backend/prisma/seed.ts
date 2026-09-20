@@ -1,7 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import { ARTICLE_SEEDS, CATEGORY_SEEDS, shanghaiLocalToUtc, type Locale } from './seed-data.js'
-
-const LOCALES: Locale[] = ['zh-HK', 'zh-CN', 'en-US']
+import { ARTICLE_SEEDS, CATEGORY_SEEDS, LOCALES, shanghaiLocalToUtc } from './seed-data.js'
 
 const prisma = new PrismaClient()
 

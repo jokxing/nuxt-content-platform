@@ -1,4 +1,6 @@
-const ALLOWED_TAGS = new Set([
+import sanitizeHtml from 'sanitize-html'
+
+const ALLOWED_TAGS = [
   'p',
   'br',
   'strong',
@@ -12,17 +14,9 @@ const ALLOWED_TAGS = new Set([
   'h2',
   'h3',
   'a',
-])
+] as const
 
-const CONTENT_LIMIT = 100_000
-
-function escapeAttr(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('"', '&quot;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-}
+export const CONTENT_LIMIT = 100_000
 
 function hasControlChar(value: string): boolean {
   for (const char of value) {
@@ -34,7 +28,8 @@ function hasControlChar(value: string): boolean {
   return false
 }
 
-function isSafeHref(url: string): boolean {
+/** a.href：仅 https?/mailto 与站内相对路径；拒绝 javascript、协议相对、..、控制字符。 */
+export function isSafeHref(url: string): boolean {
   const value = url.trim()
   if (!value || value.includes('..') || value.includes('\\') || hasControlChar(value)) {
     return false
@@ -46,43 +41,41 @@ function isSafeHref(url: string): boolean {
 }
 
 /**
- * 公开正文白名单清理：去掉脚本/事件属性/危险 URL，限制标签集合。
- * 当前为手写实现；更强安全加固见后续 B7.1。
+ * 公开正文白名单清理：基于 sanitize-html（htmlparser2），不用手写正则拼标签。
+ * 允许标签与 a.href 规则与契约一致；拒绝脚本、事件属性、SVG/MathML、危险协议。
  */
 export function sanitizeArticleHtml(input: string): string {
-  let html = input.replace(/<!--[\s\S]*?-->/g, '')
-  html = html.replace(
-    /<\s*(script|style|iframe|object|embed|link|meta)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi,
-    '',
-  )
-  html = html.replace(/<\s*(script|style|iframe|object|embed|link|meta)\b[^>]*\/?\s*>/gi, '')
-
-  html = html.replace(/<\/?([a-zA-Z][\w:-]*)\b([^>]*)>/g, (full, rawTag: string, rawAttrs: string) => {
-    const tag = rawTag.toLowerCase()
-    if (!ALLOWED_TAGS.has(tag)) {
-      return ''
-    }
-    const closing = full.startsWith('</')
-    if (closing) {
-      return tag === 'br' ? '' : `</${tag}>`
-    }
-    if (tag === 'br') {
-      return '<br>'
-    }
-    if (tag === 'a') {
-      const match = /href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(rawAttrs)
-      const href = match?.[1] ?? match?.[2] ?? match?.[3] ?? ''
-      if (!isSafeHref(href)) {
-        return '<a>'
-      }
-      return `<a href="${escapeAttr(href.trim())}">`
-    }
-    return `<${tag}>`
+  const cleaned = sanitizeHtml(input, {
+    allowedTags: [...ALLOWED_TAGS],
+    // 仅 a 可带 href；其它标签无属性 → 事件处理器等一律剥离
+    allowedAttributes: {
+      a: ['href'],
+    },
+    allowedSchemes: ['http', 'https', 'mailto'],
+    allowProtocolRelative: false,
+    // 相对路径由 transformTags + isSafeHref 再校验（含 .. 拒绝）
+    allowVulnerableTags: false,
+    disallowedTagsMode: 'discard',
+    selfClosing: ['br'],
+    transformTags: {
+      a: (_tagName, attribs) => {
+        const href = typeof attribs.href === 'string' ? attribs.href : ''
+        if (!isSafeHref(href)) {
+          // 去掉危险 href，保留链接文本（与旧实现 <a>text</a> 一致）
+          return { tagName: 'a', attribs: {} }
+        }
+        return {
+          tagName: 'a',
+          attribs: { href: href.trim() },
+        }
+      },
+    },
   })
 
-  return html.slice(0, CONTENT_LIMIT)
+  return cleaned
 }
 
+/** cover_image：仅 /logo.svg 或 /images/ 下无 .. 的相对路径。 */
 export function normalizeCoverImage(value: string): string {
   if (value === '/logo.svg') {
     return value

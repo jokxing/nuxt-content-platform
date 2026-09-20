@@ -75,7 +75,7 @@ try {
     await page.locator('.analysis_module').first().locator('button').nth(1).click()
     await page.locator('#chart-tail').screenshot({ path: `../docs/browser-review/interaction-${prefix.slice(1) || 'zh-HK'}-advanced.png` })
     // Switch to another client route, letting the browser intercept the list query.
-    await page.route('**/api/articles?*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [], total: 0, page: 1, page_size: 10, total_pages: 1 }) }))
+    await page.route('**/api/articles?*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ code: 0, msg: 'ok', data: { items: [], total: 0, page: 1, page_size: 10, total_pages: 1 } }) }))
     await page.locator('.van-tabbar-item').last().click()
     await page.waitForURL(url => url.pathname.includes('/news/'))
     await page.waitForTimeout(400)

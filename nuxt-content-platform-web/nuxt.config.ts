@@ -15,9 +15,14 @@ export default defineNuxtConfig({
   ],
 
   runtimeConfig: {
+    // 私有：Express 上游，仅 Nitro 代理使用，不进入 public、不暴露给浏览器。
+    // 部署时仅用 NUXT_CONTENT_API_* 覆盖，构建脚本也读取同一组变量。
+    contentApiBaseUrl: '',
+    contentApiUseReal: false,
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3666',
       domain: process.env.NUXT_PUBLIC_DOMAIN || 'http://localhost:3666',
+      // 仅演示时钟；资讯是否走真实后端看私有 NUXT_CONTENT_API_USE_REAL。
       useMock: process.env.NUXT_PUBLIC_USE_MOCK !== 'false',
     },
   },
@@ -127,7 +132,7 @@ export default defineNuxtConfig({
         '@intlify/shared',
       ],
     },
-    // Mock 阶段：/api 由 Nitro server/api 处理，禁止代理到原生产域名
+    // /api 由 Nitro server/api 处理；资讯在 NUXT_CONTENT_API_USE_REAL 时服务端代理到 Express
   },
 
   devtools: {
@@ -197,7 +202,7 @@ export default defineNuxtConfig({
     prerender: {
       routes: createContentDirectory().map(route => route.path),
     },
-    // Mock 阶段关闭 nitro devProxy，避免 /api 打到原生产域名
+    // 不用 nitro.devProxy 透传任意路径；资讯代理在 server/api/[...].ts 内按白名单实现
   },
 
   // 添加客户端水合配置

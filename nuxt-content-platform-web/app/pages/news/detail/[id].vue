@@ -22,10 +22,9 @@ if (!id || Array.isArray(route.params.id)) {
   await navigateTo(localePath('/news/education'), { replace: true })
 }
 else {
-  const lang = locale.value === 'zh-CN' ? 'sc' : locale.value === 'en-US' ? 'en' : 'tc'
   try {
     const article = await api.get<Record<string, any>>(`/api/articles/${id}`, {
-      params: { lang },
+      params: { lang: locale.value },
     })
     const category = ['education', 'analysis', 'story'].includes(article?.parent_route)
       ? article.parent_route

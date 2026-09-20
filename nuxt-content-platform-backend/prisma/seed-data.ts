@@ -1,10 +1,18 @@
 /** Desensitized seed payloads from frontend mock catalog (IDs 101–105 preserved). */
 
-export type Locale = 'zh-HK' | 'zh-CN' | 'en-US'
-export type ParentRoute = 'education' | 'analysis' | 'story'
+import {
+  CATEGORY_SLUGS,
+  LOCALES,
+  type CategorySlug,
+  type Locale,
+  type ParentRoute,
+} from '../src/lib/domainConstants.js'
+
+export type { Locale, ParentRoute, CategorySlug }
+export { LOCALES, CATEGORY_SLUGS }
 
 export type CategorySeed = {
-  slug: string
+  slug: CategorySlug
   parentRoute: ParentRoute
   sortOrder: number
   names: Record<Locale, string>
@@ -13,7 +21,7 @@ export type CategorySeed = {
 export type ArticleSeed = {
   id: number
   slug: string
-  categorySlug: string
+  categorySlug: CategorySlug
   author: string
   coverImage: string
   /** Asia/Shanghai wall time `YYYY-MM-DD HH:mm:ss` (converted to UTC on insert). */
@@ -22,7 +30,7 @@ export type ArticleSeed = {
   contents: Record<Locale, string>
 }
 
-export const CATEGORY_SEEDS: CategorySeed[] = [
+export const CATEGORY_SEEDS = [
   {
     slug: 'how-to-play',
     parentRoute: 'education',
@@ -77,7 +85,7 @@ export const CATEGORY_SEEDS: CategorySeed[] = [
     sortOrder: 3,
     names: { 'zh-HK': '活動資訊', 'zh-CN': '活动资讯', 'en-US': 'Event News' },
   },
-]
+] as const satisfies readonly CategorySeed[]
 
 export const ARTICLE_SEEDS: ArticleSeed[] = [
   {

@@ -3,6 +3,7 @@ import { DEMO_BRAND } from '~/mock/brand'
 import { useCurrentDomain } from '~/composables/useCurrentDomain'
 import { useNewsTab } from '~/composables/useNewsTab'
 import { getArticleCoverImage } from '~/utils/common'
+import { formatPublishDateForDisplay, toPublishIso } from '~/utils/publishTime'
 import OptimizedImage from '~/components/OptimizedImage.vue'
 
 const api = useContentApi()
@@ -49,11 +50,10 @@ const { data: article, error: fetchError, pending } = await useAsyncData(
     if (!/^\d+$/.test(articleId.value) || Array.isArray(route.params.id))
       throw createError({ statusCode: 404, statusMessage: 'Invalid article ID' })
 
-    const lang = locale.value === 'zh-CN' ? 'sc' : locale.value === 'en-US' ? 'en' : 'tc'
     const apiUrl = `/api/articles/${articleId.value}`
 
     return await api.get<Record<string, any>>(apiUrl, {
-      params: { lang },
+      params: { lang: locale.value },
     })
   },
   {
@@ -175,8 +175,8 @@ const seoConfig = computed(() => {
               height: 60,
             },
           },
-          datePublished: article.value.publish_date,
-          dateModified: article.value.publish_date,
+          datePublished: toPublishIso(article.value.publish_date),
+          dateModified: toPublishIso(article.value.publish_date),
           mainEntityOfPage: {
             '@type': 'WebPage',
             '@id': pageUrl,
@@ -302,7 +302,7 @@ definePageMeta({
 
           <div class="article_meta">
             <van-icon name="clock-o" class="mr-4px" />
-            {{ article.publish_date }}
+            {{ formatPublishDateForDisplay(article.publish_date, locale) }}
             <span v-if="article.author" class="ml-8px">
               <van-icon name="user-o" class="mr-4px" />
               {{ article.author }}

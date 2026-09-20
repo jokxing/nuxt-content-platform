@@ -13,12 +13,25 @@ const mysqlUrl = z
     'must use mysql:// or mysqls://',
   )
 
+const boolFromEnv = z
+  .union([z.boolean(), z.enum(['true', 'false', '1', '0'])])
+  .optional()
+  .transform((value) => {
+    if (value === undefined)
+      return false
+    if (typeof value === 'boolean')
+      return value
+    return value === 'true' || value === '1'
+  })
+
 const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().min(1).max(65535).default(4000),
     DATABASE_URL: mysqlUrl.optional(),
     SHADOW_DATABASE_URL: mysqlUrl.optional(),
+    /** 显式开启 /__debug；production 下禁止为 true。 */
+    ENABLE_DEBUG_ROUTES: boolFromEnv,
   })
   .superRefine((value, ctx) => {
     if (value.DATABASE_URL && value.SHADOW_DATABASE_URL && value.DATABASE_URL === value.SHADOW_DATABASE_URL) {
@@ -26,6 +39,13 @@ const envSchema = z
         code: 'custom',
         path: ['SHADOW_DATABASE_URL'],
         message: 'must differ from DATABASE_URL',
+      })
+    }
+    if (value.NODE_ENV === 'production' && value.ENABLE_DEBUG_ROUTES) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['ENABLE_DEBUG_ROUTES'],
+        message: 'must not be enabled in production',
       })
     }
   })
@@ -38,6 +58,7 @@ function readProcessEnv(): Record<string, string | undefined> {
     PORT: process.env.PORT,
     DATABASE_URL: process.env.DATABASE_URL,
     SHADOW_DATABASE_URL: process.env.SHADOW_DATABASE_URL,
+    ENABLE_DEBUG_ROUTES: process.env.ENABLE_DEBUG_ROUTES,
   }
 }
 
@@ -66,4 +87,9 @@ export function requireDatabaseEnv(
     )
   }
   return env as Env & { DATABASE_URL: string, SHADOW_DATABASE_URL: string }
+}
+
+/** /__debug 仅在 test 或显式 ENABLE_DEBUG_ROUTES 时挂载。 */
+export function shouldMountDebugRoutes(env: Env): boolean {
+  return env.NODE_ENV === 'test' || env.ENABLE_DEBUG_ROUTES === true
 }

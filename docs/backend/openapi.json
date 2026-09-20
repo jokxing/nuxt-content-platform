@@ -107,7 +107,7 @@
         "tags": [
           "资讯查询"
         ],
-        "description": "设计契约，尚未实现。拒绝未知/重复/数组/空 query 参数。公开内容只返回已发布、发布时间已到且三语齐全的记录。",
+        "description": "已实现。拒绝未知/重复/数组/空 query。成功时恰好返回九个固定子类；分类数量、slug、parent_route、sortOrder 或请求语言名称不符合固定目录时，HTTP 500 + code 50001，禁止静默返回错误目录。",
         "parameters": [
           {
             "name": "lang",
@@ -167,17 +167,29 @@
             }
           },
           "500": {
-            "description": "内部服务错误",
+            "description": "内部错误或分类数据不完整（50000 / 50001）",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorEnvelope"
                 },
-                "example": {
-                  "code": 50000,
-                  "msg": "内部服务错误",
-                  "data": null,
-                  "requestId": "example-request-id"
+                "examples": {
+                  "internal": {
+                    "value": {
+                      "code": 50000,
+                      "msg": "内部服务错误",
+                      "data": null,
+                      "requestId": "example-request-id"
+                    }
+                  },
+                  "dataIntegrity": {
+                    "value": {
+                      "code": 50001,
+                      "msg": "分类数据不完整",
+                      "data": null,
+                      "requestId": "example-request-id"
+                    }
+                  }
                 }
               }
             }
@@ -828,6 +840,7 @@
               40400,
               40401,
               50000,
+              50001,
               50300,
               50301
             ],
@@ -838,7 +851,9 @@
             "maxLength": 500
           },
           "data": {
-            "type": "null"
+            "nullable": true,
+            "description": "失败时恒为 null（OpenAPI 3.0 用 nullable，不用 type:null）",
+            "example": null
           },
           "requestId": {
             "type": "string",

@@ -1,8 +1,8 @@
 import { Prisma } from '@prisma/client'
 import { prisma } from '../db/prisma.js'
 import type { CategoryFilter } from '../lib/categoryQuery.js'
-import { articleNotFound } from '../lib/errors.js'
-import { normalizeCoverImage, sanitizeArticleHtml } from '../lib/htmlSanitize.js'
+import { articleNotFound, dataIntegrityError } from '../lib/errors.js'
+import { CONTENT_LIMIT, normalizeCoverImage, sanitizeArticleHtml } from '../lib/htmlSanitize.js'
 import type { Locale } from '../lib/lang.js'
 import { toUnixMillis } from '../lib/time.js'
 import { visibleArticleWhere } from './articleVisibility.js'
@@ -41,6 +41,9 @@ function toDto(row: ArticleRow, locale: Locale): ArticleDto | null {
   const categoryName = row.category.translations.find(item => item.locale === locale)?.name
   if (!translation || !row.publishedAt || !categoryName) {
     return null
+  }
+  if (translation.content.length > CONTENT_LIMIT) {
+    throw dataIntegrityError('文章正文超过长度限制')
   }
   return {
     id: row.id,

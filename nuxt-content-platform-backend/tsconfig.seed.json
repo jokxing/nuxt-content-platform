@@ -12,5 +12,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["prisma/**/*.ts"]
+  "include": ["prisma/**/*.ts", "src/lib/domainConstants.ts"]
 }

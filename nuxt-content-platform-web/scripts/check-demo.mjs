@@ -32,11 +32,14 @@ for (const locale of ['tc', 'sc', 'en']) {
   const response = await fetch(`${base}/api/articles?lang=${locale}`)
   assert.equal(response.status, 200)
   const list = await response.json()
-  assert.equal(list.total, 5)
-  for (const item of list.data) {
-    const detail = await (await fetch(`${base}/api/articles/${item.id}?lang=${locale}`)).json()
-    assert.equal(detail.id, item.id)
-    assert.equal(detail.title, item.title)
+  assert.equal(list.code, 0)
+  assert.equal(list.data.total, 5)
+  assert.ok(Array.isArray(list.data.items))
+  for (const item of list.data.items) {
+    const detailBody = await (await fetch(`${base}/api/articles/${item.id}?lang=${locale}`)).json()
+    assert.equal(detailBody.code, 0)
+    assert.equal(detailBody.data.id, item.id)
+    assert.equal(detailBody.data.title, item.title)
   }
   checked++
 }

@@ -4,7 +4,8 @@
   "version": "0.4.0",
   "packageManager": "pnpm@10.11.0",
   "scripts": {
-    "build": "tsx scripts/generate-sitemaps.ts && nuxt build",
+    "prepare:content": "tsx scripts/prepare-content-directory.ts",
+    "build": "tsx scripts/prepare-content-directory.ts && tsx scripts/generate-sitemaps.ts && nuxt build",
     "dev": "nuxt dev --port 3666",
     "preview": "nuxt preview",
     "start": "node .output/server/index.mjs",
@@ -13,8 +14,9 @@
     "lint:fix": "eslint . --fix",
     "commitlint": "commitlint --edit",
     "typecheck": "nuxi typecheck",
-    "update-sitemaps": "tsx scripts/generate-sitemaps.ts",
-    "generate-routes": "tsx scripts/generate-prerender-routes.ts"
+    "update-sitemaps": "tsx scripts/prepare-content-directory.ts && tsx scripts/generate-sitemaps.ts",
+    "generate-routes": "tsx scripts/generate-prerender-routes.ts",
+    "audit:seo": "node scripts/audit-seo-output.mjs"
   },
   "dependencies": {
     "@nuxt/image": "^1.11.0",

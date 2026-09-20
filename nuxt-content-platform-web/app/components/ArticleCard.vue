@@ -2,35 +2,29 @@
 import { useRouter } from 'vue-router'
 import { useArticleNavigation } from '~/composables/useArticleNavigation'
 import { getArticleCoverImage } from '~/utils/common'
+import { formatPublishDateForDisplay } from '~/utils/publishTime'
 
 interface Props {
-  /** 文章ID */
   id: number
-  /** 文章标题 */
   title: string
-  /** 文章类型（字段名兼容旧接口；语义已映射为指南/分析/动态） */
   type: 'how-to-play' | 'skills' | 'play-desc'
     | 'this-predict' | 'last-review' | 'tema-rule'
     | 'lottery-news' | 'win-story' | 'activity-news'
-  /** 发布时间 */
-  date: string
-  /** 阅读数 */
+  date: string | number
   views?: number
-  /** 文章简介 */
   description?: string
-  /** 文章标签 */
   tags?: string[]
-  /** 文章内容（用于提取图片） */
   content?: string
-  /** 封面图片 */
   coverImage?: string
 }
 
 const props = defineProps<Props>()
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 const localePath = useLocalePath()
+
+const displayDate = computed(() => formatPublishDateForDisplay(props.date, locale.value))
 
 const categoryByType: Record<Props['type'], string> = {
   'how-to-play': 'education',
@@ -50,7 +44,6 @@ const { goToArticle } = useArticleNavigation({
   saveTabState: false,
 })
 
-// 文章类型映射（标签文案/样式；路由指向分类 type 列表）
 const typeMap = {
   'how-to-play': {
     text: 'news.teaching.beginner_guide',
@@ -117,20 +110,16 @@ const typeMap = {
   },
 } as const
 
-// 处理类型标签点击
 function handleTypeClick(e: Event, route: string) {
   e.preventDefault()
   e.stopPropagation()
   router.push(localePath(route))
 }
 
-// 处理文章卡片点击
 function handleArticleClick() {
-  // 存储当前路由到 localStorage，用于文章详情页返回
   const currentPath = router.currentRoute.value.path
   localStorage.setItem('articleReturnPath', currentPath)
 
-  // 使用goToArticle跳转，不保存tab状态
   goToArticle({ id: props.id })
 }
 </script>
@@ -142,7 +131,6 @@ function handleArticleClick() {
   >
     <template #title>
       <div class="flex flex-col gap-2">
-        <!-- 标签行 -->
         <div class="mb-6 flex gap-2 items-center">
           <span
             class="text-xs font-medium px-6 py-2 rounded-full flex gap-1 items-center"
@@ -158,12 +146,10 @@ function handleArticleClick() {
           </span>
         </div>
 
-        <!-- 标题 -->
         <h3 class="text-sm text-gray-800 font-bold transition-colors line-clamp-2 dark:text-gray-200 group-hover:text-primary !mb-1">
           {{ title }}
         </h3>
 
-        <!-- 文章图片 -->
         <div v-if="getArticleCoverImage({ content, coverImage }, '/logo.svg')" class="mb-2">
           <img
             :src="getArticleCoverImage({ content, coverImage }, '/logo.svg') || undefined"
@@ -172,14 +158,12 @@ function handleArticleClick() {
           >
         </div>
 
-        <!-- 文章简介 -->
         <p
           v-if="description"
           class="text-xs text-gray-500 line-clamp-2"
           v-html="description"
         />
 
-        <!-- 标签和时间 -->
         <div class="mt-1 flex items-center justify-between">
           <div v-if="tags?.length" class="flex gap-1">
             <span
@@ -191,7 +175,7 @@ function handleArticleClick() {
             </span>
           </div>
           <span class="text-xs text-gray-400">
-            {{ date }}
+            {{ displayDate }}
           </span>
         </div>
       </div>
