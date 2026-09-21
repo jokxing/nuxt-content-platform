@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { HistoryPageDto } from '~/api/models'
 
 const api = useContentApi()
 
 const { t, locale } = useI18n()
 
-const { data: historyDraws, error, pending } = await useAsyncData('historyDraws', async () => {
-  const result = await api.get('/api/history', { params: { page: 1, page_size: 10 } })
-  if (!Array.isArray(result.data))
+const { data: historyRecords, error, pending } = await useAsyncData('historyRecords', async () => {
+  const result = await api.get<HistoryPageDto>('/api/history', { params: { page: 1, page_size: 10 } })
+  if (!Array.isArray(result.items))
     throw new Error('Invalid history data structure')
-  return result.data
+  return result.items
 }, {
   server: true,
   lazy: false,
@@ -25,11 +26,7 @@ function goToStatistics() {
   router.push(`${lang}/statistics/type/2`)
 }
 
-function getNumbers(draw: any) {
-  return [draw.num1, draw.num2, draw.num3, draw.num4, draw.num5, draw.num6]
-}
-
-function getDayOfWeek(dateStr: string) {
+function getDayOfWeek(dateStr: number) {
   const date = new Date(dateStr)
   const keys = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
   return t(`weekdays.${keys[date.getDay()]}`)
@@ -57,25 +54,25 @@ function getDayOfWeek(dateStr: string) {
             {{ error.message || t('home.history.fetch_failed') }}
           </div>
 
-          <div v-else-if="historyDraws && historyDraws.length > 0" class="space-y-6">
+          <div v-else-if="historyRecords && historyRecords.length > 0" class="space-y-6">
             <div
-              v-for="draw in historyDraws"
-              :key="draw.draw_number"
+              v-for="draw in historyRecords"
+              :key="draw.period_code"
               class="pb-6 border-b border-gray-100 last:pb-0 last:border-0 dark:border-gray-800"
             >
               <div class="mb-3 flex items-center justify-between">
                 <span class="text-sm text-gray-800 dark:text-gray-200">
-                  {{ t('home.next_draw.period', { period: draw.draw_number }) }}
+                  {{ t('home.next_release.period', { period: draw.period_code }) }}
                 </span>
                 <span class="text-xs text-gray-500">
-                  {{ draw.draw_date }}({{ getDayOfWeek(draw.draw_date) }})
+                  {{ new Date(draw.released_at).toLocaleDateString(locale) }}({{ getDayOfWeek(draw.released_at) }})
                 </span>
               </div>
 
               <div class="flex flex-wrap items-center justify-center">
                 <div class="flex gap-6">
                   <BallNumber
-                    v-for="number in getNumbers(draw)"
+                    v-for="number in draw.values"
                     :key="number"
                     :number="number"
                     :size="32"
@@ -86,7 +83,7 @@ function getDayOfWeek(dateStr: string) {
                   /
                 </div>
                 <BallNumber
-                  :number="draw.special_number"
+                  :number="draw.extra_value"
                   :size="32"
                   is-special
                 />

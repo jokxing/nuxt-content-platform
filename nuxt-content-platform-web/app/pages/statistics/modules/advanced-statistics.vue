@@ -1,16 +1,15 @@
 <script setup lang="ts">
 /**
  * 组合与占比类进阶统计（2.2-11）
- * BUSINESS_MAPPING.advancedStats；字段名兼容上游，展示层脱敏
+ * 数据字段与公开后端契约保持一致。
  */
 import type { CoreScaleOptions, Scale } from 'chart.js'
 import type { AdvancedStatsPayload, ConsecutiveCombination } from '~/api/models'
 import { Chart, registerables } from 'chart.js'
-import { toGroupStatistics } from '~/api/models'
 
 const api = useContentApi()
 
-type AdvancedStats = ReturnType<typeof toGroupStatistics<AdvancedStatsPayload>>
+type AdvancedStats = AdvancedStatsPayload
 
 const { t, locale } = useI18n()
 
@@ -32,7 +31,7 @@ const { data: advancedData, error: fetchError, pending, refresh } = await useAsy
       const dto = await api.get<AdvancedStatsPayload>('/api/advanced-stats', {
         params: { period: selectedPeriod.value },
       })
-      return toGroupStatistics(dto)
+      return dto
     }
     catch {
       throw createError({

@@ -1,5 +1,10 @@
 import { PrismaClient } from '@prisma/client'
 import { ARTICLE_SEEDS, CATEGORY_SEEDS, LOCALES, shanghaiLocalToUtc } from './seed-data.js'
+import {
+  assertDistinctValues,
+  DATASET_PERIOD_SEEDS,
+  hongKongDateToUtc,
+} from './seed-dataset-data.js'
 
 const prisma = new PrismaClient()
 
@@ -89,9 +94,42 @@ async function seedArticles(slugToId: Map<string, number>): Promise<void> {
   }
 }
 
+/** Insert missing DatasetPeriod rows only; never overwrite manual edits. */
+async function seedDatasetPeriods(): Promise<void> {
+  if (DATASET_PERIOD_SEEDS.length !== 120) {
+    throw new Error(`Expected 120 dataset period seeds, got ${DATASET_PERIOD_SEEDS.length}`)
+  }
+
+  for (const seed of DATASET_PERIOD_SEEDS) {
+    assertDistinctValues(seed)
+    const existing = await prisma.datasetPeriod.findUnique({
+      where: { periodCode: seed.periodCode },
+    })
+    if (existing) {
+      continue
+    }
+
+    await prisma.datasetPeriod.create({
+      data: {
+        periodCode: seed.periodCode,
+        releasedAt: hongKongDateToUtc(seed.releasedDateHk),
+        value1: seed.value1,
+        value2: seed.value2,
+        value3: seed.value3,
+        value4: seed.value4,
+        value5: seed.value5,
+        value6: seed.value6,
+        extraValue: seed.extraValue,
+        status: 'PUBLISHED',
+      },
+    })
+  }
+}
+
 async function main(): Promise<void> {
   const slugToId = await seedCategories()
   await seedArticles(slugToId)
+  await seedDatasetPeriods()
 }
 
 main()

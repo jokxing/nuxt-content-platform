@@ -7,7 +7,6 @@
     </div>
 
     <!-- 免责声明 -->
-    <!-- <LegalDisclaimer /> -->
 
     <AppFooter />
   </main>

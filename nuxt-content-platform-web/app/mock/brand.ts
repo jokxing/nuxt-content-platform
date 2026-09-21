@@ -21,17 +21,16 @@ export const DEMO_BRAND = {
 } as const
 
 /**
- * 原业务 → 通用内容场景映射（文案层；接口字段名暂保持兼容）
+ * 通用内容场景映射。
  */
 export const BUSINESS_MAPPING = {
-  lotteryResult: '期次数据发布 / 最新数据集',
-  drawNumbers: '数据项编号（演示用 1–49，保留图表交互）',
-  historyDraws: '历史记录列表',
+  latestDataset: '期次数据发布 / 最新数据集',
+  values: '数据项编号（演示用 1–49，保留图表交互）',
+  history: '历史记录列表',
   coldHot: '频次与分布统计',
   numberMiss: '间隔 / 遗漏类指标',
   advancedStats: '组合与占比类进阶统计',
-  aiPrediction: '智能推荐组合（筛选工具）',
-  luckyNumber: '推荐数据项组合',
+  demoCombinations: '固定演示组合（筛选工具）',
   newsEducation: '指南（原教学分类路由 education）',
   newsAnalysis: '分析（原分析分类路由 analysis）',
   newsStory: '动态（原故事分类路由 story）',

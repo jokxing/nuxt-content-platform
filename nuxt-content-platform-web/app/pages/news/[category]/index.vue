@@ -104,7 +104,7 @@ const subTabs = computed(() => {
     case 'education':
       return [
         { id: 1, title: t('news.teaching.beginner_guide') },
-        { id: 2, title: t('news.teaching.betting_skills') },
+        { id: 2, title: t('news.teaching.advanced_tips') },
         { id: 3, title: t('news.teaching.game_rules') },
       ]
     case 'analysis':
@@ -115,8 +115,8 @@ const subTabs = computed(() => {
       ]
     case 'story':
       return [
-        { id: 1, title: t('news.story.lottery_news') },
-        { id: 2, title: t('news.story.winning_stories') },
+        { id: 1, title: t('news.story.platform_updates') },
+        { id: 2, title: t('news.story.user_stories') },
         { id: 3, title: t('news.story.activity_news') },
       ]
     default:

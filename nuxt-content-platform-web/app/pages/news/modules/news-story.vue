@@ -42,7 +42,7 @@ const { data: articles, error, pending } = await useAsyncData(() => `news-story-
   else {
     category = NEWS_CATEGORIES.getParentCategory(routeCategory)
     if (!category) {
-      category = 'news-story'
+      category = 'story'
     }
   }
 

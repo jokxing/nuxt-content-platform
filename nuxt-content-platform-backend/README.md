@@ -4,7 +4,7 @@ ContentPulse 资讯后端（TypeScript + Express + Prisma + MySQL）。项目状
 
 ## 当前能力（第一批，不等于完整后端）
 
-五个公开 GET：
+五个公开 GET（资讯）+ latest / history：
 
 | 路径 | 说明 |
 | --- | --- |
@@ -13,6 +13,12 @@ ContentPulse 资讯后端（TypeScript + Express + Prisma + MySQL）。项目状
 | `GET /api/articles` | 已发布文章分页列表 |
 | `GET /api/articles/{id}` | 文章详情 |
 | `GET /api/content-directory` | 构建/sitemap 用完整可见快照 |
+| `GET /api/latest` | 最新可见数据期次与可空下一计划（无可见期次 → 40402） |
+| `GET /api/history` | 历史期次分页与 filter_options（page_size 最大 100） |
+| `GET /api/analysis` | 频次分析（period 默认 10，最大 120；0 为空窗口） |
+| `GET /api/advanced-stats` | 进阶统计（尾数/G01～G12/奇偶/相邻/完整组合） |
+| `GET /api/number-miss` | 1～49 遗漏与连续命中 |
+| `GET /api/demo-combinations` | 固定、可复现的演示组合 |
 
 统一响应：
 
@@ -63,7 +69,11 @@ pnpm db:status
 - `docs/backend/openapi.json` + `pnpm openapi:validate`
 - Apifox 可人工导入；B7.2 起以自动化校验为准（B7.2 未实际导入 Apifox）
 
+## 数据期次模型（B8.1）与统计查询（B8.2–B8.7）
+
+Prisma 已含 `DatasetPeriod` / `DatasetSchedule`。**已实现** latest、history、analysis、advanced-stats、number-miss 及固定演示组合 `demo-combinations`。前端统计联调尚未开始。
+
 ## 已验证 / 未完成
 
-- 已验证：B1～B7.3（含分类缺译 50001、领域常量收口、debug 门控）。
-- 未完成：统计/认证/发布等后续批次（B8/B9 起）。
+- 已验证：B1～B7.4、B8.1～B8.7。
+- 未完成：统计前后端联调（B8.8）、认证/发布等。

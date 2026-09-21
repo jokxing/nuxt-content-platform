@@ -1,18 +1,16 @@
-import type { ReleaseDto } from '~/api/models'
+import type { LatestDatasetDto } from '~/api/models'
 import { defineStore } from 'pinia'
-import { toNextRelease } from '~/api/models'
-import { toBeijingTimeString } from '~/utils/timezone'
 
 export const useDatasetStore = defineStore('dataset', {
-  state: () => ({ nextRelease: null as ReturnType<typeof toNextRelease> | null }),
+  state: () => ({ nextRelease: null as LatestDatasetDto['next_release'] }),
   actions: {
-    setRelease(dto: ReleaseDto) {
-      this.nextRelease = toNextRelease(dto)
+    setRelease(dto: LatestDatasetDto) {
+      this.nextRelease = dto.next_release
     },
   },
   getters: {
     nextReleaseDateTime(): string | null {
-      return this.nextRelease ? toBeijingTimeString(this.nextRelease.date, this.nextRelease.time) : null
+      return this.nextRelease ? new Date(this.nextRelease.scheduled_at).toISOString() : null
     },
   },
 })

@@ -1,10 +1,10 @@
-# 后端接口契约：第一批资讯查询
+# 后端接口契约：资讯与统计查询
 
-日期：2026-09-20。状态：第一批五个资讯查询接口已实现；前端 B7 已可通过 Nitro 代理联调。机器可读契约为 [openapi.json](./openapi.json)，实现若需修改字段，先同步契约并记录原因。
+日期：2026-09-21。状态：第一批五个资讯查询接口与 B8.1～B8.7 统计查询、固定演示组合均已实现。统计契约已在 B8.8 前改为中性字段；前端统计联调尚未开始。机器可读契约为 [openapi.json](./openapi.json)，统计公式与模型见 [STATISTICS_CONTRACT.md](./STATISTICS_CONTRACT.md)。
 
 ## 范围和衔接
 
-第一批只实现健康检查、分类、文章列表、文章详情、构建内容目录。管理员登录、编辑发布、历史统计的契约分别在后续单任务中确定，不允许接手 AI 根据本文一次性完成全栈。执行入口见 [后端逐项提示词](./BACKEND_HANDOFF_PROMPTS.md)。
+第一批已实现健康检查、分类、文章列表、文章详情、构建内容目录。B8 已设计数据期次、历史与统计查询以及明确不调用 AI 的固定组合样例；必须按逐项提示词分别实现。管理员登录和编辑发布仍在后续单任务中确定，不允许接手 AI 根据本文一次性完成全栈。执行入口见 [后端逐项提示词](./BACKEND_HANDOFF_PROMPTS.md)。
 
 依据：前端 app/mock/index.ts、app/mock/data/catalog.ts、app/api/client.ts、server/api/[...].ts、新闻页面及 scripts/content-directory.ts。列表和详情字段沿用现有语义；响应统一为 SuccessEnvelope / ErrorEnvelope（B3.1）。新分类/目录接口不代表前端已接入。
 
@@ -23,6 +23,7 @@
 | 40000 | INVALID_ARGUMENT | 400 |
 | 40400 | ROUTE_NOT_FOUND | 404 |
 | 40401 | ARTICLE_NOT_FOUND | 404 |
+| 40402 | DATASET_NOT_FOUND | 404 |
 | 50000 | INTERNAL_ERROR | 500 |
 | 50001 | DATA_INTEGRITY_ERROR | 500 |
 | 50300 | SERVICE_UNAVAILABLE | 503 |
@@ -31,7 +32,7 @@
 - GET query 只允许契约参数；未知、重复、数组、空值参数均 HTTP 400 + code 40000。分页只接受十进制正整数字符串；page 最大 1000000，page_size 最大 50，默认分别为 1、10。越界页面返回空 `items`，total_pages 至少为 1，兼容当前页面。
 - lang 默认 zh-HK，接受 zh-HK/zh-CN/en-US 及 tc/sc/en 别名，内部统一为前三者；非法值 400 + 40000。不读取用户输入的任意语言列名。
 - 第一版每篇可发布文章必须有三语非空 title/content，分类也有三语名称。列表、详情、目录共用可见条件：PUBLISHED、publishedAt <= 当前 UTC 时间且三语齐全；缺译、草稿、下线、未来时间的详情一律 HTTP 404 + code 40401，不做隐式语言回退。**`GET /api/categories` 必须返回全部九个子类**；分类数量、slug、parent_route、sortOrder 或请求语言名称任一不符合固定目录时，返回 HTTP 500 + code **50001**（`DATA_INTEGRITY_ERROR`），不得静默返回错误目录。
-- 时间：数据库按 UTC `DateTime(3)` 保存；**API 业务时间字段**（当前为 `publish_date`、`generated_at`；以后 `created_at`/`updated_at`/登录时间等同理）统一输出 **13 位 Unix 毫秒时间戳（number）**。例：上海 `2026-09-10 10:00:00` 入库为 UTC 后，API 为 `1789005600000` 这类毫秒整数（以实际 `Date#getTime()` 为准）。日志字段 `time` 不属于业务 API，可继续使用 ISO 字符串便于阅读。ID 为正整数且不超过 MySQL 有符号 INT 上限 2147483647；详情接受数字 ID，不提供 slug 查询。
+- 时间：数据库按 UTC `DateTime(3)` 保存；API 的 `publish_date`、`generated_at`、`released_at`、`scheduled_at` 统一输出 13 位 Unix 毫秒时间戳。日志字段 `time` 可继续使用 ISO 字符串。ID 为正整数且不超过 MySQL 有符号 INT 上限 2147483647。
 - 返回 content 为经过服务端白名单清理的 HTML；不得含脚本、事件属性、危险 URL。外部图片不由服务器任意抓取。第一版 cover_image 仅本站 /images/ 下无 .. 的相对资源路径或 /logo.svg，资源部署在前端 public；不实现上传。
 - 列表排序 publishedAt DESC、id DESC；统计 total 与列表使用同一筛选和一致读事务。不保证多次请求期间内容发生变化时的跨页快照一致。
 
@@ -45,19 +46,34 @@
 | GET /api/articles/{id} | id 路径参数、lang | 单个 Article；不可见与不存在同一 40401 |
 | GET /api/content-directory | 无 | `{ generated_at, articles }`；articles 为 id/parent_route/status/publish_date，固定 id ASC |
 
-category 支持父分类 education/analysis/story、下表九种子类，以及旧父分类别名 lottery-teach→education、ai-predict→analysis、news-story→story。不传则全部；未知值 400。第一版不支持 q、任意排序和新分类写入。
+## B8 统计接口
+
+| 方法/路径 | 参数 | 成功 data | 状态 |
+| --- | --- | --- | --- |
+| GET /api/latest | 无 | 最新数据期次及可空的下一计划；无可见期次 → 40402 | **已实现** |
+| GET /api/history | page/page_size/year/period_code/number/periods | 历史期次分页 + filter_options | **已实现** |
+| GET /api/analysis | period | 冷热、连续出现、同尾和相邻组合 | **已实现** |
+| GET /api/advanced-stats | period | 尾数、中性 G01～G12、奇偶、相邻和完整组合统计 | **已实现** |
+| GET /api/number-miss | period | 1～49 当前/最大/平均遗漏、遗漏众数和连续命中 | **已实现** |
+| GET /api/demo-combinations | lang | 固定且可复现的 featured + 5 组样例 | **已实现** |
+
+以上统计与固定样例接口均已实现。固定组合不是预测结果。完整参数、空数据行为、稳定排序、公式及模型以 [STATISTICS_CONTRACT.md](./STATISTICS_CONTRACT.md) 为准。前端统计路径仍待 B8.8 联调。
+
+category 支持父分类 education/analysis/story 及下表九种子类。不传则全部；未知值 400。第一版不支持 q、任意排序和新分类写入。
 
 | parent_route | category_slug（兼容既有页面） | 中文语义 |
 | --- | --- | --- |
-| education | how-to-play / skills / play-desc | 新手指南 / 进阶技巧 / 功能说明 |
-| analysis | this-predict / last-review / tema-rule | 本期分析 / 往期回顾 / 指标规则 |
-| story | lottery-news / win-story / activity-news | 平台动态 / 用户故事 / 活动资讯 |
+| education | getting-started / skills / feature-notes | 新手指南 / 进阶技巧 / 功能说明 |
+| analysis | current-insights / last-review / metric-rules | 本期分析 / 往期回顾 / 指标规则 |
+| story | platform-updates / user-stories / activity-news | 平台动态 / 用户故事 / 活动资讯 |
 
 Article 必填字段：id、title、slug、content、publish_date、author、cover_image、status、category、category_slug、parent_route。category 是请求语言的子类名称，status 在公开响应中恒为 1。字段类型、长度和示例见 OpenAPI。
 
 构建目录从同一可见集合输出三语齐全文章。第一版上限 10000 篇；超过返回 HTTP 503 + code 50301，不得截断导致漏路由。generated_at 只是快照获取时间，不作为文章 lastmod。前端现有 lastmod 取发布日期，未来编辑发布时须单独设计 updatedAt 与版本策略。
 
-## 数据模型（设计，不是已建表）
+## 数据模型
+
+资讯四表已实现；B8.1 另建数据期次两表（见下节说明）。
 
 | 模型 | 字段与约束 |
 | --- | --- |
@@ -70,7 +86,9 @@ Article 必填字段：id、title、slug、content、publish_date、author、cov
 
 Prisma 模型和代码字段 camelCase，通过 @map/@@map 映射 snake_case 表列。业务外键 Category→Article 删除限制 RESTRICT；翻译从属记录可随主记录级联删除，但本批无删除接口。索引 Article(status,publishedAt,id) 与 Article(categoryId,status,publishedAt,id)，先不添加其他重复索引。数据库外键不能证明三语齐全，必须在服务可见性查询和后续发布事务中落实。
 
-种子只采用已脱敏 Mock 文章和九个分类，保留文章 ID 以稳定路由；原时间明确按 Asia/Shanghai 转 UTC。脚本幂等，默认只插入缺失记录，不覆盖后续人工编辑的内容，不清空库；三语分类名称明确编写，不调用外部 AI。统计、用户和发布日志表待对应任务再定。
+**B8.1 已建表**：`DatasetPeriod` / `DatasetSchedule`（含枚举、索引与迁移内 CHECK：7 值范围 1～49、互异、金额非负）。种子 120 条脱敏已发布期次 + 1 条未来 SCHEDULED 计划；幂等插入，不覆盖人工修改。统计 HTTP 仍未实现。
+
+种子只采用已脱敏 Mock 文章和九个分类，保留文章 ID 以稳定路由；原时间明确按 Asia/Shanghai 转 UTC。脚本幂等，默认只插入缺失记录，不覆盖后续人工编辑的内容，不清空库；三语分类名称明确编写，不调用外部 AI。用户和发布日志表待对应任务再定。
 
 ## Apifox 与验收
 
@@ -83,6 +101,12 @@ Prisma 模型和代码字段 camelCase，通过 @map/@@map 映射 snake_case 表
 3. `GET /api/articles?lang=sc&page=1&page_size=2` → 200 / code 0，`data.items` 分页
 4. `GET /api/articles/101?lang=en` → 200 / code 0，`publish_date` 为毫秒时间戳
 5. `GET /api/content-directory` → 200 / code 0，`articles` 按 id ASC，`generated_at`/`publish_date` 均为毫秒；任意 query → 40000
+6. `GET /api/latest` → 200 / code 0，`released_at` 与 `next_release.scheduled_at` 为毫秒；任意 query → 40000；无可见期次 → 40402
+7. `GET /api/history?page=1&page_size=5` → 200 / code 0，含 `filter_options`；`page_size=101` → 40000
+8. `GET /api/analysis` → 200 / code 0，`requested_period=10`；请求 `period=0/121` → 40000
+9. `GET /api/advanced-stats` → 200 / code 0，含 `group_distribution` 的 G01～G12
+10. `GET /api/number-miss` → 200 / code 0，有样本时 `number_stats` 恰好 49 项
+11. `GET /api/demo-combinations?lang=en` → 200 / code 0，`source=fixed_demo` 且 `is_generated=false`
 
 补查：`page=0`、`page_size=51`、`lang=xx`、重复 `lang`、未知分类、未知 ID；用测试数据验证草稿/未来时间/缺译不出现在列表、详情与目录。目录超过 10000 可见篇时为 HTTP 503 / code 50301，不得截断。不是仅检查 HTTP 200。
 

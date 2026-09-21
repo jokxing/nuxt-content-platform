@@ -90,9 +90,9 @@ function handlePlatformInfoClick(articleId: string) {
       :style="{ width: '60%', height: '100%' }"
     >
       <van-cell-group inset>
-        <!-- 新增菜单项：最新开奖结果 -->
+        <!-- 最新数据入口 -->
         <van-cell :title="t('menu.latestResult')" is-link @click="showMenu = false; router.push(localePath('/'))" />
-        <!-- 新增菜单项：近20期开奖结果 -->
+        <!-- 历史数据入口 -->
         <van-cell :title="t('menu.last20Results')" is-link @click="showMenu = false; router.push(localePath('/statistics/type/2'))" />
         <!-- 平台资料分组 -->
         <van-cell

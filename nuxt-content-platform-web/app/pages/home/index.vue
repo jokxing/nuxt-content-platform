@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import HistoryDraws from './modules/history-draws.vue'
+import HistoryRecords from './modules/history-records.vue'
 import LatestResult from './modules/latest-result.vue'
-import NextDrawCountdown from './modules/next-draw-countdown.vue'
+import NextReleaseCountdown from './modules/next-release-countdown.vue'
 import RecommendArticles from './modules/recommend-articles.vue'
 import RecommendNumbers from './modules/recommend-numbers.vue'
+import type { LatestDatasetDto } from '~/api/models'
 
 const api = useContentApi()
 
@@ -14,7 +15,7 @@ useHead(() => ({
 }))
 
 const { data: latestResult } = await useAsyncData('latestResult', async () => {
-  return await api.get('/api/latest')
+  return await api.get<LatestDatasetDto>('/api/latest')
 }, {
   server: true,
   lazy: false,
@@ -25,9 +26,9 @@ const { data: latestResult } = await useAsyncData('latestResult', async () => {
 <template>
   <div class="p-16">
     <LatestResult :result="latestResult || undefined" />
-    <NextDrawCountdown />
+    <NextReleaseCountdown />
     <RecommendNumbers />
-    <HistoryDraws />
+    <HistoryRecords />
     <RecommendArticles />
   </div>
 </template>

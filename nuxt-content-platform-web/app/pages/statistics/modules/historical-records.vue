@@ -1,10 +1,9 @@
 <script setup lang="ts">
 /**
  * 历史记录模块（2.2-8）
- * BUSINESS_MAPPING.historyDraws → 历史记录列表；字段名仍兼容 draw_* Mock
+ * 历史筛选选项和列表数据均来自同一个接口快照。
  */
-import { MOCK_CLOCK_ISO } from '~/mock/brand'
-import { MOCK_HISTORY } from '~/mock/data/catalog'
+import type { HistoryPageDto } from '~/api/models'
 
 const api = useContentApi()
 
@@ -16,6 +15,8 @@ const pageSize = ref(20)
 const total = ref(0)
 const totalPages = ref(0)
 const isRequesting = ref(false)
+const periodCodes = ref<string[]>([])
+const years = ref<number[]>([])
 
 interface FormData {
   recent?: string
@@ -50,32 +51,23 @@ const { data: records, error: fetchError, pending } = await useAsyncData(
       if (formData.value.year)
         params.year = formData.value.year
       if (formData.value.period)
-        params.draw_number = formData.value.period
+        params.period_code = formData.value.period
       if (formData.value.specific_number)
         params.number = formData.value.specific_number
 
-      const result = await api.get<{
-        data: Array<Record<string, any>>
-        total: number
-        total_pages: number
-      }>('/api/history', { params })
+      const result = await api.get<HistoryPageDto>('/api/history', { params })
 
-      const formattedRecords = (result.data || []).map(item => ({
-        id: item.draw_number,
-        date: item.draw_date,
-        numbers: [
-          formatNumber(item.num1),
-          formatNumber(item.num2),
-          formatNumber(item.num3),
-          formatNumber(item.num4),
-          formatNumber(item.num5),
-          formatNumber(item.num6),
-        ],
-        special: formatNumber(item.special_number),
+      const formattedRecords = result.items.map(item => ({
+        id: item.period_code,
+        date: item.released_at,
+        numbers: item.values.map(formatNumber),
+        special: formatNumber(item.extra_value),
       }))
 
       total.value = result.total
       totalPages.value = result.total_pages
+      periodCodes.value = result.filter_options.period_codes
+      years.value = result.filter_options.years
       error.value = null
       return formattedRecords
     }
@@ -101,11 +93,8 @@ watch(() => formData.value, () => {
     currentPage.value = 1
 }, { deep: true, immediate: true })
 
-const mockYear = Number(MOCK_CLOCK_ISO.slice(0, 4)) || 2026
-
 function generatePeriodOptions() {
-  return MOCK_HISTORY.map((row) => {
-    const value = row.draw_number
+  return periodCodes.value.map((value) => {
     return {
       label: t('statistics.history.form.period_label', { period: value }),
       value,
@@ -114,8 +103,7 @@ function generatePeriodOptions() {
 }
 
 function generateYearOptions() {
-  return Array.from({ length: 3 }, (_, i) => {
-    const year = mockYear - i
+  return years.value.map((year) => {
     return {
       label: t('statistics.history.form.year_label', { year }),
       value: year,
@@ -141,7 +129,7 @@ const recentOptions = [
   { label: t('statistics.history.form.recent_100'), value: '100' },
 ]
 
-const formConfig = [
+const formConfig = computed(() => [
   {
     type: 'select',
     title: t('statistics.history.form.recent'),
@@ -166,7 +154,7 @@ const formConfig = [
     field: 'specific_number',
     props: { options: generateNumberOptions() },
   },
-]
+])
 
 function formatNumber(num: number): string {
   return String(num).padStart(2, '0')

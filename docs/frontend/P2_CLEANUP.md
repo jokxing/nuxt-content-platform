@@ -12,8 +12,8 @@
 
 ## 命名与兼容边界
 
-- 原 useLotteryStore 改为 useDatasetStore，状态为 nextRelease/date/number/target/time；倒计时与最新数据模块使用通用名称，删除乱码注释及无消费者的 latestResult 存储。
-- `app/api/models.ts` 将 next_draw_date/next_draw_number/next_jackpot 转为发布模型，将 zodiac_distribution 转为 group_distribution。高级统计内部 key 和三语翻译 key 改为 group；图表计算值保持原接口含义。
+- 原 useLegacyStore 改为 useDatasetStore，状态为 nextRelease/date/number/target/time；倒计时与最新数据模块使用通用名称，删除乱码注释及无消费者的 latestResult 存储。
+- `app/api/models.ts` 将 next_draw_date/next_draw_number/next_target 转为发布模型，将 legacy_group_distribution 转为 group_distribution。高级统计内部 key 和三语翻译 key 改为 group；图表计算值保持原接口含义。
 - 底栏“立即玩/Play Now”改为“体验工具/Try Tools”，继续跳转原来的站内 pick 路径，没有恢复外链。
 - API 的历史 draw_*、文章 category_slug 等仍为兼容字段；不机械全局改名破坏现有接口、文章分类和 Mock 检查。剩余兼容值不代表品牌或生产服务残留；后端契约确定后再迁移。
 

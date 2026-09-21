@@ -2,7 +2,7 @@
 
 每次只复制下面一个代码块。每段都有读取入口和停止条件；完成后由用户检查结果，再给下一段。不能复制整份文档要求 AI 连续执行全部步骤。没有数据库时，可以完成不依赖连接的工作，连接验证必须标为未完成。
 
-当前 B1～B6 已完成，统一响应与 `Route → Controller → Service → Prisma` 分层已经落实。下一步执行 **B6.1**，统一 API 毫秒时间戳、整理有面试价值的中文注释并更新后端文档；完成后再执行 B7 联调。
+当前 B1～B7.4 已完成，B8 统计契约设计已完成。下一步只执行 **B8.1 数据模型与种子**；此后每次由用户检查，再复制下一段，不连续实现全部统计接口。
 
 ## B1：工程基础（第一个执行）
 
@@ -133,10 +133,78 @@
 保持现有 API 字段、数字业务码、毫秒时间戳和分层结构；如新增数据完整性业务码，先更新契约/OpenAPI，保持 HTTP 状态语义。不要为了常量共享让后端直接依赖前端文件，也不引入 Repository/DAO/DI。运行现有全部验证，更新 STATUS 后停止，再由用户决定 B8。
 ```
 
-## B8：统计契约设计（只设计）
+## B8：统计契约设计（已完成，勿重复）
 
 ```text
-仅执行 B8 设计，不写统计后端。确认 B7.1～B7.3 已按状态完成或有用户明确后置决定；读取 docs/STATUS.md、docs/backend/BACKEND_CONTRACT.md、docs/backend/openapi.json、docs/frontend/MOCK_DATA_CONTRACT.md、前端 app/mock/statistics.ts 和统计页面实际调用。逐字段设计 latest/history/analysis/advanced-stats/number-miss，以及明确为固定示例的组合接口；确定数据库模型、范围、公式、空数据与参数规则。兼容已有字段必须有映射依据，不宣称 AI 推理能力。所有新增响应必须复用 B3.1 的 SuccessEnvelope/ErrorEnvelope、数字业务码、毫秒时间戳和正确 HTTP 状态，后续实现提示词必须遵循 `Route → Controller → Service → Prisma`，不创建另一套返回格式或把控制器写进 route。将本批契约追加进唯一 docs/backend/openapi.json，并补每次只实现一个接口的后续独立提示词，更新 docs/STATUS.md 后停止，等待用户选择下一任务。
+B8 设计已经完成，结果在 docs/backend/STATISTICS_CONTRACT.md、BACKEND_CONTRACT.md 和唯一 openapi.json。不要重新设计或一次性执行 B8.1～B8.8；从用户指定的单段开始。
+```
+
+## B8.1：数据期次模型、迁移与脱敏种子
+
+```text
+仅执行 B8.1，不实现任何统计 HTTP 接口、不改前端。先读取适用 AGENTS.md、docs/STATUS.md、docs/backend/STATISTICS_CONTRACT.md、BACKEND_CONTRACT.md、openapi.json、MYSQL_SETUP.md，并检查 Git 状态与现有 Prisma 迁移。以契约为准新增 DatasetPeriod、DatasetSchedule 及必要枚举、索引和数据库检查约束；字段映射、UTC DateTime(3)、7 个 1～49 互异值、金额精度和可见状态必须符合设计。不要改已有 Article/Category 行为。
+
+把前端当前 120 条脱敏 MOCK_HISTORY 转为后端幂等 seed；保留 periodCode/时间/数值，首批 8 条可补契约允许的展示金额，合成记录金额保持 null。新增一个脱敏的未来 DatasetSchedule。种子只补缺失记录，不覆盖人工修改，不清表，不读取或连接其他项目数据库。检查迁移 SQL 后才应用到用户已配置的专用开发库和 shadow 库；禁止 reset、危险 db push。
+
+验证 schema/typecheck/lint/build、迁移状态、种子重复执行、120 条已发布期次、数值范围/互异、UTC 时间转换和下一计划；测试/输出不得泄露连接串。更新 STATUS.md，注明尚无统计接口，然后停止，等待 B8.2。
+```
+
+## B8.2：最新数据接口
+
+```text
+仅执行 B8.2：GET /api/latest。读取 STATUS、STATISTICS_CONTRACT、openapi 和 B8.1 实际模型，确认迁移/种子完成。严格按 Route → Controller → Service → Prisma：route 只注册；controller 拒绝全部 query、调用 service、统一 okResponse；service 用同一个 now 查询最新可见 DatasetPeriod 和最早未来 SCHEDULED 计划并映射 DTO。draw_date/next_draw_date 输出 13 位毫秒；金额遵循契约；不返回 _mock_clock。没有可见期次时新增并复用 40402 DATASET_NOT_FOUND，正确 HTTP 404/ErrorEnvelope；没有下一计划只返回三个 null。
+
+增加不破坏开发库的集成测试，覆盖成功、排序、草稿/未来/归档不可见、next 可空、未知 query、40402 和数据库失败不泄密。同步 errors 常量、BACKEND_CONTRACT/openapi 的“已实现”状态及 README；运行 typecheck/lint/openapi/test/build，更新 STATUS 后停止。不要实现 history 或改前端。
+```
+
+## B8.3：历史数据接口
+
+```text
+仅执行 B8.3：GET /api/history。读取 STATUS、STATISTICS_CONTRACT、openapi，确认 B8.2 完成。沿用 Route → Controller → Service → Prisma 和统一外壳。实现 page/page_size/year/draw_number/number/periods 的严格 query 校验；未知、重复、数组、空值、非十进制整数和越界统一 40000。year 按 Asia/Hong_Kong 日历边界转换为 UTC 查询；过滤顺序、periods 窗口、稳定 releasedAt DESC/id DESC 排序、total 和 total_pages 严格按契约。不要静默截断 page_size。
+
+列表 DTO 只含契约字段，draw_date 为毫秒；同一一致读事务返回 filter_options：全部可见年份降序及最新 120 个 periodCode，不受当前筛选影响。用固定探测记录验证组合筛选、年份边界、任一 7 值匹配、periods 后分页、空集、超页、稳定排序、可见性和筛选选项；不要清空开发库。同步 OpenAPI 状态、README/STATUS，运行全部既有验证后停止。不要实现 analysis 或改前端。
+```
+
+## B8.4：统计公共窗口与频次分析接口
+
+```text
+仅执行 B8.4：统计公共计算模块和 GET /api/analysis，不实现 advanced-stats/number-miss。读取 STATUS、STATISTICS_CONTRACT、openapi、前端 app/mock/statistics.ts。建立可复用的 period 参数校验、统一 now/可见窗口查询和纯函数计算模块；默认 10、最大 120，响应含 requested_period 与实际 period。公式必须按契约覆盖全部 7 个值：hot/cold、从最新开始连续出现、同尾期数和升序相邻对；所有并列排序稳定。period=0 返回五个空数组，不伪造冷热数据。
+
+公式用小型固定数组做单元测试，接口集成测试覆盖默认/边界/超样本/非法 period、隐藏记录和统一外壳。禁止在 controller 计算统计，禁止复制 Mock 函数后不核对口径。同步 OpenAPI 状态和 STATUS，执行 typecheck/lint/openapi/test/build 后停止。
+```
+
+## B8.5：进阶统计接口
+
+```text
+仅执行 B8.5：GET /api/advanced-stats。复用 B8.4 的参数、可见窗口与相邻组合纯函数，不重复查询/复制公式。严格实现尾数 0～9、中性 G01～G12、奇偶数量与百分比、含相邻值的期次数/比例、相邻组合频次，以及前 6 个普通值完整组合的 top 5；不得把 G 分组描述为真实生肖，不得计算任意子集。百分比保留 2 位、排序稳定；period=0 时固定分布键为 0、组合为空。
+
+补纯函数和 HTTP 测试，覆盖分母为 0、重复完整组合、多个相邻对、并列排序和非法参数。同步 OpenAPI 状态/STATUS，运行全部验证后停止。不要实现 number-miss 或改前端。
+```
+
+## B8.6：遗漏与连续命中接口
+
+```text
+仅执行 B8.6：GET /api/number-miss。复用 B8.4 的 period 与可见窗口。按 STATISTICS_CONTRACT 对 1～49 计算 current_miss、max_miss、avg_miss、most_freq_miss、max_streak；窗口按最新到最旧，遗漏段包含两端截断段和连续命中间的 0，众数并列取较小值。period=0 返回空 number_stats；有样本时按 number 升序恰好 49 项。
+
+用易人工验算的小型序列覆盖从未出现、最新出现、连续出现、首尾遗漏、0 间隔和众数并列；再做 HTTP 参数/外壳测试。同步 OpenAPI 状态和 STATUS，运行 typecheck/lint/openapi/test/build 后停止。不要实现固定组合或改前端。
+```
+
+## B8.7：固定演示组合接口
+
+```text
+仅执行 B8.7：GET /api/legacy-analysision 与 GET /api/legacy-featured-combination。它们是兼容旧前端路径的固定作品样例，不调用 AI、不读取统计表、不根据刷新随机生成。将脱敏的 5 组和首页 1 组放入后端受版本控制常量，三语 reason/tags 显式编写；返回 source=fixed_demo、is_generated=false。numbers 必须 6 个互异 1～49 升序整数；legacy-featured-combination.generated_at 使用固定样例版本毫秒时间，不用 Date.now() 伪装更新。
+
+lang 复用既有三语和别名解析，未知/重复/数组/空 query 为 40000。增加结构、三语、固定可复现和非法参数测试；文档不得宣称预测准确率或模型能力。同步 OpenAPI 状态/README/STATUS，运行全部验证后停止。不要改前端或实现管理接口。
+```
+
+## B8.8：统计前后端联调与 Mock 收口
+
+```text
+仅执行 B8.8 前后端联调。确认 B8.2～B8.7 及 B8.7.1 契约脱敏均已完成；以 STATISTICS_CONTRACT 和 openapi 为准，不恢复旧兼容字段。扩展 Nitro 白名单代理 latest/history/analysis/advanced-stats/number-miss/demo-combinations，继续不转发认证头、不允许任意路径、真实失败不回退 Mock。所有统计 Mock 改成统一 SuccessEnvelope，页面继续只由 useContentApi 解包。
+
+新增前端共享 DTO，移除统计页面的 Record<string, any>/旧 data 嵌套假设。latest/history 只使用 period_code、released_at、values、extra_value、next_release；高级统计只使用 group_distribution；集中把 released_at、scheduled_at、generated_at 格式化为当前语言和 Asia/Hong_Kong。历史筛选读取 filter_options.period_codes/years，不再直接导入 MOCK_HISTORY。首页与工具页共用 demo-combinations 的 featured/items，并明确显示固定样例及 is_generated=false。
+
+验证真实模式下首页、历史筛选/分页、三个统计模块、三语固定样例、SSR 与生产构建；Mock 模式仍能离线运行。运行前后端 lint/typecheck/OpenAPI/测试/build 和必要浏览器回归，更新导览及 STATUS 后停止。不要进入 B9、认证、发布或部署。
 ```
 
 ## B9：认证与编辑发布契约设计（只设计）

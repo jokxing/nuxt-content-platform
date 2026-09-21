@@ -4,7 +4,7 @@ import { MOCK_CLOCK_ISO } from '~/mock/brand'
 import { useDatasetStore } from '~/stores/dataset'
 import { calculateTimeDifference } from '~/utils/timezone'
 
-const { locale, t } = useI18n()
+const { t } = useI18n()
 const datasetStore = useDatasetStore()
 const runtimeConfig = useRuntimeConfig()
 
@@ -79,11 +79,6 @@ onUnmounted(() => {
     timer = null
   }
 })
-
-function formatMetric(value: number) {
-  const localeTag = locale.value === 'zh-CN' ? 'zh-CN' : locale.value === 'en-US' ? 'en-US' : 'zh-HK'
-  return new Intl.NumberFormat(localeTag).format(value)
-}
 </script>
 
 <template>
@@ -93,37 +88,33 @@ function formatMetric(value: number) {
         <div class="text-center w-full">
           <div class="mb-2">
             <h3 class="text-base text-gray-800 font-medium dark:text-gray-200">
-              {{ t('home.next_draw.title') }}
+              {{ t('home.next_release.title') }}
             </h3>
           </div>
           <div class="text-xs text-gray-500 mb-4">
-            {{ t('home.next_draw.period_prefix') }}{{ datasetStore.nextRelease?.number }}{{ t('home.next_draw.period_suffix') }}
-            {{ t('home.next_draw.draw_time') }}: {{ datasetStore.nextReleaseDateTime }}
+            {{ t('home.next_release.period_prefix') }}{{ datasetStore.nextRelease?.period_code }}{{ t('home.next_release.period_suffix') }}
+            {{ t('home.next_release.draw_time') }}: {{ datasetStore.nextReleaseDateTime }}
           </div>
           <div class="flex gap-4 items-center justify-center">
             <div class="flex items-center">
               <span class="countdown-number text-red-500">{{ countdown.days }}</span>
-              <span class="text-xs text-gray-500">{{ t('home.next_draw.days') }}</span>
+              <span class="text-xs text-gray-500">{{ t('home.next_release.days') }}</span>
             </div>
             <span class="text-16px text-gray-400 font-bold">:</span>
             <div class="flex items-center">
               <span class="countdown-number text-red-500">{{ countdown.hours }}</span>
-              <span class="text-xs text-gray-500">{{ t('home.next_draw.hours') }}</span>
+              <span class="text-xs text-gray-500">{{ t('home.next_release.hours') }}</span>
             </div>
             <span class="text-16px text-gray-400 font-bold">:</span>
             <div class="flex items-center">
               <span class="countdown-number text-red-500">{{ countdown.minutes }}</span>
-              <span class="text-xs text-gray-500">{{ t('home.next_draw.minutes') }}</span>
+              <span class="text-xs text-gray-500">{{ t('home.next_release.minutes') }}</span>
             </div>
             <span class="text-16px text-gray-400 font-bold">:</span>
             <div class="flex items-center">
               <span class="countdown-number text-red-500">{{ countdown.seconds }}</span>
-              <span class="text-xs text-gray-500">{{ t('home.next_draw.seconds') }}</span>
+              <span class="text-xs text-gray-500">{{ t('home.next_release.seconds') }}</span>
             </div>
-          </div>
-
-          <div v-if="datasetStore.nextRelease" class="text-base text-red-500 font-bold mt-4">
-            {{ t('home.next_draw.jackpot') }}: {{ formatMetric(datasetStore.nextRelease.target) }}
           </div>
         </div>
       </template>

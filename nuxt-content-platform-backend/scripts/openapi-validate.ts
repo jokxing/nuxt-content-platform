@@ -26,6 +26,12 @@ const requiredPaths = [
   '/api/articles',
   '/api/articles/{id}',
   '/api/content-directory',
+  '/api/latest',
+  '/api/history',
+  '/api/analysis',
+  '/api/advanced-stats',
+  '/api/number-miss',
+  '/api/demo-combinations',
 ]
 for (const path of requiredPaths) {
   assert.ok(api.paths?.[path], `missing path ${path}`)
@@ -35,7 +41,7 @@ const errorEnvelope = api.components?.schemas?.ErrorEnvelope
 assert.ok(errorEnvelope, 'missing ErrorEnvelope schema')
 const codeEnum = (errorEnvelope as { properties?: { code?: { enum?: number[] } } }).properties?.code?.enum
 assert.ok(Array.isArray(codeEnum), 'ErrorEnvelope.code must declare enum')
-for (const code of [40000, 40400, 40401, 50000, 50001, 50300, 50301]) {
+for (const code of [40000, 40400, 40401, 40402, 50000, 50001, 50300, 50301]) {
   assert.ok(codeEnum.includes(code), `ErrorEnvelope.code missing ${code}`)
 }
 

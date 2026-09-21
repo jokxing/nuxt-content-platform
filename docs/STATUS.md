@@ -93,7 +93,7 @@ Git 状态：按用户要求跳过
 | 验证 | 命令 / 方式 | 结果 |
 | --- | --- | --- |
 | 首页 SSR | `curl http://localhost:3666/` | HTTP 200；`<title>`/`description` 为訊覽演示文案 |
-| 旧业务残留 | 首页 HTML 字符串计数 | `六合彩`/`开奖`/`心水`/`Mark Six`/`852 5236` = 0；含 `訊覽`/`ContentPulse`/`最新期次`/`2026090` |
+| 旧业务残留 | 首页 HTML 字符串计数 | `旧业务品牌`/`数据发布`/`心水`/`旧品牌`/`852 5236` = 0；含 `訊覽`/`ContentPulse`/`最新期次`/`2026090` |
 | 多语言入口 | `curl /zh-CN`、`/en-US` | HTTP 200（未逐字核对英文 DOM） |
 | Mock API | `/api/latest` | 固定 Mock，含 `_mock_clock` |
 | Dev server | 既有 `pnpm dev` :3666 | HMR 正常；无新增阻断错误 |
@@ -141,24 +141,24 @@ Git 状态：按用户要求跳过
 
 ## 2026-09-17 15:54 — 号码球视觉脱敏 + Favicon
 
-**背景**：3D 彩球易联想博彩，不利于大陆求职展示。
+**背景**：3D 彩球易联想敏感业务，不利于大陆求职展示。
 
 **修改**
 
-- `app/components/BallNumber.vue`：改为扁平数据标签（左侧色条 + 分档青/靛/石板；`is-special` 紫色强调），不再加载 `/lottery/marksix-*.svg`
+- `app/components/BallNumber.vue`：改为扁平数据标签（左侧色条 + 分档青/靛/石板；`is-special` 紫色强调），不再加载 `/legacy-assets/value-*.svg`
 - 首页 `latest-result` / `history-draws`：分隔符 `+` → `/`
 - `public/favicon.svg` 新增；`public/favicon.ico` 换成 ContentPulse 波形标
 - `nuxt.config.ts`：优先挂载 SVG favicon
 
-**未做**：未物理删除 `public/lottery/`（49 个 marksix SVG，已无引用，收尾时可删）；`logo.png` 等品牌图仍待替换。
+**未做**：未物理删除 `public/legacy-assets/`（49 个 marksix SVG，已无引用，收尾时可删）；`logo.png` 等品牌图仍待替换。
 
-**搜素材关键词（若另换）**：`data chip badge flat UI`、`metric tag rounded square`、`dashboard number pill`、`analytics favicon pulse waveform teal`、`squircle status indicator SVG`；避免 `lottery ball` / `bingo` / `keno`。
+**搜素材关键词（若另换）**：`data chip badge flat UI`、`metric tag rounded square`、`dashboard number pill`、`analytics favicon pulse waveform teal`、`squircle status indicator SVG`；避免 `number sphere` / `bingo` / `keno`。
 
 **下一步**：仍为 2.2-2 资讯入口（用户指定时再做）。
 
 ```text
 日期时间：2026-09-17 15:54
-阶段及目标：首页视觉去彩票化（BallNumber + favicon）
+阶段及目标：首页视觉去敏感业务化（BallNumber + favicon）
 验证：依赖 HMR；建议硬刷新后看首页编号标签与标签页图标
 Git 状态：跳过
 ```
@@ -167,7 +167,7 @@ Git 状态：跳过
 
 ## 2026-09-17 16:09 — 品牌 Logo 脱敏（替换 logo1 彩球图）
 
-**背景**：`logo1.jpg` 含彩球「6」与「六合彩開獎網」文案。
+**背景**：`logo1.jpg` 含彩球「6」与「旧业务品牌開獎網」文案。
 
 **修改**
 
@@ -175,7 +175,7 @@ Git 状态：跳过
 - 覆盖生成：`logo1.jpg`、`logo.jpg`、`logo.png`；另增 `logo-og.png`（480×320，OG 可用）
 - Mock 封面与默认封面路径改为 `/logo.svg`：`catalog.ts`、`common.ts`、`ArticleCard.vue`、news 模块 fallback
 
-**搜素材关键词（若另换）**：`saas logo waveform teal`、`content platform wordmark flat`、`data pulse icon rounded square`、`mint green brand card 3:2`；避开 `lottery` / `bingo` / `mark six` / `号码球`。
+**搜素材关键词（若另换）**：`saas logo waveform teal`、`content platform wordmark flat`、`data pulse icon rounded square`、`mint green brand card 3:2`；避开 `legacy-domain` / `bingo` / `legacy-brand` / `号码球`。
 
 ```text
 日期时间：2026-09-17 16:09
@@ -196,7 +196,7 @@ Git 状态：跳过
 | --- | --- | --- |
 | 入口跳转 | `GET /news` | 307 → `/news/education` |
 | 指南页 | `GET /news/education` | 200；`<title>` 为「訊覽指南｜入門與進階內容（演示）」 |
-| 旧文案 | HTML 字符串计数 | `六合彩教學`/`六合彩開獎網`/`Mark Six`/`彩票` = 0；含 `指南`/`訊覽指南`/`新手指南`/`如何閱讀` |
+| 旧文案 | HTML 字符串计数 | `旧业务品牌教學`/`旧业务品牌開獎網`/`旧品牌`/`敏感业务` = 0；含 `指南`/`訊覽指南`/`新手指南`/`如何閱讀` |
 | 其它分类 | `/news/analysis`、`/news/story` | HTTP 200 |
 
 未验证：子类型页 SEO（`news-education-beginner` 等仍含旧文案，属 2.2-4）；浏览器点 Tab 全路径；typecheck/build。
@@ -207,7 +207,7 @@ Git 状态：跳过
 - `news/modules/{teaching,forecasting,news-story}.vue`：失败文案 i18n、空列表不抛错、展示 `publish_date`
 - `constants/news-categories.ts`：注释映射为指南/分析/动态（slug 不变）
 - i18n 三语：`news.*` Tab/子 Tab；新增 `seo.news`；替换 `seo.news-education|analysis|story`
-- `[category]/index.vue`：仅替换 schema 中硬编码 `Mark Six Lottery Results` → 讯览（未重构分类页）
+- `[category]/index.vue`：仅替换 schema 中硬编码 `旧品牌 Legacy Results` → 讯览（未重构分类页）
 
 **下一步**：2.2-3 分类列表 `app/pages/news/[category]/index.vue`；完成后停止。
 
@@ -231,7 +231,7 @@ Git 状态：跳过
 | --- | --- | --- |
 | 有效分类 | `/news/education` `/analysis` `/story` | 均 200 |
 | 非法分类 | `/news/not-a-category`、`/news/xyz123` | 302/跟随后到 `/news/education` |
-| 文案 | education HTML | 无「六合彩/Mark Six」；标题「訊覽指南…」；二级 Tab「新手指南/進階技巧/功能說明」；文章「如何閱讀」 |
+| 文案 | education HTML | 无「旧业务品牌/旧品牌」；标题「訊覽指南…」；二级 Tab「新手指南/進階技巧/功能說明」；文章「如何閱讀」 |
 
 未验证：二级 Tab 点进 `type/[id]` 页内 SEO（属 2.2-4）；空列表 UI 细调；typecheck/build。
 
@@ -264,7 +264,7 @@ Git 状态：跳过
 | 标题 | education type/1 HTML | `<title>`「訊覽｜新手指南（演示）」；`訊覽｜新手指南` 出现 2 次 |
 | 非法类型 | `/news/education/type/9` | 跟随后到 `/news/education` |
 | 非法分类 | `/news/foo/type/1` | 跟随后到 `/news/education` |
-| 旧文案 | type/1 HTML 计数 | `六合彩`/`Mark Six`/`彩票` = 0 |
+| 旧文案 | type/1 HTML 计数 | `旧业务品牌`/`旧品牌`/`敏感业务` = 0 |
 
 未验证：文章详情 SEO（属 2.2-5）；遗留未使用的旧 SEO key（如 teaching-beginner 等）；typecheck/build。
 
@@ -300,7 +300,7 @@ Git 状态：跳过
 | 验证 | 命令 / 方式 | 结果 |
 | --- | --- | --- |
 | 有效文章 | `GET /news/education/article/101` | 200；`<title>`「如何閱讀數據面板｜訊覽」 |
-| 旧文案 | 101 HTML 计数 | `六合彩`/`Mark Six`/`開獎網` = 0 |
+| 旧文案 | 101 HTML 计数 | `旧业务品牌`/`旧品牌`/`開獎網` = 0 |
 | 不存在 | `/news/education/article/999` | 200 + 空态「沒有找到該文章」 |
 | 非法分类 | `/news/foo/article/101` | 跟随后到 `/news/education` |
 | 分类纠正 | `/news/story/article/101`（文章属 education） | 跟随后到 `/news/education/article/101` |
@@ -381,7 +381,7 @@ Git 状态：跳过
 | --- | --- | --- |
 | 入口 | `GET /statistics`（跟随） | → `/statistics/type/1`（200） |
 | 标题 | type/1 HTML | `<title>`「訊覽｜頻次分佈（演示）」 |
-| Tab SEO 品牌 | 同上 | 无「六合彩開獎網 / Mark Six」；含「頻次分佈」 |
+| Tab SEO 品牌 | 同上 | 无「旧业务品牌開獎網 / 旧品牌」；含「頻次分佈」 |
 | 非法 type | `/statistics/type/9` | 跟随后到 `/statistics/type/1` |
 | type/2 | `/statistics/type/2` | 200 |
 
@@ -415,7 +415,7 @@ Git 状态：跳过
 | --- | --- | --- |
 | 历史 Tab | `GET /statistics/type/2` | 200；标题「訊覽｜歷史記錄（演示）」 |
 | Mock 数据 | HTML | 含期次 `2026090` |
-| 旧文案 | HTML 计数 | `六合彩`/`開獎`/`特碼`/`Mark Six` = 0；含「近20期」 |
+| 旧文案 | HTML 计数 | `旧业务品牌`/`開獎`/`特碼`/`旧品牌` = 0；含「近20期」 |
 | 筛选/分页 | 代码审查 | 保留 recent/year/period/number 筛选与分页逻辑 |
 
 未验证：冷热/图表/进阶模块正文；浏览器点筛选全路径；typecheck/build。
@@ -447,7 +447,7 @@ Git 状态：跳过
 | --- | --- | --- |
 | 频次 Tab | `GET /statistics/type/1` | 200；标题「訊覽｜頻次分佈（演示）」 |
 | 新文案 | HTML | 含「高頻數據項/低頻數據項/同尾分組/相鄰項」 |
-| 旧文案 | HTML 计数 | `六合彩`/`開獎`/`熱門號碼`/`冷門`/`升勢`/`Mark Six` = 0 |
+| 旧文案 | HTML 计数 | `旧业务品牌`/`開獎`/`熱門號碼`/`冷門`/`升勢`/`旧品牌` = 0 |
 
 未验证：内嵌 `ChartAnalysis` 正文（属 2.2-10）；浏览器切换期数全路径；typecheck/build。
 
@@ -509,16 +509,16 @@ Git 状态：跳过
 | 验证 | 命令 / 方式 | 结果 |
 | --- | --- | --- |
 | 进阶 Tab | `GET /statistics/type/3` | 200；`<title>`「訊覽｜進階統計（演示）」 |
-| Mock 接口 | `GET /api/advanced-stats?period=10` | 含 `tail_distribution`/`zodiac_distribution`(G01–G12)/相邻组合 |
-| 旧文案 | HTML 计数 | `六合`/`開獎`/`生肖`/`投注`/`Mark Six` = 0 |
+| Mock 接口 | `GET /api/advanced-stats?period=10` | 含 `tail_distribution`/`legacy_group_distribution`(G01–G12)/相邻组合 |
+| 旧文案 | HTML 计数 | `六合`/`開獎`/`生肖`/`业务操作`/`旧品牌` = 0 |
 
 未验证：浏览器内饼/柱切换与期数刷新全路径；typecheck/build。客户端拉取图表正文属预期。
 
 **修改摘要**
 
 - `advanced-statistics.vue`：去调试日志；Chart 注册/卸载；青绿主色；空态/失败/加载 i18n；说明文案 computed
-- `MOCK_ADVANCED_STATS`：对齐组件字段；`zodiac` 标签 G01–G12；补 `tail_distribution` 与 `consecutive_combinations`；`combination_type` 通用枚举
-- i18n 三语：`statistics.advanced.*` 映射为组合/占比通用指标（去投注/生肖用语）
+- `MOCK_ADVANCED_STATS`：对齐组件字段；`legacy-group` 标签 G01–G12；补 `tail_distribution` 与 `consecutive_combinations`；`combination_type` 通用枚举
+- i18n 三语：`statistics.advanced.*` 映射为组合/占比通用指标（去业务操作/生肖用语）
 
 **下一步**：2.2-12 统计类型页 `app/pages/statistics/type/[id].vue` 复核（模块已齐）；完成后停止。
 
@@ -544,7 +544,7 @@ Git 状态：跳过
 | type 1/2/3 | 直接访问 | 200；标题分别为頻次/歷史/進階 |
 | 非法 type | `GET /statistics/type/9` | 回退频次 Tab 标题 |
 | 多语言 | `/zh-CN/.../1`、`/en-US/.../2` | 200；讯览/ContentPulse SEO |
-| 旧文案 | HTML 计数 | `六合`/`開獎`/`Mark Six` = 0 |
+| 旧文案 | HTML 计数 | `六合`/`開獎`/`旧品牌` = 0 |
 
 未验证：浏览器内 Tab 切换 keep-alive 全路径；语言切换后 Tab 文案热更新；typecheck/build。
 
@@ -575,15 +575,15 @@ Git 状态：跳过
 | --- | --- | --- |
 | 选择页 | `GET /pick` | 200；标题「訊覽｜智能推薦組合（演示）」 |
 | 多语言 | `/zh-CN/pick`、`/en-US/pick` | 200；讯览/ContentPulse SEO |
-| Mock | `GET /api/ai-prediction` | 5 组推荐；reason 含「Mock 演示」 |
-| 旧文案 | HTML 计数 | `六合`/`開獎`/`中獎`/`攪珠`/`Mark Six` = 0 |
+| Mock | `GET /api/legacy-analysision` | 5 组推荐；reason 含「Mock 演示」 |
+| 旧文案 | HTML 计数 | `六合`/`開獎`/`中獎`/`攪珠`/`旧品牌` = 0 |
 
 未验证：浏览器点「重新生成」全路径；typecheck/build。验证前曾重启本地 dev（原 Nitro socket 失效）。
 
 **修改摘要**
 
 - `pick/index.vue`：去调试日志；青绿主色；locale SEO/FAQ；空态/失败 i18n；演示说明文案
-- `MOCK_AI_PREDICTION`：原因文案去冷热/投注语气
+- `MOCK_AI_PREDICTION`：原因文案去冷热/业务操作语气
 - i18n 三语：`pick.*`、`seo.ai-pick.*`（含 FAQ）映射为智能推荐组合工具
 
 **下一步**：2.2-14 兜底页 `app/pages/[...all].vue`；完成后停止。
@@ -609,7 +609,7 @@ Git 状态：跳过
 | 未知路径 | `GET /this-path-does-not-exist-xyz` | **404**；标题「訊覽｜頁面未找到」；含回首页 |
 | 多语言未知 | `/zh-CN/no-such-page`、`/en-US/missing-route` | **404**；讯览/ContentPulse |
 | 正常页对比 | `GET /pick` | **200**（未被兜底掩盖） |
-| 旧文案 | HTML 计数 | `六合`/`開獎`/`Mark Six` = 0 |
+| 旧文案 | HTML 计数 | `六合`/`開獎`/`旧品牌` = 0 |
 
 未验证：浏览器 history.back 全路径；语言切换后回首页路径；typecheck/build。
 
@@ -777,7 +777,7 @@ Git 状态：跳过
 
 - 无效组件/图片：检索自动组件标签、import、资源字符串后，人工查看并删除 NowPlay.vue、public/images/playnow.png、public/icon-16x16.png。未按文件名批量删除其余图片，也未声称全量图片 OCR。
 - 统计清理：首页唯一 GA 调用本来是 no-op；删除该调用、useGoogleAnalytics.ts、google-analytics.client.ts 和 types/gtag.d.ts。无第三方统计加载。
-- 命名：新增 api/models.ts 转换 next_draw_* / next_jackpot 与 zodiac_distribution，页面改用 nextRelease/target/group_distribution；useLotteryStore 改为 useDatasetStore，删除无消费者 latestResult 状态及乱码注释；高级统计内部与翻译 key 改为 group，底栏改为体验工具/Try Tools，仍跳转本地 pick。
+- 命名：新增 api/models.ts 转换 next_draw_* / next_target 与 legacy_group_distribution，页面改用 nextRelease/target/group_distribution；useLegacyStore 改为 useDatasetStore，删除无消费者 latestResult 状态及乱码注释；高级统计内部与翻译 key 改为 group，底栏改为体验工具/Try Tools，仍跳转本地 pick。
 - 兼容边界：现有 API draw_*、category_slug 等仍保留契约含义，不做破坏性全局替换。转换层是通用模型入口，不能宣称所有旧字段名已消失。
 - 依赖：删除 nuxt-gtag、sitemap、node-fetch 三个无使用的直接依赖并同步锁文件。发现全局 pnpm 版本与项目不同，改用 corepack pnpm 10.11.0；解析时 Vue 曾升到 3.5.21，随后显式固定回原版本 3.5.16。最终 frozen-lockfile + offline + ignore-scripts 安装通过，无需下载；生产构建另行运行，未靠跳过脚本冒充构建验证。
 - 部署：统一 build/start，删除两个重复 build 别名及纯静态 generate 命令。Dockerfile 改为 Node 24 双阶段、固定 pnpm、非 root、生产环境/端口/健康检查及 SITE_URL；.dockerignore 排除环境文件、缓存和日志。具体步骤见 DEPLOYMENT.md。未安装 Docker，本机无 CLI/daemon，镜像构建与运行未验证。
@@ -892,9 +892,9 @@ Git 状态：跳过
 ## 2026-09-19 — B4 文章列表
 
 - 确认 B3.1 完成；实现 `GET /api/articles`。可见性与 DTO 在服务层：`PUBLISHED`、`publishedAt <= 当前 UTC`、三语 title/content 非空；排序 `publishedAt DESC, id DESC`；`count` 与列表同一 `REPEATABLE READ` 事务。
-- 分类支持父类、九种子类及旧别名（lottery-teach/ai-predict/news-story）。分页只接受十进制正整数字符串，默认 page=1、page_size=10，上限 1000000/50；越页返回空 `items`，`total_pages` 至少为 1。
+- 分类支持父类、九种子类及旧别名（legacy-education/legacy-analysis/news-story）。分页只接受十进制正整数字符串，默认 page=1、page_size=10，上限 1000000/50；越页返回空 `items`，`total_pages` 至少为 1。
 - 成功体 `{ code:0, msg:"ok", data:{ items, total, page, page_size, total_pages } }`；正文经标签白名单清理（去脚本、事件属性、危险 URL）；非法 cover 回落 `/logo.svg`；公开 `status` 恒为 1。失败走数字业务码外壳。
-- **已验证**（专用探测行 990001–990005，测完删除，未清空开发库、种子 101–105 仍在）：page=1/3 顺序与 total=5；page=4 空列表且 total_pages=3；education 与 lottery-teach 一致；how-to-play / en 标题；page=0、page_size=51、lang=xx、未知分类、空/重复/多余参数 → HTTP 400 / code 40000。草稿、未来时间、缺译、下线不出现；含 script 的探测文被清理且 cover 被替换。typecheck / lint / build 通过。
+- **已验证**（专用探测行 990001–990005，测完删除，未清空开发库、种子 101–105 仍在）：page=1/3 顺序与 total=5；page=4 空列表且 total_pages=3；education 与 legacy-education 一致；how-to-play / en 标题；page=0、page_size=51、lang=xx、未知分类、空/重复/多余参数 → HTTP 400 / code 40000。草稿、未来时间、缺译、下线不出现；含 script 的探测文被清理且 cover 被替换。typecheck / lint / build 通过。
 - 未实现文章详情、管理端或前端联调；未 commit/push。
 - **下一步**：用户检查后执行 **B5**（`GET /api/articles/{id}`）。
 
@@ -1003,3 +1003,86 @@ Git 状态：跳过
 - 新增 `scripts/audit-seo-output.mjs` / `npm run audit:seo`，以 `.output/public/sitemap.xml` 为基准逐页核对预渲染 `index.html`、唯一且匹配的 canonical、zh-HK/zh-CN/en-US/x-default hreflang 和 JSON-LD JSON 语法。
 - **产物审计结果**：66/66 sitemap URL 均有对应 HTML、canonical、四组 hreflang 和合法 JSON-LD。另有 9 个预渲染路由未进 sitemap，全部是 `/news`、`/statistics` 重定向入口及 `/news/detail/101` 兼容入口的三语版本，排除合理。
 - 当前 robots 仍为作品演示阶段既定的 `noindex,nofollow`；正式公开收录前需改为环境控制并在生产构建开启索引。
+
+## 2026-09-20 — B8 统计契约设计（只设计）
+
+- 新增 `docs/backend/STATISTICS_CONTRACT.md`：设计 DatasetPeriod/DatasetSchedule、120 条脱敏种子边界、统一可见窗口、Asia/Hong_Kong 年份口径、空数据、稳定排序和 7 个兼容接口。所有 API 日期为 13 位毫秒时间戳。
+- 设计接口：latest、history、analysis、advanced-stats、number-miss，以及明确 `source=fixed_demo`、`is_generated=false` 的 legacy-analysision/legacy-featured-combination；固定组合不调用 AI、不随刷新随机变化。
+- history 返回 filter_options（可见年份及最新 120 个 periodCode），用于后续移除前端对 MOCK_HISTORY 的直接依赖。新增设计业务码 40402 DATASET_NOT_FOUND，仅 latest 无可见数据时使用。
+- 唯一 `docs/backend/openapi.json` 已从 5 条路径扩展为 12 条；新增统计 schemas、query 边界和统一外壳。资讯五接口仍为已实现，B8 七接口明确标记“设计，尚未实现”。OpenAPI 校验脚本同步要求 12 条路径和 40402。
+- `docs/backend/BACKEND_HANDOFF_PROMPTS.md` 已拆为 B8.1～B8.8：模型/种子、latest、history、analysis、advanced-stats、number-miss、固定样例、前端联调；每段完成后必须停止，禁止一次连续执行。
+- 本轮未改 Prisma schema、未生成迁移、未写统计 route/controller/service、未改前端、未连接数据库。下一步是 **B8.1 数据期次模型、迁移与脱敏种子**。
+
+## 2026-09-20 22:36 — B8.1 数据期次模型、迁移与脱敏种子
+
+- 确认无适用 AGENTS.md；已读 STATUS、STATISTICS_CONTRACT、BACKEND_CONTRACT、openapi、MYSQL_SETUP；连接确认为 `content_platform_dev` / `content_platform_shadow`（日志不打印连接串）。
+- Prisma 新增 `DatasetPeriod` / `DatasetSchedule` 及 `DatasetPeriodStatus` / `DatasetScheduleStatus`；索引 `(status, releasedAt, id)` 与 `(status, scheduledAt)`；迁移 `20260920120000_dataset_period_schedule` 含 CHECK（1～49、七值互异、金额/次数非负）。未改 Article/Category 行为；未用 reset / db push。
+- 幂等种子：前端 MOCK_HISTORY 120 条（periodCode/日期/七值保留）；首批 8 条补展示金额（含 MOCK_LATEST 对齐的 2026090）；其余金额 null；`releasedAt`/`scheduledAt` 按 Asia/Hong_Kong 当日 00:00 → UTC；未来计划 `2026091` / `2026-09-20` / estimatedAmount `2100000`。只插入缺失行，不覆盖、不清表。
+- **刻意未做**：任何统计 HTTP 接口（latest/history/…）、前端改动。
+- **已验证**：`migrate deploy` + status up to date；`db:seed` 连续两次成功；`verify-dataset-seed`（120 PUBLISHED、8 条有金额、UTC `2026-09-15T16:00:00.000Z` / `2026-09-19T16:00:00.000Z`）；CHECK 拒绝越界与重复值；typecheck / lint / build；openapi:validate（12 paths）；unit 14 + integration 11。
+- 未 commit/push。**下一步：B8.2 `GET /api/latest`**（用户指定后再做）。
+
+## 2026-09-21 10:25 — B8.2 GET /api/latest
+
+- 分层：`routes/latest.ts` → `controllers/latestController.ts` → `services/latestService.ts` → Prisma；拒绝全部 query；同一 `now` 查最新可见 `PUBLISHED` 期次（`releasedAt DESC, id DESC`）与最早未来 `SCHEDULED` 计划；金额经 `decimalToJson`；无 `_mock_clock`。
+- 新增业务码 **40402** `DATASET_NOT_FOUND`（HTTP 404）；无下一计划时 `next_*` 三字段为 null。
+- 集成测试（高位探测期次/计划，测完删除）：成功与排序、草稿/未来/归档不可见、next 可空、未知 query → 40000、无可见期次 → 40402、数据库失败不泄密。
+- 同步 `errors`、BACKEND_CONTRACT、STATISTICS_CONTRACT、openapi（latest 标已实现）、README。
+- **已验证**：typecheck / lint / openapi:validate / test（unit 14 + integration 16）/ build。
+- 未实现 history、未改前端、未 commit/push。**下一步：B8.3 `GET /api/history`**。
+
+## 2026-09-21 10:50 — B8.3 GET /api/history
+
+- 分层：`routes/history.ts` → `controllers/historyController.ts` → `services/historyService.ts`；可见性抽到 `datasetVisibility.ts`；HK 年边界 `hongKongTime.ts`。
+- Query：page/page_size（默认 1/20，page_size 最大 100 不截断）、year 2000–2100、draw_number、number 1–49、periods 1–120；非法一律 40000。
+- 同一 now + REPEATABLE READ：过滤后 `releasedAt DESC, id DESC`；periods 先截窗口再分页；`filter_options.years`（HK 年降序）与最新 120 `draw_numbers` 不受本次筛选影响；列表 DTO 仅 DatasetRow 字段，`draw_date` 毫秒。
+- 集成测试覆盖：filter_options 独立性、HK 年边界、七值匹配、periods 分页、空集/超页、稳定排序、草稿/未来/归档不可见、非法 query。
+- 同步 openapi（history 已实现）、BACKEND_CONTRACT、STATISTICS_CONTRACT、README。
+- **已验证**：typecheck / lint / openapi:validate / test（unit 14 + integration 21）/ build。
+- 未实现 analysis、未改前端、未 commit/push。**下一步：B8.4 统计公共窗口与 `GET /api/analysis`**。
+
+## 2026-09-21 11:05 — B8.4 统计窗口与 GET /api/analysis
+
+- 可复用：`parseStatisticsPeriod`（缺省 10、最大 120、允许 0、超限 40000）、`loadVisibleValueWindow`（同一 now、可见期次、最新到最旧）、纯函数 `analyzeFrequency` / `adjacentPairs`。Controller 只校验并调用 service。
+- 公式覆盖全部 7 个值：hot/cold 前 5 且并列按 number 升序；rising 从最新连续出现；同尾按期计数；相邻对去重升序。`period=0` 或无样本时五个数组为空，不伪造冷热。响应含 `requested_period` 与实际 `period`。
+- OpenAPI：analysis 标已实现，并将 period / requested_period 下限改为 0，与契约空窗口一致。
+- **已验证**：typecheck / lint / openapi:validate / test（unit 18 + integration 25）/ build。
+- 未实现 advanced-stats、未改前端、未 commit/push。**下一步：B8.5 `GET /api/advanced-stats`**。
+
+## 2026-09-21 11:20 — B8.5 GET /api/advanced-stats
+
+- 复用 `parseStatisticsPeriod`、`loadVisibleValueWindow`、`adjacentPairs`；新增纯函数 `analyzeAdvancedStats` 与 Route/Controller/Service。
+- 实现尾数 0～9、中性 G01～G12、奇偶计数与 2 位百分比、含相邻期次数/比例、相邻组合频次，以及前 6 普通值完整组合 top 5（频次降序、字典序升序）。`period=0` 时分布键完整为 0、组合为空。
+- 纯函数与 HTTP 测试覆盖空窗口、重复完整组合、相邻对、非法 period。同步 openapi / 契约 / README。
+- **已验证**：typecheck / lint / openapi:validate / test / build。
+- 未实现 number-miss、未改前端、未 commit/push。**下一步：B8.6 `GET /api/number-miss`**。
+
+## 2026-09-21 11:30 — B8.6 GET /api/number-miss
+
+- 复用 `parseStatisticsPeriod` 与 `loadVisibleValueWindow`；纯函数 `missStats` / `analyzeNumberMiss`。
+- 1～49 计算 current_miss、max_miss、avg_miss（2 位）、most_freq_miss（并列取较小值）、max_streak。遗漏段包含窗口两端截断和连续命中之间的 0。`period=0` 或无样本时 `number_stats=[]`；有样本时按 number 升序恰好 49 项。
+- 单元测试覆盖从未出现、最新命中、连续命中、首尾遗漏、0 间隔和众数并列；HTTP 覆盖外壳、49 项、空窗口和非法 period。
+- **已验证**：typecheck / lint / openapi:validate / test / build。
+- 未实现固定组合、未改前端、未 commit/push。**下一步：B8.7 固定演示组合接口**。
+
+## 2026-09-21 11:45 — B8.7 固定演示组合
+
+- `GET /api/legacy-analysision`、`GET /api/legacy-featured-combination`：版本常量、三语文案、`source=fixed_demo`、`is_generated=false`。不读统计表、不调用外部服务、不随请求变化。
+- 号码为 6 个互异 1～49 升序整数，与前端既有样例数字一致。`generated_at` 固定为样例版本 `2026-09-17T12:00:00+08:00` 的毫秒值。
+- 集成测试覆盖三语、两次请求一致、非法 lang/多余参数。文档不称预测能力。
+- **已验证**：typecheck / lint / openapi:validate / test / build。
+- 未改前端、未 commit/push。**下一步：B8.8 统计前后端联调**。
+
+## 2026-09-21 — B8.7.1 联调前契约复盘与脱敏收口
+
+- 对外统计契约改为中性字段：latest/history 使用 `period_code`、`released_at`、`values`、`extra_value`、`next_release`；history query 使用 `period_code`，筛选选项使用 `period_codes`；高级统计使用 `group_distribution`。
+- 删除 DatasetPeriod 的金额/层级字段和 DatasetSchedule 的估算金额字段；以追加迁移完成，不修改已应用迁移。固定发布计划不再写入数据库种子，避免随时间失效或制造不真实的远期倒计时；Mock 倒计时继续使用固定演示时钟。
+- 合并两个重复固定接口为 `GET /api/demo-combinations`，返回 `featured/items`、`source=fixed_demo`、`is_generated=false`。不调用外部模型。
+- 移除内容查询的旧父类别名；六个来源明显的子分类 slug 迁移为通用命名。前端内容分类映射同步使用规范父分类。
+- 请求 `period` 只接受 1～120；数据库没有可见样本时，响应实际 `period` 仍可为 0。
+- 删除未使用且含敏感文案的 LegalDisclaimer，修复 Mock 入口乱码；前端 Mock、共享 DTO、首页、历史筛选和高级统计已改用中性字段，历史筛选不再直接导入 MOCK_HISTORY，固定样例统一到 `demo-combinations`。B8.8 仅剩真实后端代理与整链路联调。
+- 同步 OpenAPI、BACKEND_CONTRACT、STATISTICS_CONTRACT、README 与 B8.8 接手提示词。B8.1～B8.7 的旧记录仅表示当时实现过程，本节契约优先。
+- **数据库**：`20260921120000_remove_sensitive_metrics`、`20260921121000_refresh_demo_schedule` 与后续清理迁移 `20260921122000_remove_seed_schedule` 已通过 `prisma migrate deploy` 应用。
+- **验证**：后端 typecheck（应用与 seed）、lint、OpenAPI（11 paths）、单元测试 28、集成测试 30、种子不变量、数据库 CHECK 全通过；前端 typecheck、lint、Mock 模式生产构建通过，SEO 产物审计 66/66 通过。构建产物完成后 Nitro 进程仍未自行退出，已手动结束。
+- **限制**：完整 `prisma generate` 在 Windows 上仍因正在运行的 Node 进程占用 query engine DLL 报 EPERM；生成过程已更新 Client，所有数据库集成测试随后正常通过。未执行生产构建，未 commit/push。
+- **下一步：B8.8 前后端统计联调**，严格以当前 OpenAPI 与 STATISTICS_CONTRACT 为准，不恢复旧兼容字段。

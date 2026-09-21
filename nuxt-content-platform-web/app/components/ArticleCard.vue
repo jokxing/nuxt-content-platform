@@ -7,9 +7,9 @@ import { formatPublishDateForDisplay } from '~/utils/publishTime'
 interface Props {
   id: number
   title: string
-  type: 'how-to-play' | 'skills' | 'play-desc'
-    | 'this-predict' | 'last-review' | 'tema-rule'
-    | 'lottery-news' | 'win-story' | 'activity-news'
+  type: 'getting-started' | 'skills' | 'feature-notes'
+    | 'current-insights' | 'last-review' | 'metric-rules'
+    | 'platform-updates' | 'user-stories' | 'activity-news'
   date: string | number
   views?: number
   description?: string
@@ -27,14 +27,14 @@ const localePath = useLocalePath()
 const displayDate = computed(() => formatPublishDateForDisplay(props.date, locale.value))
 
 const categoryByType: Record<Props['type'], string> = {
-  'how-to-play': 'education',
+  'getting-started': 'education',
   skills: 'education',
-  'play-desc': 'education',
-  'this-predict': 'analysis',
+  'feature-notes': 'education',
+  'current-insights': 'analysis',
   'last-review': 'analysis',
-  'tema-rule': 'analysis',
-  'lottery-news': 'story',
-  'win-story': 'story',
+  'metric-rules': 'analysis',
+  'platform-updates': 'story',
+  'user-stories': 'story',
   'activity-news': 'story',
 }
 
@@ -45,7 +45,7 @@ const { goToArticle } = useArticleNavigation({
 })
 
 const typeMap = {
-  'how-to-play': {
+  'getting-started': {
     text: 'news.teaching.beginner_guide',
     icon: 'i-carbon:education',
     color: 'text-blue-500',
@@ -53,13 +53,13 @@ const typeMap = {
     route: '/news/education/type/1',
   },
   skills: {
-    text: 'news.teaching.betting_skills',
+    text: 'news.teaching.advanced_tips',
     icon: 'i-carbon:education',
     color: 'text-blue-500',
     bg: 'bg-blue-50',
     route: '/news/education/type/2',
   },
-  'play-desc': {
+  'feature-notes': {
     text: 'news.teaching.game_rules',
     icon: 'i-carbon:education',
     color: 'text-blue-500',
@@ -73,29 +73,29 @@ const typeMap = {
     bg: 'bg-red-50',
     route: '/news/analysis/type/1',
   },
-  'this-predict': {
+  'current-insights': {
     text: 'news.forecasting.current_prediction',
     icon: 'i-carbon:analytics',
     color: 'text-red-500',
     bg: 'bg-red-50',
     route: '/news/analysis/type/2',
   },
-  'tema-rule': {
+  'metric-rules': {
     text: 'news.forecasting.special_pattern',
     icon: 'i-carbon:analytics',
     color: 'text-red-500',
     bg: 'bg-red-50',
     route: '/news/analysis/type/3',
   },
-  'lottery-news': {
-    text: 'news.story.lottery_news',
+  'platform-updates': {
+    text: 'news.story.platform_updates',
     icon: 'i-carbon:document',
     color: 'text-green-500',
     bg: 'bg-green-50',
     route: '/news/story/type/1',
   },
-  'win-story': {
-    text: 'news.story.winning_stories',
+  'user-stories': {
+    text: 'news.story.user_stories',
     icon: 'i-carbon:document',
     color: 'text-green-500',
     bg: 'bg-green-50',

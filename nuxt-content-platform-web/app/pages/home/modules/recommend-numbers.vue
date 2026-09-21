@@ -8,10 +8,10 @@ const runtimeConfig = useRuntimeConfig()
 
 const { data: luckyNumber, error, pending } = await useAsyncData(() => `luckyNumber-${locale.value}`, async () => {
   const lang = locale.value === 'zh-CN' ? 'sc' : locale.value === 'en-US' ? 'en' : 'tc'
-  const result = await api.get('/api/lucky-number', { params: { lang } })
-  if (!Array.isArray(result.numbers) || result.numbers.length === 0)
+  const result = await api.get('/api/demo-combinations', { params: { lang } })
+  if (!result?.featured || !Array.isArray(result.featured.numbers) || result.featured.numbers.length === 0)
     throw new Error('Invalid sample number data structure')
-  return result
+  return result.featured
 }, {
   server: true,
   lazy: false,

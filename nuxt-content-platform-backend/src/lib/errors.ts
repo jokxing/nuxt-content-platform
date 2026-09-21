@@ -4,6 +4,7 @@ export const BusinessCode = {
   INVALID_ARGUMENT: 40000,
   ROUTE_NOT_FOUND: 40400,
   ARTICLE_NOT_FOUND: 40401,
+  DATASET_NOT_FOUND: 40402,
   INTERNAL_ERROR: 50000,
   DATA_INTEGRITY_ERROR: 50001,
   SERVICE_UNAVAILABLE: 50300,
@@ -41,6 +42,10 @@ export function routeNotFound(message = '资源不存在'): AppError {
 
 export function articleNotFound(message = '文章不存在'): AppError {
   return new AppError(404, BusinessCode.ARTICLE_NOT_FOUND, message)
+}
+
+export function datasetNotFound(message = '数据期次不存在'): AppError {
+  return new AppError(404, BusinessCode.DATASET_NOT_FOUND, message)
 }
 
 export function internalError(message = '内部服务错误', cause?: unknown): AppError {

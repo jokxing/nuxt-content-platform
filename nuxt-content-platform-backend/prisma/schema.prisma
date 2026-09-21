@@ -63,3 +63,48 @@ model ArticleTranslation {
   @@id([articleId, locale])
   @@map("article_translations")
 }
+
+enum DatasetPeriodStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum DatasetScheduleStatus {
+  SCHEDULED
+  CANCELLED
+  PUBLISHED
+}
+
+/// 已发布数据期次（公开统计只读 PUBLISHED 且 releasedAt <= now）
+model DatasetPeriod {
+  id          Int                 @id @default(autoincrement())
+  periodCode  String              @unique @map("period_code") @db.VarChar(32)
+  releasedAt  DateTime            @map("released_at") @db.DateTime(3)
+  value1      Int                 @map("value_1")
+  value2      Int                 @map("value_2")
+  value3      Int                 @map("value_3")
+  value4      Int                 @map("value_4")
+  value5      Int                 @map("value_5")
+  value6      Int                 @map("value_6")
+  extraValue  Int                 @map("extra_value")
+  status      DatasetPeriodStatus @default(DRAFT)
+  createdAt   DateTime            @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime            @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@index([status, releasedAt, id], map: "dataset_periods_status_released_at_id_idx")
+  @@map("dataset_periods")
+}
+
+/// 下一次计划发布（latest 取最早未来 SCHEDULED）
+model DatasetSchedule {
+  id              Int                   @id @default(autoincrement())
+  periodCode      String                @unique @map("period_code") @db.VarChar(32)
+  scheduledAt     DateTime              @map("scheduled_at") @db.DateTime(3)
+  status          DatasetScheduleStatus @default(SCHEDULED)
+  createdAt       DateTime              @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt       DateTime              @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@index([status, scheduledAt], map: "dataset_schedules_status_scheduled_at_idx")
+  @@map("dataset_schedules")
+}

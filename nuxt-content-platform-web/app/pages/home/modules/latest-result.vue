@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
+import type { PropType } from 'vue'
+import type { LatestDatasetDto } from '~/api/models'
 import { useDatasetStore } from '~/stores/dataset'
 
 const props = defineProps({
   result: {
-    type: Object,
+    type: Object as PropType<LatestDatasetDto>,
     default: null,
   },
 })
@@ -14,35 +16,20 @@ const datasetStore = useDatasetStore()
 
 watch(() => props.result, (newResult) => {
   if (newResult)
-    datasetStore.setRelease(newResult as any)
+    datasetStore.setRelease(newResult)
 }, { immediate: true })
 
 const dataUpdateTime = computed(() => {
-  if (!props.result?.draw_date)
+  if (!props.result?.released_at)
     return null
   const localeTag = locale.value === 'zh-CN' ? 'zh-CN' : locale.value === 'en-US' ? 'en-US' : 'zh-HK'
-  return new Date(props.result.draw_date).toLocaleString(localeTag)
+  return new Date(props.result.released_at).toLocaleString(localeTag, { timeZone: 'Asia/Hong_Kong' })
 })
-
-function formatAmount(amount: any) {
-  if (!amount && amount !== 0)
-    return '-'
-  const num = typeof amount === 'string' ? Number.parseFloat(amount) : amount
-  const localeTag = locale.value === 'zh-CN' ? 'zh-CN' : locale.value === 'en-US' ? 'en-US' : 'zh-HK'
-  return new Intl.NumberFormat(localeTag).format(num)
-}
 
 const numbers = computed(() => {
   if (!props.result)
     return []
-  return [
-    props.result.num1,
-    props.result.num2,
-    props.result.num3,
-    props.result.num4,
-    props.result.num5,
-    props.result.num6,
-  ]
+  return props.result.values
 })
 
 function getDayOfWeek(dateStr: any) {
@@ -64,7 +51,7 @@ function getDayOfWeek(dateStr: any) {
           <div class="text-center w-full">
             <div class="mb-3">
               <h3 class="text-base text-gray-800 font-medium dark:text-gray-200">
-                {{ t('home.latest_result.winning_numbers') }}
+                {{ t('home.latest_result.dataset_values') }}
               </h3>
             </div>
             <div class="mb-4 flex flex-wrap gap-3 items-center justify-center">
@@ -77,7 +64,7 @@ function getDayOfWeek(dateStr: any) {
                 /
               </div>
               <BallNumber
-                :number="result.special_number"
+                :number="result.extra_value"
                 is-special
               />
             </div>
@@ -85,33 +72,17 @@ function getDayOfWeek(dateStr: any) {
         </template>
       </VanCell>
       <VanCell
-        :title="t('home.latest_result.draw_number')"
-        :value="result.draw_number"
+        :title="t('home.latest_result.period_code')"
+        :value="result.period_code"
       />
       <VanCell
-        :title="t('home.latest_result.draw_date')"
-        :value="`${result.draw_date}(${getDayOfWeek(result.draw_date)})`"
+        :title="t('home.latest_result.released_at')"
+        :value="`${new Date(result.released_at).toLocaleDateString(locale)}(${getDayOfWeek(result.released_at)})`"
       />
       <VanCell
         v-if="dataUpdateTime"
         :title="t('home.latest_result.data_updated_at')"
         :value="dataUpdateTime"
-      />
-      <VanCell
-        :title="t('home.latest_result.total_investment')"
-        :value="formatAmount(result.total_sales)"
-      />
-      <VanCell
-        :title="t('home.latest_result.first_prize')"
-        :value="`${formatAmount(result.first_prize_amount)}(${result.first_prize_count || 0}${t('home.latest_result.winners')})`"
-      />
-      <VanCell
-        :title="t('home.latest_result.second_prize')"
-        :value="`${formatAmount(result.second_prize_amount)}(${result.second_prize_count || 0}${t('home.latest_result.winners')})`"
-      />
-      <VanCell
-        :title="t('home.latest_result.third_prize')"
-        :value="`${formatAmount(result.third_prize_amount)}(${result.third_prize_count || 0}${t('home.latest_result.winners')})`"
       />
     </template>
     <template v-else>

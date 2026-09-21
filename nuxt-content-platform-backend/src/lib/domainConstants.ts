@@ -1,5 +1,5 @@
 /**
- * 资讯领域常量：locale / parent_route / 九个子类 slug / 旧父类别名。
+ * 资讯领域常量：locale / parent_route / 九个子类 slug。
  * seed、query、service 共用，避免多处硬编码漂移。不依赖前端文件。
  */
 
@@ -27,14 +27,14 @@ export const PARENT_ORDER: Record<ParentRoute, number> = {
 }
 
 export const CATEGORY_SLUGS = [
-  'how-to-play',
+  'getting-started',
   'skills',
-  'play-desc',
-  'this-predict',
+  'feature-notes',
+  'current-insights',
   'last-review',
-  'tema-rule',
-  'lottery-news',
-  'win-story',
+  'metric-rules',
+  'platform-updates',
+  'user-stories',
   'activity-news',
 ] as const
 export type CategorySlug = (typeof CATEGORY_SLUGS)[number]
@@ -43,23 +43,16 @@ export const EXPECTED_CATEGORY_COUNT = CATEGORY_SLUGS.length
 
 /** 分类固定归属及顺序；用于校验数据库没有“数量正确但内容错误”。 */
 export const CATEGORY_DEFINITIONS = {
-  'how-to-play': { parentRoute: 'education', sortOrder: 1 },
+  'getting-started': { parentRoute: 'education', sortOrder: 1 },
   'skills': { parentRoute: 'education', sortOrder: 2 },
-  'play-desc': { parentRoute: 'education', sortOrder: 3 },
-  'this-predict': { parentRoute: 'analysis', sortOrder: 1 },
+  'feature-notes': { parentRoute: 'education', sortOrder: 3 },
+  'current-insights': { parentRoute: 'analysis', sortOrder: 1 },
   'last-review': { parentRoute: 'analysis', sortOrder: 2 },
-  'tema-rule': { parentRoute: 'analysis', sortOrder: 3 },
-  'lottery-news': { parentRoute: 'story', sortOrder: 1 },
-  'win-story': { parentRoute: 'story', sortOrder: 2 },
+  'metric-rules': { parentRoute: 'analysis', sortOrder: 3 },
+  'platform-updates': { parentRoute: 'story', sortOrder: 1 },
+  'user-stories': { parentRoute: 'story', sortOrder: 2 },
   'activity-news': { parentRoute: 'story', sortOrder: 3 },
 } as const satisfies Record<CategorySlug, { parentRoute: ParentRoute, sortOrder: number }>
-
-/** 旧父分类 query 别名 → 规范 parent_route */
-export const PARENT_ALIASES = {
-  'lottery-teach': 'education',
-  'ai-predict': 'analysis',
-  'news-story': 'story',
-} as const satisfies Record<string, ParentRoute>
 
 export const PARENT_ROUTE_SET: ReadonlySet<string> = new Set(PARENT_ROUTES)
 export const CATEGORY_SLUG_SET: ReadonlySet<string> = new Set(CATEGORY_SLUGS)

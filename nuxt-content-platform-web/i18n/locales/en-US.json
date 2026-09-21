@@ -43,17 +43,17 @@
   "home": {
     "latest_result": {
       "title": "Latest Period Dataset",
-      "winning_numbers": "Data Item IDs",
-      "draw_number": "Period ID",
-      "draw_date": "Publish Date",
+      "dataset_values": "Data Item IDs",
+      "period_code": "Period ID",
+      "released_at": "Publish Date",
       "data_updated_at": "Data Updated At",
-      "total_investment": "Published Volume",
-      "first_prize": "Tier-1 Metric",
-      "second_prize": "Tier-2 Metric",
-      "third_prize": "Tier-3 Metric",
-      "winners": "items"
+      "total_volume": "Published Volume",
+      "tier_one": "Tier-1 Metric",
+      "tier_two": "Tier-2 Metric",
+      "tier_three": "Tier-3 Metric",
+      "item_count": "items"
     },
-    "next_draw": {
+    "next_release": {
       "title": "Next Publish Countdown",
       "draw_time": "Scheduled Time",
       "period": "{period}",
@@ -63,7 +63,7 @@
       "hours": "h",
       "minutes": "m",
       "seconds": "s",
-      "jackpot": "Target Metric"
+      "target_metric": "Target Metric"
     },
     "recommend": {
       "numbers_title": "Smart Recommendation Set",
@@ -247,13 +247,13 @@
       "special_pattern": "Metric patterns"
     },
     "story": {
-      "lottery_news": "Platform updates",
-      "winning_stories": "Case studies",
+      "platform_updates": "Platform updates",
+      "user_stories": "Case studies",
       "activity_news": "Events"
     },
     "teaching": {
       "beginner_guide": "Getting started",
-      "betting_skills": "Advanced tips",
+      "advanced_tips": "Advanced tips",
       "game_rules": "How it works"
     },
     "fetch_failed": "Failed to load articles. Please try again later.",
@@ -369,7 +369,7 @@
           },
           "ai_accuracy": {
             "question": "Can I use these results for decisions?",
-            "answer": "No. All numbers and copy are for portfolio demonstration only and are not advice for betting, investing, or any other decision."
+            "answer": "No. All numbers and copy are for portfolio demonstration only and are not advice for financial or any other decision."
           },
           "update_frequency": {
             "question": "How often does the data update?",
@@ -428,7 +428,7 @@
       "description": "Browse guides, analysis, and platform updates on the ContentPulse demo. Categories and article IDs are fixed mock data for portfolio use.",
       "keywords": "ContentPulse, news, guides, analysis, updates, demo"
     },
-    "story-winning": {
+    "story-users": {
       "title": "ContentPulse News｜Guides · Analysis · Updates (Demo)",
       "description": "Browse guides, analysis, and platform updates on the ContentPulse demo. Categories and article IDs are fixed mock data for portfolio use.",
       "keywords": "ContentPulse, news, guides, analysis, updates, demo"
@@ -608,7 +608,7 @@
         "description": "Platform update notes for the ContentPulse demo (mock)."
       }
     },
-    "news-story-winning": {
+    "news-story-users": {
       "title": "ContentPulse｜Case studies (Demo)",
       "description": "Case-study articles on the ContentPulse demo. Fixed mock content.",
       "keywords": "ContentPulse, case studies, demo",

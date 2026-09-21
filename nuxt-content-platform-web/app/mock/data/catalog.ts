@@ -1,4 +1,4 @@
-import { MOCK_ARTICLE_IDS, MOCK_CLOCK_ISO } from '../brand'
+import { MOCK_ARTICLE_IDS } from '../brand'
 
 /** 固定演示文章：分类 slug 与路由 education/analysis/story 子类保持兼容 */
 export interface MockArticle {
@@ -34,7 +34,7 @@ export const MOCK_ARTICLES: MockArticle[] = [
     cover_image: '/logo.svg',
     status: 1,
     category: '新手指南',
-    category_slug: 'how-to-play',
+    category_slug: 'getting-started',
     parent_route: 'education',
   },
   {
@@ -85,7 +85,7 @@ export const MOCK_ARTICLES: MockArticle[] = [
     cover_image: '/logo.svg',
     status: 1,
     category: '指標觀察',
-    category_slug: 'this-predict',
+    category_slug: 'current-insights',
     parent_route: 'analysis',
   },
   {
@@ -102,7 +102,7 @@ export const MOCK_ARTICLES: MockArticle[] = [
     cover_image: '/logo.svg',
     status: 1,
     category: '平台動態',
-    category_slug: 'lottery-news',
+    category_slug: 'platform-updates',
     parent_route: 'story',
   },
 ]
@@ -125,43 +125,37 @@ export function pickLocalizedArticle(article: MockArticle, lang?: string) {
   }
 }
 
-/** 固定期次结果（字段名兼容旧接口，语义已映射为数据集发布） */
+function datasetRow(periodCode: string, date: string, values: number[], extraValue: number) {
+  return {
+    period_code: periodCode,
+    released_at: Date.parse(`${date}T00:00:00+08:00`),
+    values,
+    extra_value: extraValue,
+  }
+}
+
+/** 固定期次结果，与公开后端契约保持一致。 */
 export const MOCK_LATEST = {
-  draw_number: '2026090',
-  draw_date: '2026-09-16',
-  special_number: 7,
-  num1: 3,
-  num2: 12,
-  num3: 18,
-  num4: 27,
-  num5: 33,
-  num6: 41,
-  total_sales: 1280000,
-  first_prize_count: '1',
-  first_prize_amount: '850000',
-  second_prize_count: '4',
-  second_prize_amount: '42000',
-  third_prize_count: '62',
-  third_prize_amount: '3200',
-  next_draw_number: '2026091',
-  next_draw_date: '2026-09-20',
-  next_jackpot: 2100000,
-  _mock_clock: MOCK_CLOCK_ISO,
+  ...datasetRow('2026090', '2026-09-16', [3, 12, 18, 27, 33, 41], 7),
+  next_release: {
+    period_code: '2026091',
+    scheduled_at: Date.parse('2026-09-20T00:00:00+08:00'),
+  },
 }
 
 export const MOCK_HISTORY = [
-  { draw_number: '2026090', draw_date: '2026-09-16', special_number: 7, num1: 3, num2: 12, num3: 18, num4: 27, num5: 33, num6: 41 },
-  { draw_number: '2026089', draw_date: '2026-09-13', special_number: 15, num1: 5, num2: 9, num3: 21, num4: 28, num5: 36, num6: 44 },
-  { draw_number: '2026088', draw_date: '2026-09-11', special_number: 2, num1: 1, num2: 14, num3: 22, num4: 30, num5: 38, num6: 49 },
-  { draw_number: '2026087', draw_date: '2026-09-09', special_number: 29, num1: 6, num2: 11, num3: 19, num4: 25, num5: 34, num6: 47 },
-  { draw_number: '2026086', draw_date: '2026-09-06', special_number: 40, num1: 8, num2: 16, num3: 23, num4: 31, num5: 37, num6: 45 },
-  { draw_number: '2026085', draw_date: '2026-09-04', special_number: 19, num1: 4, num2: 10, num3: 17, num4: 26, num5: 35, num6: 42 },
-  { draw_number: '2026084', draw_date: '2026-09-02', special_number: 33, num1: 2, num2: 13, num3: 20, num4: 24, num5: 39, num6: 48 },
-  { draw_number: '2026083', draw_date: '2026-08-30', special_number: 11, num1: 7, num2: 15, num3: 18, num4: 32, num5: 41, num6: 46 },
+  datasetRow('2026090', '2026-09-16', [3, 12, 18, 27, 33, 41], 7),
+  datasetRow('2026089', '2026-09-13', [5, 9, 21, 28, 36, 44], 15),
+  datasetRow('2026088', '2026-09-11', [1, 14, 22, 30, 38, 49], 2),
+  datasetRow('2026087', '2026-09-09', [6, 11, 19, 25, 34, 47], 29),
+  datasetRow('2026086', '2026-09-06', [8, 16, 23, 31, 37, 45], 40),
+  datasetRow('2026085', '2026-09-04', [4, 10, 17, 26, 35, 42], 19),
+  datasetRow('2026084', '2026-09-02', [2, 13, 20, 24, 39, 48], 33),
+  datasetRow('2026083', '2026-08-30', [7, 15, 18, 32, 41, 46], 11),
   ...Array.from({ length: 112 }, (_, i) => {
     const date = new Date(Date.UTC(2026, 7, 27 - i * 3)).toISOString().slice(0, 10)
     const values = Array.from({ length: 7 }, (_, j) => ((i * 13 + Math.floor(i / 7) * 3 + j * 8) % 49) + 1)
-    return { draw_number: String(2026082 - i), draw_date: date, num1: values[0]!, num2: values[1]!, num3: values[2]!, num4: values[3]!, num5: values[4]!, num6: values[5]!, special_number: values[6]! }
+    return datasetRow(String(2026082 - i), date, values.slice(0, 6), values[6]!)
   }),
 
 ]
@@ -190,9 +184,8 @@ export const MOCK_API_INFO = {
     history: '/history - 历史记录',
     analysis: '/analysis - 频次分布',
     advanced_stats: '/advanced-stats - 进阶统计',
-    ai_prediction: '/ai-prediction - 智能推荐组合',
+    demo_combinations: '/demo-combinations - 固定演示组合',
     articles: '/articles - 文章内容',
-    lucky_number: '/lucky-number - 推荐组合',
     number_miss: '/number-miss - 间隔指标',
     recent_articles: '/articles - 最近文章',
   },

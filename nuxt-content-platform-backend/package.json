@@ -16,7 +16,7 @@
     "lint:fix": "eslint . --fix",
     "test:sanitize": "tsx --test src/lib/htmlSanitize.test.ts",
     "test:integration": "tsx --test src/api.integration.test.ts",
-    "test:unit": "tsx --test src/lib/htmlSanitize.test.ts src/config/env.test.ts",
+    "test:unit": "tsx --test src/lib/htmlSanitize.test.ts src/config/env.test.ts src/lib/analysisStats.test.ts src/lib/advancedStats.test.ts src/lib/numberMiss.test.ts",
     "test": "pnpm test:unit && pnpm test:integration",
     "openapi:validate": "tsx scripts/openapi-validate.ts",
     "db:generate": "prisma generate",

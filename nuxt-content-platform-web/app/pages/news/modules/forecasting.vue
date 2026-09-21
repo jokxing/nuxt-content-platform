@@ -42,7 +42,7 @@ const { data: articles, error, pending } = await useAsyncData(() => `forecasting
   else {
     category = NEWS_CATEGORIES.getParentCategory(routeCategory)
     if (!category) {
-      category = 'ai-predict'
+      category = 'analysis'
     }
   }
 

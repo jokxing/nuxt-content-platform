@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "ContentPulse 后端 API：第一批资讯查询",
-    "version": "0.1.0",
-    "description": "第一批资讯查询接口。成功统一 { code:0, msg, data }；失败统一 { code:非零数字, msg, data:null, requestId }。HTTP 状态码仍使用 400/404/500/503。规则见 BACKEND_CONTRACT.md。"
+    "title": "ContentPulse 后端 API：资讯与统计查询",
+    "version": "0.2.0",
+    "description": "资讯接口已实现；B8 统计与固定演示接口仅完成契约设计。全部响应使用统一外壳、数字业务码和正确 HTTP 状态。详细规则见 BACKEND_CONTRACT.md 与 STATISTICS_CONTRACT.md。"
   },
   "servers": [
     {
@@ -17,6 +17,12 @@
     },
     {
       "name": "资讯查询"
+    },
+    {
+      "name": "数据统计"
+    },
+    {
+      "name": "固定演示"
     }
   ],
   "security": [],
@@ -141,7 +147,7 @@
                   "msg": "ok",
                   "data": [
                     {
-                      "slug": "how-to-play",
+                      "slug": "getting-started",
                       "name": "新手指南",
                       "parent_route": "education"
                     }
@@ -250,21 +256,18 @@
                 "education",
                 "analysis",
                 "story",
-                "how-to-play",
+                "getting-started",
                 "skills",
-                "play-desc",
-                "this-predict",
+                "feature-notes",
+                "current-insights",
                 "last-review",
-                "tema-rule",
-                "lottery-news",
-                "win-story",
-                "activity-news",
-                "lottery-teach",
-                "ai-predict",
-                "news-story"
+                "metric-rules",
+                "platform-updates",
+                "user-stories",
+                "activity-news"
               ]
             },
-            "description": "父类、子类或兼容别名；不传查询全部"
+            "description": "父分类或子分类；不传查询全部"
           },
           {
             "name": "page",
@@ -314,7 +317,7 @@
                         "cover_image": "/logo.svg",
                         "status": 1,
                         "category": "新手指南",
-                        "category_slug": "how-to-play",
+                        "category_slug": "getting-started",
                         "parent_route": "education"
                       }
                     ],
@@ -438,7 +441,7 @@
                     "cover_image": "/logo.svg",
                     "status": 1,
                     "category": "新手指南",
-                    "category_slug": "how-to-play",
+                    "category_slug": "getting-started",
                     "parent_route": "education"
                   }
                 }
@@ -611,6 +614,562 @@
           }
         }
       }
+    },
+    "/api/latest": {
+      "get": {
+        "operationId": "getLatestDataset",
+        "summary": "最新数据期次",
+        "tags": [
+          "数据统计"
+        ],
+        "description": "已实现。无可见期次时返回 40402。不接受 query。不返回 _mock_clock。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LatestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数不合法",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 40000,
+                  "msg": "参数不合法",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "没有可见数据期次",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 40402,
+                  "msg": "数据期次不存在",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "内部服务错误或数据完整性错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 50000,
+                  "msg": "内部服务错误",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 50300,
+                  "msg": "服务暂不可用",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/history": {
+      "get": {
+        "operationId": "listDatasetHistory",
+        "summary": "历史数据期次",
+        "tags": [
+          "数据统计"
+        ],
+        "description": "已实现。过滤顺序、Asia/Hong_Kong 年份、periods 窗口与 filter_options 见 STATISTICS_CONTRACT.md。",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000,
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 2100
+            }
+          },
+          {
+            "name": "period_code",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{1,32}$"
+            },
+            "description": "精确匹配期次编码"
+          },
+          {
+            "name": "number",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 49
+            }
+          },
+          {
+            "name": "periods",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 120
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数不合法",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 40000,
+                  "msg": "参数不合法",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "内部服务错误或数据完整性错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 50000,
+                  "msg": "内部服务错误",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 50300,
+                  "msg": "服务暂不可用",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analysis": {
+      "get": {
+        "operationId": "getFrequencyAnalysis",
+        "summary": "频次与组合分布",
+        "tags": [
+          "数据统计"
+        ],
+        "description": "已实现。7 个值均参与计算；period 缺省 10、最大 120，0 表示空窗口。",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 120,
+              "default": 10
+            },
+            "description": "最新样本窗口；0 或 1～120 的十进制整数字符串，缺省 10"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数不合法",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 40000,
+                  "msg": "参数不合法",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "内部服务错误或数据完整性错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 50000,
+                  "msg": "内部服务错误",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 50300,
+                  "msg": "服务暂不可用",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/advanced-stats": {
+      "get": {
+        "operationId": "getAdvancedStats",
+        "summary": "进阶统计",
+        "tags": [
+          "数据统计"
+        ],
+        "description": "已实现。G01～G12 为中性演示分组；period 缺省 10、最大 120，0 为空窗口。",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 120,
+              "default": 10
+            },
+            "description": "最新样本窗口；0 或 1～120 的十进制整数字符串，缺省 10"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvancedStatsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数不合法",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 40000,
+                  "msg": "参数不合法",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "内部服务错误或数据完整性错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 50000,
+                  "msg": "内部服务错误",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 50300,
+                  "msg": "服务暂不可用",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/number-miss": {
+      "get": {
+        "operationId": "getNumberMissStats",
+        "summary": "间隔与连续命中统计",
+        "tags": [
+          "数据统计"
+        ],
+        "description": "已实现。只描述当前窗口；period 缺省 10、最大 120，0 返回空 number_stats。",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 120,
+              "default": 10
+            },
+            "description": "最新样本窗口；0 或 1～120 的十进制整数字符串，缺省 10"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NumberMissResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数不合法",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 40000,
+                  "msg": "参数不合法",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "内部服务错误或数据完整性错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 50000,
+                  "msg": "内部服务错误",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 50300,
+                  "msg": "服务暂不可用",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/demo-combinations": {
+      "get": {
+        "operationId": "getDemoCombinations",
+        "summary": "获取固定演示组合",
+        "tags": [
+          "固定演示"
+        ],
+        "description": "固定、可复现的作品样例；不调用外部模型，不随请求变化。",
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "zh-HK",
+                "zh-CN",
+                "en-US",
+                "tc",
+                "sc",
+                "en"
+              ],
+              "default": "zh-HK"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoCombinationsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数不合法",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 40000,
+                  "msg": "参数不合法",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "内部服务错误或数据完整性错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 50000,
+                  "msg": "内部服务错误",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "服务暂不可用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                },
+                "example": {
+                  "code": 50300,
+                  "msg": "服务暂不可用",
+                  "data": null,
+                  "requestId": "example-request-id"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -683,14 +1242,14 @@
           "category_slug": {
             "type": "string",
             "enum": [
-              "how-to-play",
+              "getting-started",
               "skills",
-              "play-desc",
-              "this-predict",
+              "feature-notes",
+              "current-insights",
               "last-review",
-              "tema-rule",
-              "lottery-news",
-              "win-story",
+              "metric-rules",
+              "platform-updates",
+              "user-stories",
               "activity-news"
             ]
           },
@@ -716,14 +1275,14 @@
           "slug": {
             "type": "string",
             "enum": [
-              "how-to-play",
+              "getting-started",
               "skills",
-              "play-desc",
-              "this-predict",
+              "feature-notes",
+              "current-insights",
               "last-review",
-              "tema-rule",
-              "lottery-news",
-              "win-story",
+              "metric-rules",
+              "platform-updates",
+              "user-stories",
               "activity-news"
             ]
           },
@@ -839,6 +1398,7 @@
               40000,
               40400,
               40401,
+              40402,
               50000,
               50001,
               50300,
@@ -1026,6 +1586,720 @@
           },
           "data": {
             "$ref": "#/components/schemas/ContentDirectory"
+          }
+        }
+      },
+      "DatasetRow": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "period_code",
+          "released_at",
+          "values",
+          "extra_value"
+        ],
+        "properties": {
+          "period_code": {
+            "type": "string",
+            "pattern": "^\\d{1,32}$"
+          },
+          "released_at": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1000000000000,
+            "description": "13 位 Unix 毫秒时间戳"
+          },
+          "values": {
+            "type": "array",
+            "minItems": 6,
+            "maxItems": 6,
+            "uniqueItems": true,
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 49
+            }
+          },
+          "extra_value": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 49
+          }
+        }
+      },
+      "LatestDataset": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DatasetRow"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "next_release"
+            ],
+            "properties": {
+              "next_release": {
+                "type": "object",
+                "nullable": true,
+                "additionalProperties": false,
+                "required": [
+                  "period_code",
+                  "scheduled_at"
+                ],
+                "properties": {
+                  "period_code": {
+                    "type": "string",
+                    "pattern": "^\\d{1,32}$"
+                  },
+                  "scheduled_at": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 1000000000000,
+                    "description": "13 位 Unix 毫秒时间戳"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "HistoryPageData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size",
+          "total_pages",
+          "filter_options"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatasetRow"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "total_pages": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "filter_options": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "years",
+              "period_codes"
+            ],
+            "properties": {
+              "years": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "integer",
+                  "minimum": 2000,
+                  "maximum": 2100
+                },
+                "description": "Asia/Hong_Kong 日历年，降序"
+              },
+              "period_codes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "type": "string",
+                  "pattern": "^\\d{1,32}$"
+                },
+                "description": "最新 120 个可见 periodCode"
+              }
+            }
+          }
+        }
+      },
+      "FrequencyItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "number",
+          "frequency"
+        ],
+        "properties": {
+          "number": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 49
+          },
+          "frequency": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "AnalysisData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "period",
+          "requested_period",
+          "hot_numbers",
+          "cold_numbers",
+          "rising_numbers",
+          "duplicate_numbers",
+          "consecutive_numbers"
+        ],
+        "properties": {
+          "period": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 120
+          },
+          "requested_period": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 120
+          },
+          "hot_numbers": {
+            "type": "array",
+            "maxItems": 5,
+            "items": {
+              "$ref": "#/components/schemas/FrequencyItem"
+            }
+          },
+          "cold_numbers": {
+            "type": "array",
+            "maxItems": 5,
+            "items": {
+              "$ref": "#/components/schemas/FrequencyItem"
+            }
+          },
+          "rising_numbers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FrequencyItem"
+            }
+          },
+          "duplicate_numbers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "duplicate_tail",
+                "frequency",
+                "combination_type"
+              ],
+              "properties": {
+                "duplicate_tail": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9
+                },
+                "frequency": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "combination_type": {
+                  "type": "string",
+                  "enum": [
+                    "same_tail"
+                  ]
+                }
+              }
+            }
+          },
+          "consecutive_numbers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "consecutive_pair",
+                "frequency",
+                "combination_type"
+              ],
+              "properties": {
+                "consecutive_pair": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 49
+                  }
+                },
+                "frequency": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "combination_type": {
+                  "type": "string",
+                  "enum": [
+                    "adjacent"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "AdvancedStatsData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "period",
+          "requested_period",
+          "tail_distribution",
+          "group_distribution",
+          "odd_even_ratio",
+          "consecutive_analysis",
+          "top_combinations"
+        ],
+        "properties": {
+          "period": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 120
+          },
+          "requested_period": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 120
+          },
+          "tail_distribution": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "固定键 0～9"
+          },
+          "odd_even_ratio": {
+            "type": "object",
+            "required": [
+              "odd_count",
+              "even_count",
+              "odd_ratio",
+              "even_ratio"
+            ],
+            "properties": {
+              "odd_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "even_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "odd_ratio": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "even_ratio": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              }
+            }
+          },
+          "consecutive_analysis": {
+            "type": "object",
+            "required": [
+              "consecutive_count",
+              "consecutive_ratio",
+              "total_draws",
+              "consecutive_combinations"
+            ],
+            "properties": {
+              "consecutive_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "consecutive_ratio": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "total_draws": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "consecutive_combinations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "combination",
+                    "frequency",
+                    "combination_type"
+                  ],
+                  "properties": {
+                    "combination": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 49
+                      }
+                    },
+                    "frequency": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "combination_type": {
+                      "type": "string",
+                      "enum": [
+                        "adjacent"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "top_combinations": {
+            "type": "array",
+            "maxItems": 5,
+            "items": {
+              "type": "object",
+              "required": [
+                "combination",
+                "frequency",
+                "combination_type"
+              ],
+              "properties": {
+                "combination": {
+                  "type": "array",
+                  "minItems": 6,
+                  "maxItems": 6,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 49
+                  }
+                },
+                "frequency": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "combination_type": {
+                  "type": "string",
+                  "enum": [
+                    "frequent"
+                  ]
+                }
+              }
+            }
+          },
+          "group_distribution": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "固定键 G01～G12；中性分组"
+          }
+        }
+      },
+      "NumberMissData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "period",
+          "requested_period",
+          "number_stats"
+        ],
+        "properties": {
+          "period": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 120
+          },
+          "requested_period": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 120
+          },
+          "number_stats": {
+            "type": "array",
+            "maxItems": 49,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "number",
+                "current_miss",
+                "max_miss",
+                "avg_miss",
+                "most_freq_miss",
+                "max_streak"
+              ],
+              "properties": {
+                "number": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 49
+                },
+                "current_miss": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "max_miss": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "avg_miss": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "most_freq_miss": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "max_streak": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      "FixedRecommendation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "numbers",
+          "reason",
+          "tags"
+        ],
+        "properties": {
+          "numbers": {
+            "type": "array",
+            "minItems": 6,
+            "maxItems": 6,
+            "uniqueItems": true,
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 49
+            }
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            }
+          }
+        }
+      },
+      "LatestResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "msg",
+          "data"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "enum": [
+              0
+            ]
+          },
+          "msg": {
+            "type": "string",
+            "example": "ok"
+          },
+          "data": {
+            "$ref": "#/components/schemas/LatestDataset"
+          }
+        }
+      },
+      "HistoryResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "msg",
+          "data"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "enum": [
+              0
+            ]
+          },
+          "msg": {
+            "type": "string",
+            "example": "ok"
+          },
+          "data": {
+            "$ref": "#/components/schemas/HistoryPageData"
+          }
+        }
+      },
+      "AnalysisResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "msg",
+          "data"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "enum": [
+              0
+            ]
+          },
+          "msg": {
+            "type": "string",
+            "example": "ok"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AnalysisData"
+          }
+        }
+      },
+      "AdvancedStatsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "msg",
+          "data"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "enum": [
+              0
+            ]
+          },
+          "msg": {
+            "type": "string",
+            "example": "ok"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdvancedStatsData"
+          }
+        }
+      },
+      "NumberMissResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "msg",
+          "data"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "enum": [
+              0
+            ]
+          },
+          "msg": {
+            "type": "string",
+            "example": "ok"
+          },
+          "data": {
+            "$ref": "#/components/schemas/NumberMissData"
+          }
+        }
+      },
+      "DemoCombinationsData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "is_generated",
+          "generated_at",
+          "featured",
+          "items"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "fixed_demo"
+            ]
+          },
+          "is_generated": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "generated_at": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1000000000000,
+            "description": "13 位 Unix 毫秒时间戳"
+          },
+          "featured": {
+            "$ref": "#/components/schemas/FixedRecommendation"
+          },
+          "items": {
+            "type": "array",
+            "minItems": 5,
+            "maxItems": 5,
+            "items": {
+              "$ref": "#/components/schemas/FixedRecommendation"
+            }
+          }
+        }
+      },
+      "DemoCombinationsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "msg",
+          "data"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "enum": [
+              0
+            ]
+          },
+          "msg": {
+            "type": "string",
+            "example": "ok"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DemoCombinationsData"
           }
         }
       }

@@ -1,7 +1,6 @@
 /**
- * Mock ??????
- * - Nitro `server/api/*` ?????????????? SSR/?????
- * - ??????????????? service???????????
+ * 本地 Mock 数据入口。
+ * Nitro 代理和浏览器请求共用同一分发函数，保证 SSR 与客户端行为一致。
  */
 
 import { MOCK_ARTICLE_IDS } from './brand'
@@ -40,16 +39,16 @@ export async function mockGetHistory(params: Record<string, any> = {}) {
   let rows = [...MOCK_HISTORY]
 
   if (params.year) {
-    const year = String(params.year)
-    rows = rows.filter(r => r.draw_date.startsWith(year))
+    const year = Number(params.year)
+    rows = rows.filter(r => new Date(r.released_at).getFullYear() === year)
   }
-  if (params.draw_number) {
-    rows = rows.filter(r => r.draw_number === String(params.draw_number))
+  if (params.period_code) {
+    rows = rows.filter(r => r.period_code === String(params.period_code))
   }
   if (params.number !== undefined) {
     const n = positiveInteger(params.number, 'number', 1, 49)
     rows = rows.filter(r =>
-      [r.num1, r.num2, r.num3, r.num4, r.num5, r.num6, r.special_number].includes(n),
+      [...r.values, r.extra_value].includes(n),
     )
   }
   if (params.periods !== undefined) {
@@ -58,13 +57,17 @@ export async function mockGetHistory(params: Record<string, any> = {}) {
 
   const total = rows.length
   const start = (page - 1) * pageSize
-  const data = rows.slice(start, start + pageSize)
+  const items = rows.slice(start, start + pageSize)
   return delay({
-    data,
+    items,
     total,
     page,
     page_size: pageSize,
     total_pages: Math.max(1, Math.ceil(total / pageSize)),
+    filter_options: {
+      years: [...new Set(MOCK_HISTORY.map(row => new Date(row.released_at).getFullYear()))].sort((a, b) => b - a),
+      period_codes: MOCK_HISTORY.slice(0, 120).map(row => row.period_code),
+    },
   })
 }
 
@@ -76,20 +79,23 @@ export async function mockGetAdvancedStats(params: Record<string, any> = {}) {
   return delay(advancedStats(params))
 }
 
-export async function mockGetAiPrediction(locale?: string) {
+export async function mockGetDemoCombinations(locale?: string) {
   const english = locale === 'en' || locale === 'en-US'
+  const simplified = locale === 'sc' || locale === 'zh-CN'
   const reasons = ['Balanced sample across ranges', 'High and low frequency sample', 'Interval comparison sample', 'Adjacent and scattered sample', 'Fixed control sample']
-  return delay({ recommendations: MOCK_AI_PREDICTION.recommendations.map((r, i) => ({
-    ...r,
-    reason: english ? `${reasons[i]} (demo data, not a prediction)` : r.reason,
-  })) })
-}
-
-export async function mockGetLuckyNumber(locale?: string) {
-  if (locale === 'en' || locale === 'en-US') {
-    return delay({ ...MOCK_LUCKY_NUMBER, tags: ['Frequency sample', 'Balanced ranges', 'Adjacent sample'], reason: 'Fixed sample for portfolio demonstration only; not a prediction.' })
-  }
-  return delay({ ...MOCK_LUCKY_NUMBER, reason: '????????????????????????????' })
+  const featured = english
+    ? { ...MOCK_LUCKY_NUMBER, tags: ['Frequency sample', 'Balanced ranges', 'Adjacent sample'], reason: 'Fixed sample for portfolio demonstration only; not a prediction.' }
+    : { ...MOCK_LUCKY_NUMBER, reason: simplified ? '固定样例，仅供作品展示，不是预测。' : '固定樣例，僅供作品展示，不是預測。' }
+  return delay({
+    source: 'fixed_demo',
+    is_generated: false,
+    generated_at: Date.parse('2026-09-17T12:00:00+08:00'),
+    featured,
+    items: MOCK_AI_PREDICTION.recommendations.map((item, index) => ({
+      ...item,
+      reason: english ? `${reasons[index]} (demo data, not a prediction)` : item.reason,
+    })),
+  })
 }
 
 export async function mockGetNumberMiss(params: Record<string, any> = {}) {
@@ -104,10 +110,7 @@ export async function mockGetArticles(params: Record<string, any> = {}, lang?: s
     const cat = String(params.category)
     list = list.filter(a =>
       a.category_slug === cat
-      || a.parent_route === cat
-      || (cat === 'lottery-teach' && a.parent_route === 'education')
-      || (cat === 'ai-predict' && a.parent_route === 'analysis')
-      || (cat === 'news-story' && a.parent_route === 'story'),
+      || a.parent_route === cat,
     )
   }
 
@@ -117,7 +120,7 @@ export async function mockGetArticles(params: Record<string, any> = {}, lang?: s
     .slice(start, start + pageSize)
     .map(a => pickLocalizedArticle(a, lang || params.lang))
 
-  // ??? SuccessEnvelope ?????????????????? items?
+  // 资讯接口保持统一成功外壳，页面只通过 API 客户端解包。
   return delay({
     code: 0,
     msg: 'ok',
@@ -155,7 +158,7 @@ export async function mockGetProse() {
   return delay(MOCK_PROSE)
 }
 
-/** ? Nitro ??????? */
+/** Nitro 与客户端共用的 Mock 路由分发。 */
 export async function mockHandleApi(path: string, query: Record<string, any> = {}) {
   const withoutQuery = path.split('?')[0] || path
   const clean = withoutQuery.replace(/^\/api\/?/, '').replace(/\/$/, '')
@@ -171,10 +174,8 @@ export async function mockHandleApi(path: string, query: Record<string, any> = {
     return mockGetAnalysis(query)
   if (clean === 'advanced-stats' || clean === 'advanced_stats')
     return mockGetAdvancedStats(query)
-  if (clean === 'ai-prediction' || clean === 'ai_prediction')
-    return mockGetAiPrediction(lang)
-  if (clean === 'lucky-number' || clean === 'lucky_number')
-    return mockGetLuckyNumber(lang)
+  if (clean === 'demo-combinations' || clean === 'demo_combinations')
+    return mockGetDemoCombinations(lang)
   if (clean === 'number-miss' || clean === 'number_miss')
     return mockGetNumberMiss(query)
   if (clean === 'article-ids' || clean === 'article_ids')

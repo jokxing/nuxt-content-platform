@@ -18,8 +18,8 @@
 
 | 原业务 | 通用映射 | 备注 |
 | --- | --- | --- |
-| 开奖结果 / 号码球 | 期次数据发布 / 数据项编号 | 保留 BallNumber 交互与字段兼容，文案逐页替换 |
-| 历史开奖 | 历史记录 | 统计模块 8 |
+| 数据发布结果 / 号码球 | 期次数据发布 / 数据项编号 | 保留 BallNumber 交互与字段兼容，文案逐页替换 |
+| 历史数据发布 | 历史记录 | 统计模块 8 |
 | 冷热分析 | 频次与分布 | 模块 9 |
 | 号码遗漏 | 间隔指标 | 模块 10 |
 | 进阶统计 | 组合与占比统计 | 模块 11 |
@@ -42,9 +42,9 @@
 | 分类文章详情 | `app/pages/news/[category]/article/[id].vue` | 业务页 | **已替换**（2.2-5）：Mock 详情 + 讯览 SEO；列表进本路由 | canonical |
 | 旧详情 | `app/pages/news/detail/[id].vue` | 兼容入口 | **已改为跳转**（2.2-6）：replace → 分类 article；不删除 | 预渲染保留 `/news/detail/101` 样例 |
 | 统计容器 | `app/pages/statistics/index.vue` + `type/[id].vue` 外壳 | 容器 | **已替换**（2.2-7 / 2.2-12 复核） | 入口重定向；Tab/SEO/非法 type；modules 见下行 |
-| 历史/冷热/图表/进阶 | `statistics/modules/*.vue` | 有价值数据展示 | **四模块已替换**（2.2-8～11） | 均 `buildApiUrl('/api/...')`；`zodiac_*` 字段名保留，标签为 G01–G12 |
+| 历史/冷热/图表/进阶 | `statistics/modules/*.vue` | 有价值数据展示 | **四模块已替换**（2.2-8～11） | 均 `buildApiUrl('/api/...')`；`legacy-group_*` 字段名保留，标签为 G01–G12 |
 | 统计类型页 | `app/pages/statistics/type/[id].vue` | 业务页 | **已复核**（2.2-12）：复用脱敏模块；type 1–3；三语 SEO；非法回退 | Tab 标题 computed；面包屑带语言前缀 |
-| 选择工具 | `app/pages/pick/index.vue` | 业务页 | **已替换**（2.2-13）：讯览 SEO/FAQ；Mock 推荐组合；重新生成保留 | `$fetch` `/api/ai-prediction` |
+| 选择工具 | `app/pages/pick/index.vue` | 业务页 | **已替换**（2.2-13）：讯览 SEO/FAQ；Mock 推荐组合；重新生成保留 | `$fetch` `/api/legacy-analysision` |
 | 404 | `app/pages/[...all].vue` | 兜底 | **已替换**（2.2-14）：真实 HTTP 404；讯览品牌；返回/首页带语言前缀 | 布局 `layouts/404.vue` |
 | GA 调试 | `app/pages/ga-test.vue` | 调试页 | **已删除**（2.2-15）：无导航引用；含旧 Measurement ID | `/ga-test` 现走 404 兜底；`useGoogleAnalytics`/插件仍为 no-op |
 
@@ -63,7 +63,7 @@
 | 启动初始化 | `app/app.vue` | SSR+CSR 调 `getApiInfo` | 现打本地 Mock |
 | 硬编码外网 | `home/modules/recommend-articles.vue`、`news/modules/{teaching,forecasting,news-story}.vue` | 绝对 URL 拉文章 | **已改**为 `/api/articles` |
 | 页脚外链 | `app/components/AppFooter.vue` | 原注册页外链 | **已改**为站内 `/pick` |
-| Store | `app/stores/{api,lottery,prose}.ts` | 存开奖/端点 | **保留结构**，数据来自 Mock |
+| Store | `app/stores/{api,legacy-domain,prose}.ts` | 存数据发布/端点 | **保留结构**，数据来自 Mock |
 
 Mock 实现：
 
@@ -163,7 +163,7 @@ Mock 实现：
 - `home/index.vue`：去掉原电话与搜索 schema、调试日志、死倒计时代码；SEO `noindex`
 - 倒计时使用 `MOCK_CLOCK_ISO`（Mock 开启时），避免 SSR/CSR 水合不一致
 - 模块空态/失败态走 i18n；推荐更新时间用 Mock 时钟
-- 验证：`GET /` 200；标题/描述含訊覽；页面无「六合彩/开奖/心水/Mark Six」；`/zh-CN` `/en-US` 200
+- 验证：`GET /` 200；标题/描述含訊覽；页面无「旧业务品牌/数据发布/心水/旧品牌」；`/zh-CN` `/en-US` 200
 - 未改资讯页及其它 2.2 项；布局 `site.name` 缺失警告、logo/素材仍待收尾
 
 ---
@@ -275,7 +275,7 @@ Mock 实现：
 
 - 无效组件/图片：检索自动组件标签、import、资源字符串后，人工查看并删除 NowPlay.vue、public/images/playnow.png、public/icon-16x16.png。未按文件名批量删除其余图片，也未声称全量图片 OCR。
 - 统计清理：首页唯一 GA 调用本来是 no-op；删除该调用、useGoogleAnalytics.ts、google-analytics.client.ts 和 types/gtag.d.ts。无第三方统计加载。
-- 命名：新增 api/models.ts 转换 next_draw_* / next_jackpot 与 zodiac_distribution，页面改用 nextRelease/target/group_distribution；useLotteryStore 改为 useDatasetStore，删除无消费者 latestResult 状态及乱码注释；高级统计内部与翻译 key 改为 group，底栏改为体验工具/Try Tools，仍跳转本地 pick。
+- 命名：新增 api/models.ts 转换 next_draw_* / next_target 与 legacy_group_distribution，页面改用 nextRelease/target/group_distribution；useLegacyStore 改为 useDatasetStore，删除无消费者 latestResult 状态及乱码注释；高级统计内部与翻译 key 改为 group，底栏改为体验工具/Try Tools，仍跳转本地 pick。
 - 兼容边界：现有 API draw_*、category_slug 等仍保留契约含义，不做破坏性全局替换。转换层是通用模型入口，不能宣称所有旧字段名已消失。
 - 依赖：删除 nuxt-gtag、sitemap、node-fetch 三个无使用的直接依赖并同步锁文件。发现全局 pnpm 版本与项目不同，改用 corepack pnpm 10.11.0；解析时 Vue 曾升到 3.5.21，随后显式固定回原版本 3.5.16。最终 frozen-lockfile + offline + ignore-scripts 安装通过，无需下载；生产构建另行运行，未靠跳过脚本冒充构建验证。
 - 部署：统一 build/start，删除两个重复 build 别名及纯静态 generate 命令。Dockerfile 改为 Node 24 双阶段、固定 pnpm、非 root、生产环境/端口/健康检查及 SITE_URL；.dockerignore 排除环境文件、缓存和日志。具体步骤见 DEPLOYMENT.md。未安装 Docker，本机无 CLI/daemon，镜像构建与运行未验证。

@@ -1,6 +1,6 @@
 <!--
   数据项编号展示（原 BallNumber API 兼容）
-  扁平圆角标签 + 左侧色条，避免彩票球体联想。
+  扁平圆角数据标签，避免原三维球体的业务联想。
   <BallNumber :number="12" />
   <BallNumber :number="7" is-special />
   <BallNumber :number="18" variant="solid" :size="32" />

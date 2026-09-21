@@ -48,9 +48,9 @@ const { data: articles, error, pending } = await useAsyncData(() => `teaching-ar
     // 独立路由，传递父分类
     category = NEWS_CATEGORIES.getParentCategory(routeCategory)
 
-    // 如果父分类为空，尝试直接使用 'lottery-teach'
+    // 未识别路由时使用当前模块的规范父分类。
     if (!category) {
-      category = 'lottery-teach'
+      category = 'education'
     }
   }
 

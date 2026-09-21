@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * 智能推荐组合 / 筛选工具（2.2-13）
- * BUSINESS_MAPPING.aiPrediction；刷新固定示例，Mock 固定可复现
+ * 固定组合筛选工具；刷新只重新请求同一版本样例。
  */
 import { useCurrentDomain } from '~/composables/useCurrentDomain'
 import { DEMO_BRAND } from '~/mock/brand'
@@ -14,8 +14,8 @@ interface AiRecommendation {
   tags?: string[]
 }
 
-interface AiPredictionResponse {
-  recommendations: AiRecommendation[]
+interface DemoCombinationsResponse {
+  items: AiRecommendation[]
 }
 
 const { locale, t } = useI18n()
@@ -139,17 +139,17 @@ definePageMeta({
 })
 
 const { data: predictions, error, pending, refresh } = await useAsyncData(
-  () => `aiPredictions-${locale.value}`,
+  () => `demoCombinations-${locale.value}`,
   async () => {
     try {
-      const data = await api.get<AiPredictionResponse>('/api/ai-prediction', {
+      const data = await api.get<DemoCombinationsResponse>('/api/demo-combinations', {
         params: { lang: locale.value },
       })
 
-      if (!data?.recommendations || !Array.isArray(data.recommendations))
+      if (!data?.items || !Array.isArray(data.items))
         throw createError({ statusCode: 500, statusMessage: t('pick.fetch_failed') })
 
-      return data.recommendations.map(item => ({
+      return data.items.map(item => ({
         numbers: item.numbers,
         reason: item.reason,
       }))

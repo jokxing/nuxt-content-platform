@@ -32,7 +32,7 @@ export type ArticleSeed = {
 
 export const CATEGORY_SEEDS = [
   {
-    slug: 'how-to-play',
+    slug: 'getting-started',
     parentRoute: 'education',
     sortOrder: 1,
     names: { 'zh-HK': '新手指南', 'zh-CN': '新手指南', 'en-US': 'Beginner Guide' },
@@ -44,13 +44,13 @@ export const CATEGORY_SEEDS = [
     names: { 'zh-HK': '進階技巧', 'zh-CN': '进阶技巧', 'en-US': 'Advanced Tips' },
   },
   {
-    slug: 'play-desc',
+    slug: 'feature-notes',
     parentRoute: 'education',
     sortOrder: 3,
     names: { 'zh-HK': '功能說明', 'zh-CN': '功能说明', 'en-US': 'Feature Notes' },
   },
   {
-    slug: 'this-predict',
+    slug: 'current-insights',
     parentRoute: 'analysis',
     sortOrder: 1,
     names: { 'zh-HK': '本期分析', 'zh-CN': '本期分析', 'en-US': 'Current Analysis' },
@@ -62,19 +62,19 @@ export const CATEGORY_SEEDS = [
     names: { 'zh-HK': '往期回顧', 'zh-CN': '往期回顾', 'en-US': 'Past Review' },
   },
   {
-    slug: 'tema-rule',
+    slug: 'metric-rules',
     parentRoute: 'analysis',
     sortOrder: 3,
     names: { 'zh-HK': '指標規則', 'zh-CN': '指标规则', 'en-US': 'Metric Rules' },
   },
   {
-    slug: 'lottery-news',
+    slug: 'platform-updates',
     parentRoute: 'story',
     sortOrder: 1,
     names: { 'zh-HK': '平台動態', 'zh-CN': '平台动态', 'en-US': 'Platform Updates' },
   },
   {
-    slug: 'win-story',
+    slug: 'user-stories',
     parentRoute: 'story',
     sortOrder: 2,
     names: { 'zh-HK': '用戶故事', 'zh-CN': '用户故事', 'en-US': 'User Stories' },
@@ -91,7 +91,7 @@ export const ARTICLE_SEEDS: ArticleSeed[] = [
   {
     id: 101,
     slug: 'how-to-read-dashboard',
-    categorySlug: 'how-to-play',
+    categorySlug: 'getting-started',
     author: 'ContentPulse Editor',
     coverImage: '/logo.svg',
     publishedAtShanghai: '2026-09-10 10:00:00',
@@ -145,7 +145,7 @@ export const ARTICLE_SEEDS: ArticleSeed[] = [
   {
     id: 104,
     slug: 'current-period-notes',
-    categorySlug: 'this-predict',
+    categorySlug: 'current-insights',
     author: 'Insights Desk',
     coverImage: '/logo.svg',
     publishedAtShanghai: '2026-09-13 13:00:00',
@@ -163,7 +163,7 @@ export const ARTICLE_SEEDS: ArticleSeed[] = [
   {
     id: 105,
     slug: 'platform-update-notes',
-    categorySlug: 'lottery-news',
+    categorySlug: 'platform-updates',
     author: 'News Desk',
     coverImage: '/logo.svg',
     publishedAtShanghai: '2026-09-14 14:00:00',

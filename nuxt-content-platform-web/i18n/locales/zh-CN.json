@@ -43,17 +43,17 @@
   "home": {
     "latest_result": {
       "title": "最新期次数据",
-      "winning_numbers": "数据项编号",
-      "draw_number": "期次编号",
-      "draw_date": "发布日期",
+      "dataset_values": "数据项编号",
+      "period_code": "期次编号",
+      "released_at": "发布日期",
       "data_updated_at": "数据更新时间",
-      "total_investment": "发布总量",
-      "first_prize": "一档指标",
-      "second_prize": "二档指标",
-      "third_prize": "三档指标",
-      "winners": "项"
+      "total_volume": "发布总量",
+      "tier_one": "一档指标",
+      "tier_two": "二档指标",
+      "tier_three": "三档指标",
+      "item_count": "项"
     },
-    "next_draw": {
+    "next_release": {
       "title": "下期发布倒计时",
       "draw_time": "计划发布时间",
       "period": "{period}",
@@ -63,7 +63,7 @@
       "hours": "时",
       "minutes": "分",
       "seconds": "秒",
-      "jackpot": "目标指标值"
+      "target_metric": "目标指标值"
     },
     "recommend": {
       "numbers_title": "智能推荐组合",
@@ -247,13 +247,13 @@
       "special_pattern": "指标规律"
     },
     "story": {
-      "lottery_news": "平台动态",
-      "winning_stories": "案例分享",
+      "platform_updates": "平台动态",
+      "user_stories": "案例分享",
       "activity_news": "活动快讯"
     },
     "teaching": {
       "beginner_guide": "新手指南",
-      "betting_skills": "进阶技巧",
+      "advanced_tips": "进阶技巧",
       "game_rules": "功能说明"
     },
     "fetch_failed": "获取文章失败，请稍后重试",
@@ -396,7 +396,7 @@
       "description": "浏览讯览演示站的指南、分析与平台动态文章。分类与文章 ID 固定 Mock，仅供作品展示。",
       "keywords": "讯览, 资讯, 指南, 分析, 动态, ContentPulse"
     },
-    "story-winning": {
+    "story-users": {
       "title": "讯览资讯｜指南 · 分析 · 动态（演示）",
       "description": "浏览讯览演示站的指南、分析与平台动态文章。分类与文章 ID 固定 Mock，仅供作品展示。",
       "keywords": "讯览, 资讯, 指南, 分析, 动态, ContentPulse"
@@ -576,7 +576,7 @@
         "description": "讯览演示站平台动态专题：版本与内容更新说明（Mock）。"
       }
     },
-    "news-story-winning": {
+    "news-story-users": {
       "title": "讯览｜案例分享（演示）",
       "description": "讯览演示站案例分享专题：固定 Mock 文章，仅供作品展示。",
       "keywords": "讯览, 案例分享, 演示",

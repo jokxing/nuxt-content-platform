@@ -3,7 +3,7 @@ import { positiveInteger } from './parameters'
 
 type Row = typeof MOCK_HISTORY[number]
 export function numbers(row: Row) {
-  return [row.num1, row.num2, row.num3, row.num4, row.num5, row.num6, row.special_number]
+  return [...row.values, row.extra_value]
 }
 
 // 统计从同一份历史样本计算，返回实际窗口大小，避免请求期数超过样本时产生误导。
@@ -84,7 +84,7 @@ export function advancedStats(params: Record<string, unknown>) {
   return {
     ...meta,
     tail_distribution: tail,
-    zodiac_distribution: groups,
+    group_distribution: groups,
     odd_even_ratio: { odd_count: odd, even_count: total - odd, odd_ratio: ratio(odd, total), even_ratio: ratio(total - odd, total) },
     consecutive_analysis: {
       consecutive_count: consecutiveCount,
