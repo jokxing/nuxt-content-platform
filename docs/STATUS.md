@@ -1086,3 +1086,23 @@ Git 状态：跳过
 - **验证**：后端 typecheck（应用与 seed）、lint、OpenAPI（11 paths）、单元测试 28、集成测试 30、种子不变量、数据库 CHECK 全通过；前端 typecheck、lint、Mock 模式生产构建通过，SEO 产物审计 66/66 通过。构建产物完成后 Nitro 进程仍未自行退出，已手动结束。
 - **限制**：完整 `prisma generate` 在 Windows 上仍因正在运行的 Node 进程占用 query engine DLL 报 EPERM；生成过程已更新 Client，所有数据库集成测试随后正常通过。未执行生产构建，未 commit/push。
 - **下一步：B8.8 前后端统计联调**，严格以当前 OpenAPI 与 STATISTICS_CONTRACT 为准，不恢复旧兼容字段。
+
+## 2026-09-21 — B8.8 统计前后端联调
+
+- Nitro 白名单增加 `latest`、`history`、`analysis`、`advanced-stats`、`number-miss`、`demo-combinations`。只转发对应查询键，不转发 Cookie/Authorization，未知路径不代理。`NUXT_CONTENT_API_USE_REAL=true` 时上游失败不回退 Mock。
+- 统计 Mock 改为 `{ code: 0, msg: "ok", data }`。页面仍只通过 `useContentApi` 解包。共享 DTO 使用 `period_code`、`released_at`、`values`、`extra_value`、`next_release`、`group_distribution`、`filter_options.period_codes/years` 和 `demo-combinations` 的 `featured/items`、`is_generated=false`。
+- `released_at`、`scheduled_at`、`generated_at` 经 `publishTime` 按当前语言和 `Asia/Hong_Kong` 展示。首页与工具页标明固定样例。历史筛选继续只读接口里的 `filter_options`。
+- **验证**：后端 typecheck、lint、OpenAPI（11 paths）、单元测试 28、集成测试 30 通过。`tsc -p tsconfig.build.json` 通过。完整 `pnpm build` 仍在 `prisma generate` 因运行中的 Node 占用 query engine DLL 报 EPERM，未停止正在运行的后端进程。
+- 前端 typecheck、变更文件 lint、`scripts/check-mock.ts` 通过。Mock 模式与真实模式生产构建均成功。真实模式（`http://localhost:3677`，上游 `127.0.0.1:4000`）确认 latest 的 `next_release=null` 来自后端而非带计划的 Mock；历史按年份与期次筛选并分页；三个统计接口返回中性字段；tc/sc/en 固定样例文案不同且 `is_generated=false`；首页、历史页和工具页 SSR 可见固定样例标记。未列入白名单的 `/api/secret-path` 返回 404，未转发到 Express。
+- 联调后已把内容目录快照恢复为 Mock，避免默认离线启动因快照来源不一致而失败。当前 `.output` 是真实模式构建产物。
+- 未进入 B9、认证、发布或部署。未 commit/push。
+
+## 2026-09-21 — B8.8.1 联调收尾与构建产物复核
+
+- 首页倒计时改用当前时间判断；`next_release=null` 或计划时间已过时不再显示空白/负向倒计时卡片。截图中的 `2026-09-20` 计划在 `2026-09-21` 不再展示；同时删除已无用途的公开 Mock 时钟开关。
+- Nitro 代理现在拒绝白名单外 query，避免静默删除参数后得到与 Express 直连不同的结果；仍拒绝重复、数组及空参数。
+- 更新前端 `.env.example`，明确真实模式覆盖资讯与统计固定白名单，失败不回退 Mock。
+- SEO 产物审计增加 Nuxt 正文与 `data-ssr=true` 标记检查，不再只检查 HTML 文件存在及 head 标签。
+- **验证**：前端 typecheck、lint、Mock 契约检查通过；Mock 与真实模式均完成生产构建，各预渲染 75 条路由。真实构建从 MySQL 内容目录取得 5 篇文章。
+- **路由/SEO**：sitemap 共 66 条正式 URL，全部有预渲染 HTML、Nuxt SSR 标记、canonical、四个 hreflang 和合法 JSON-LD；其余 9 条为 `/news`、`/statistics` 及旧详情的三语重定向/兼容入口，按设计不进 sitemap。首页、三个统计页、资讯列表、文章详情均抽查到服务端渲染数据。
+- 构建完成后 Nitro 在当前 Windows 环境仍不自动退出；看到 `Nuxt Nitro server built` 后手动结束。依赖数据陈旧提示不影响本次产物正确性。

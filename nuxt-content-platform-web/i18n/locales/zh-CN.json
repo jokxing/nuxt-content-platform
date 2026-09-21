@@ -71,6 +71,7 @@
       "update_time": "更新时间",
       "view_more": "查看更多文章",
       "recommendation_explanation": "推荐说明",
+      "fixed_sample": "固定样例",
       "fetch_failed": "获取推荐组合失败"
     },
     "history": {
@@ -224,7 +225,7 @@
   },
   "pick": {
     "prediction_title": "智能推荐组合（演示）",
-    "demo_note": "以下为固定 Mock 组合，仅供作品展示，非真实预测。",
+    "demo_note": "以下为固定样例，仅供作品展示，不是预测。",
     "refresh_example": "刷新示例",
     "ai_analyzing": "生成推荐中…",
     "group_label": "第 {n} 组",

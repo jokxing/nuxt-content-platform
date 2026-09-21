@@ -71,6 +71,7 @@
       "update_time": "Updated",
       "view_more": "More articles",
       "recommendation_explanation": "Recommendation Notes",
+      "fixed_sample": "Fixed sample",
       "fetch_failed": "Failed to load recommendations"
     },
     "history": {
@@ -224,7 +225,7 @@
   },
   "pick": {
     "prediction_title": "Smart recommendation sets (demo)",
-    "demo_note": "Fixed mock combinations for portfolio display only — not real predictions.",
+    "demo_note": "Fixed sample for portfolio display only — not a prediction.",
     "refresh_example": "Refresh example",
     "ai_analyzing": "Generating…",
     "group_label": "Set {n}",

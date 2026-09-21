@@ -39,3 +39,17 @@ export interface AdvancedStatsPayload {
   }
   top_combinations?: { combination: number[], frequency: number }[]
 }
+
+export interface DemoCombinationItem {
+  numbers: number[]
+  reason: string
+  tags: string[]
+}
+
+export interface DemoCombinationsDto {
+  source: 'fixed_demo'
+  is_generated: false
+  generated_at: number
+  featured: DemoCombinationItem
+  items: DemoCombinationItem[]
+}

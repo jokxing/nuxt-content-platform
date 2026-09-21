@@ -1,4 +1,4 @@
-/** 后端 SuccessEnvelope / ErrorEnvelope 解包；Mock 统计等无外壳响应原样返回。 */
+/** 后端 SuccessEnvelope / ErrorEnvelope 解包。统计 Mock 同样使用成功外壳。 */
 
 export interface ApiErrorBody {
   code: number
@@ -31,7 +31,7 @@ export function isApiEnvelope(value: unknown): value is { code: number, msg?: st
   return isRecord(value) && typeof value.code === 'number'
 }
 
-/** code=0 提取 data；非零抛出可判断错误；无外壳则原样返回（统计 Mock）。 */
+/** code=0 提取 data；非零抛出可判断错误；无外壳则原样返回（如本地目录探测）。 */
 export function unwrapApiPayload<T = unknown>(raw: unknown): T {
   if (!isApiEnvelope(raw))
     return raw as T

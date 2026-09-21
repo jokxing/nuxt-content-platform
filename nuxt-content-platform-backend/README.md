@@ -76,4 +76,4 @@ Prisma 已含 `DatasetPeriod` / `DatasetSchedule`。**已实现** latest、histo
 ## 已验证 / 未完成
 
 - 已验证：B1～B7.4、B8.1～B8.7。
-- 未完成：统计前后端联调（B8.8）、认证/发布等。
+- 未完成：认证/发布等。统计查询（B8.8）已可由 Nitro 白名单代理联调。

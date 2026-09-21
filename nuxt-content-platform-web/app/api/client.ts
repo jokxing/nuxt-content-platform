@@ -27,7 +27,7 @@ export function createContentApi(transport: ApiTransport) {
       // 每次复制查询参数，避免语言和筛选条件污染后续 SSR 请求。
       try {
         const raw = await transport(path, { method: 'GET', query: { ...options.params }, retry: 0, timeout: 10000 })
-        // 统一检查数字 code：成功提取 data；统计等无外壳 Mock 原样返回。页面禁止各自解包。
+        // 统一检查数字 code：成功提取 data。页面禁止各自解包。
         return unwrapApiPayload<T>(raw)
       }
       catch (err) {

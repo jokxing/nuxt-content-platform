@@ -1,6 +1,6 @@
 # 后端接口契约：资讯与统计查询
 
-日期：2026-09-21。状态：第一批五个资讯查询接口与 B8.1～B8.7 统计查询、固定演示组合均已实现。统计契约已在 B8.8 前改为中性字段；前端统计联调尚未开始。机器可读契约为 [openapi.json](./openapi.json)，统计公式与模型见 [STATISTICS_CONTRACT.md](./STATISTICS_CONTRACT.md)。
+日期：2026-09-21。状态：第一批五个资讯查询接口与 B8.1～B8.8 统计查询、固定演示组合均已实现，并已通过 Nitro 白名单代理联调。机器可读契约为 [openapi.json](./openapi.json)，统计公式与模型见 [STATISTICS_CONTRACT.md](./STATISTICS_CONTRACT.md)。
 
 ## 范围和衔接
 
@@ -8,7 +8,7 @@
 
 依据：前端 app/mock/index.ts、app/mock/data/catalog.ts、app/api/client.ts、server/api/[...].ts、新闻页面及 scripts/content-directory.ts。列表和详情字段沿用现有语义；响应统一为 SuccessEnvelope / ErrorEnvelope（B3.1）。新分类/目录接口不代表前端已接入。
 
-后端开发地址拟为 http://127.0.0.1:4000。Nuxt 使用同源 /api，由 Nitro 在 `NUXT_CONTENT_API_USE_REAL=true` 时按白名单代理资讯路径到 Express。服务端私有配置 `NUXT_CONTENT_API_BASE_URL`，不进入 public runtimeConfig。第一批仅资讯切换，统计仍为 Mock。上游失败返回错误，禁止静默回退 Mock。
+后端开发地址拟为 http://127.0.0.1:4000。Nuxt 使用同源 /api，由 Nitro 在 `NUXT_CONTENT_API_USE_REAL=true` 时按白名单代理资讯与统计路径到 Express。服务端私有配置 `NUXT_CONTENT_API_BASE_URL`，不进入 public runtimeConfig。不转发认证头，不允许任意路径。上游失败返回错误，禁止静默回退 Mock。
 
 ## 通用规则
 
@@ -57,7 +57,7 @@
 | GET /api/number-miss | period | 1～49 当前/最大/平均遗漏、遗漏众数和连续命中 | **已实现** |
 | GET /api/demo-combinations | lang | 固定且可复现的 featured + 5 组样例 | **已实现** |
 
-以上统计与固定样例接口均已实现。固定组合不是预测结果。完整参数、空数据行为、稳定排序、公式及模型以 [STATISTICS_CONTRACT.md](./STATISTICS_CONTRACT.md) 为准。前端统计路径仍待 B8.8 联调。
+以上统计与固定样例接口均已实现，并已接入 Nitro 白名单代理。固定组合不是预测结果。完整参数、空数据行为、稳定排序、公式及模型以 [STATISTICS_CONTRACT.md](./STATISTICS_CONTRACT.md) 为准。
 
 category 支持父分类 education/analysis/story 及下表九种子类。不传则全部；未知值 400。第一版不支持 q、任意排序和新分类写入。
 

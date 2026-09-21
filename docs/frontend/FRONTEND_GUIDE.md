@@ -2,7 +2,7 @@
 
 这是一个使用 Nuxt 4、Vue 3、TypeScript、Vant 和 Pinia 的多语言资讯与数据展示项目。可以先运行前端，再沿下面五个主题阅读代码；启动步骤见 [前端 README](../../nuxt-content-platform-web/README.md)。
 
-经历边界：在职阶段独立完成前端并与后端同事联调；当前展示版在离职后进行脱敏与个人改造。第一批资讯查询后端已可联调（Express + Prisma）；默认仍可用本地 Nitro Mock。统计、认证与内容发布闭环尚未接入。组合工具展示固定示例，不是 AI 推理或真实预测。
+经历边界：在职阶段独立完成前端并与后端同事联调；当前展示版在离职后进行脱敏与个人改造。资讯与统计查询已可联调（Express + Prisma）；默认仍可用本地 Nitro Mock。认证与内容发布闭环尚未接入。组合工具展示固定示例，不是 AI 推理或真实预测。
 
 ## 五分钟阅读路线
 
@@ -20,7 +20,7 @@
 
 阅读：[Nuxt 插件](../../nuxt-content-platform-web/app/plugins/content-api.ts) → [客户端工厂](../../nuxt-content-platform-web/app/api/client.ts) → [页面获取入口](../../nuxt-content-platform-web/app/composables/useContentApi.ts)。
 
-页面在 setup 获取客户端，统一通过受限的本地 API 路径请求数据。客户端和 transport 在 Nuxt 插件内部创建，没有模块级可变客户端；SSR 相对路径由 Nitro 内部派发，浏览器使用同源请求。`useContentApi` 统一解包数字 `code`；资讯可在 `NUXT_CONTENT_API_USE_REAL=true` 时由 Nitro 代理到 Express（地址仅服务端私有配置），统计继续 Mock。
+页面在 setup 获取客户端，统一通过受限的本地 API 路径请求数据。客户端和 transport 在 Nuxt 插件内部创建，没有模块级可变客户端；SSR 相对路径由 Nitro 内部派发，浏览器使用同源请求。`useContentApi` 统一解包数字 `code`；资讯与统计可在 `NUXT_CONTENT_API_USE_REAL=true` 时由 Nitro 白名单代理到 Express（地址仅服务端私有配置，不转发认证头，上游失败不回退 Mock）。未列入白名单的路径继续 Mock。
 
 **问：为什么不直接导出一个全局客户端？**
 答：SSR 服务会处理多个用户请求。如果全局客户端将来保存认证头或可变配置，就可能串用。我把实例放在 Nuxt 插件内部创建，页面复用当前应用的客户端。

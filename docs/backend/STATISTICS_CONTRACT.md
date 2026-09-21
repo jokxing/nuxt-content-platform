@@ -1,6 +1,6 @@
 # 统计接口契约（B8）
 
-状态：B8.1～B8.7 已实现，B8.8 前端联调尚未开始。全部接口采用 `{ code, msg, data }` 成功外壳、数字业务码、13 位 Unix 毫秒时间戳及 `Route → Controller → Service → Prisma` 分层。
+状态：B8.1～B8.8 已实现。全部接口采用 `{ code, msg, data }` 成功外壳、数字业务码、13 位 Unix 毫秒时间戳及 `Route → Controller → Service → Prisma` 分层。前端统计 Mock 使用同一外壳，页面只经 `useContentApi` 解包；真实模式由 Nitro 白名单代理，失败不回退 Mock。
 
 ## 1. 数据模型
 
@@ -58,4 +58,4 @@
 - 最多读取 120 行后在纯函数中计算，暂不增加缓存、队列或预聚合表。
 - 三个统计接口保持独立；共享窗口查询和纯函数，不使用通用 Controller 工厂。
 - 集成测试使用高位探测 periodCode 并在结束后清理。
-- B8.8 统一前端 DTO、时间格式化和 Mock 成功外壳；历史筛选读取 `filter_options`。
+- B8.8 已统一前端 DTO、香港时区格式化和 Mock 成功外壳；历史筛选读取 `filter_options`；首页与工具页共用 `demo-combinations`。

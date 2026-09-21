@@ -41,6 +41,11 @@ for (const absoluteUrl of sitemapUrls) {
     continue
   }
 
+  if (!/<div id="__nuxt">[\s\S]+<\/div><\/div><div id="teleports">/.test(html))
+    failures.push(`${route}: prerendered HTML has no rendered Nuxt body`)
+  if (!/<script[^>]+data-nuxt-data="nuxt-app"[^>]+data-ssr="true"/.test(html))
+    failures.push(`${route}: Nuxt SSR payload marker missing`)
+
   const links = [...html.matchAll(/<link\b[^>]*>/g)].map(match => attributes(match[0]))
   const canonicals = links.filter(link => link.rel === 'canonical')
   if (canonicals.length !== 1 || canonicals[0].href !== `${siteOrigin}${route === '/' ? '/' : route}`)

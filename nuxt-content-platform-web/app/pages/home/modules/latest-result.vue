@@ -2,6 +2,7 @@
 import { computed, watch } from 'vue'
 import type { PropType } from 'vue'
 import type { LatestDatasetDto } from '~/api/models'
+import { formatHongKongDate, formatPublishDateForDisplay, hongKongWeekdayIndex } from '~/utils/publishTime'
 import { useDatasetStore } from '~/stores/dataset'
 
 const props = defineProps({
@@ -19,11 +20,18 @@ watch(() => props.result, (newResult) => {
     datasetStore.setRelease(newResult)
 }, { immediate: true })
 
+const localeTag = computed(() => locale.value === 'zh-CN' ? 'zh-CN' : locale.value === 'en-US' ? 'en-US' : 'zh-HK')
+
 const dataUpdateTime = computed(() => {
   if (!props.result?.released_at)
     return null
-  const localeTag = locale.value === 'zh-CN' ? 'zh-CN' : locale.value === 'en-US' ? 'en-US' : 'zh-HK'
-  return new Date(props.result.released_at).toLocaleString(localeTag, { timeZone: 'Asia/Hong_Kong' })
+  return formatPublishDateForDisplay(props.result.released_at, localeTag.value)
+})
+
+const releasedDateLabel = computed(() => {
+  if (!props.result?.released_at)
+    return ''
+  return `${formatHongKongDate(props.result.released_at, localeTag.value)}(${getDayOfWeek(props.result.released_at)})`
 })
 
 const numbers = computed(() => {
@@ -32,10 +40,9 @@ const numbers = computed(() => {
   return props.result.values
 })
 
-function getDayOfWeek(dateStr: any) {
-  const date = new Date(dateStr)
+function getDayOfWeek(timestamp: number) {
   const keys = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
-  return t(`weekdays.${keys[date.getDay()]}`)
+  return t(`weekdays.${keys[hongKongWeekdayIndex(timestamp)]}`)
 }
 </script>
 
@@ -77,7 +84,7 @@ function getDayOfWeek(dateStr: any) {
       />
       <VanCell
         :title="t('home.latest_result.released_at')"
-        :value="`${new Date(result.released_at).toLocaleDateString(locale)}(${getDayOfWeek(result.released_at)})`"
+        :value="releasedDateLabel"
       />
       <VanCell
         v-if="dataUpdateTime"

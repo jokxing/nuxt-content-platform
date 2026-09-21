@@ -1,15 +1,33 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 
-/** 仅允许资讯上游固定路径与查询键；不透传任意 URL 或认证头。 */
+/** 仅允许资讯与统计上游固定路径与查询键；不透传任意 URL 或认证头。 */
 const ALLOWED_QUERY: Record<string, readonly string[]> = {
   articles: ['lang', 'category', 'page', 'page_size'],
   categories: ['lang'],
   'content-directory': [],
+  latest: [],
+  history: ['page', 'page_size', 'year', 'period_code', 'number', 'periods'],
+  analysis: ['period'],
+  'advanced-stats': ['period'],
+  'number-miss': ['period'],
+  'demo-combinations': ['lang'],
 }
 
+const EXACT_UPSTREAM = new Set([
+  'articles',
+  'categories',
+  'content-directory',
+  'latest',
+  'history',
+  'analysis',
+  'advanced-stats',
+  'number-miss',
+  'demo-combinations',
+])
+
 export function matchContentUpstreamPath(cleanPath: string): { upstreamPath: string, queryKeys: readonly string[] } | null {
-  if (cleanPath === 'articles' || cleanPath === 'categories' || cleanPath === 'content-directory') {
+  if (EXACT_UPSTREAM.has(cleanPath)) {
     return { upstreamPath: `/api/${cleanPath}`, queryKeys: ALLOWED_QUERY[cleanPath]! }
   }
   const detail = cleanPath.match(/^articles\/(\d+)$/)
@@ -19,6 +37,10 @@ export function matchContentUpstreamPath(cleanPath: string): { upstreamPath: str
 }
 
 function pickAllowedQuery(query: Record<string, unknown>, allowed: readonly string[]): Record<string, string> {
+  const unknown = Object.keys(query).filter(key => !allowed.includes(key))
+  if (unknown.length > 0)
+    throw createError({ statusCode: 400, statusMessage: `Unsupported query parameter: ${unknown[0]}` })
+
   const out: Record<string, string> = {}
   for (const key of allowed) {
     const value = query[key]
@@ -35,7 +57,7 @@ function pickAllowedQuery(query: Record<string, unknown>, allowed: readonly stri
 }
 
 /**
- * 将资讯请求代理到 Express；失败明确抛错，不回退 Mock。
+ * 将白名单请求代理到 Express；失败明确抛错，不回退 Mock。
  * baseUrl / useReal 来自私有 runtimeConfig，不进入 public。
  */
 export async function proxyContentApi(

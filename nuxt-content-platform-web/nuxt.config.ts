@@ -22,8 +22,6 @@ export default defineNuxtConfig({
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3666',
       domain: process.env.NUXT_PUBLIC_DOMAIN || 'http://localhost:3666',
-      // 仅演示时钟；资讯是否走真实后端看私有 NUXT_CONTENT_API_USE_REAL。
-      useMock: process.env.NUXT_PUBLIC_USE_MOCK !== 'false',
     },
   },
 
@@ -132,7 +130,7 @@ export default defineNuxtConfig({
         '@intlify/shared',
       ],
     },
-    // /api 由 Nitro server/api 处理；资讯在 NUXT_CONTENT_API_USE_REAL 时服务端代理到 Express
+    // /api 由 Nitro server/api 处理；资讯与统计白名单在 NUXT_CONTENT_API_USE_REAL 时服务端代理到 Express
   },
 
   devtools: {

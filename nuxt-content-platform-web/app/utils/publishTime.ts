@@ -74,3 +74,24 @@ export function toSitemapLastmod(value: number | string): string {
     day: '2-digit',
   }).format(new Date(ms))
 }
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+
+/** 统计时间统一按当前语言与 Asia/Hong_Kong 展示，不使用运行环境本地时区。 */
+export function formatHongKongDate(value: number, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: 'Asia/Hong_Kong',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(value))
+}
+
+export function hongKongWeekdayIndex(value: number): number {
+  const label = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Hong_Kong',
+    weekday: 'short',
+  }).format(new Date(value))
+  const index = WEEKDAYS.indexOf(label as typeof WEEKDAYS[number])
+  return index >= 0 ? index : 0
+}

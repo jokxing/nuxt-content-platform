@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue'
-import { MOCK_CLOCK_ISO } from '~/mock/brand'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { formatPublishDateForDisplay } from '~/utils/publishTime'
 import { useDatasetStore } from '~/stores/dataset'
 import { calculateTimeDifference } from '~/utils/timezone'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const datasetStore = useDatasetStore()
-const runtimeConfig = useRuntimeConfig()
-
 const countdown = ref({
   days: 0,
   hours: 0,
@@ -15,23 +13,26 @@ const countdown = ref({
   seconds: 0,
 })
 
-/** Mock：从固定时钟起算，客户端每秒推进，SSR/首屏一致 */
-const mockElapsedMs = ref(0)
 let timer: ReturnType<typeof setInterval> | null = null
+const countdownVisible = ref(false)
 
-function getNowMs() {
-  if (runtimeConfig.public.useMock !== false)
-    return new Date(MOCK_CLOCK_ISO).getTime() + mockElapsedMs.value
-  return undefined
-}
-
+const scheduledLabel = computed(() => {
+  const scheduledAt = datasetStore.nextRelease?.scheduled_at
+  if (!scheduledAt)
+    return ''
+  const localeTag = locale.value === 'zh-CN' ? 'zh-CN' : locale.value === 'en-US' ? 'en-US' : 'zh-HK'
+  return formatPublishDateForDisplay(scheduledAt, localeTag)
+})
 function calculateCountdown() {
-  if (!datasetStore.nextReleaseDateTime)
+  if (!datasetStore.nextReleaseDateTime) {
+    countdownVisible.value = false
     return
+  }
 
-  const timeDiff = calculateTimeDifference(datasetStore.nextReleaseDateTime, getNowMs())
+  const timeDiff = calculateTimeDifference(datasetStore.nextReleaseDateTime)
 
   if (timeDiff.total <= 0) {
+    countdownVisible.value = false
     if (timer) {
       clearInterval(timer)
       timer = null
@@ -40,6 +41,7 @@ function calculateCountdown() {
     return
   }
 
+  countdownVisible.value = true
   countdown.value = {
     days: timeDiff.days,
     hours: timeDiff.hours,
@@ -52,19 +54,23 @@ function startCountdown() {
   calculateCountdown()
   if (timer)
     clearInterval(timer)
+  if (!countdownVisible.value)
+    return
   timer = setInterval(() => {
-    if (runtimeConfig.public.useMock !== false)
-      mockElapsedMs.value += 1000
     calculateCountdown()
   }, 1000)
 }
 
-watch(() => datasetStore.nextReleaseDateTime, (newVal) => {
-  if (newVal)
+watch(() => datasetStore.nextReleaseDateTime, () => {
+  if (datasetStore.nextReleaseDateTime) {
     startCountdown()
+  }
+  else if (timer) {
+    clearInterval(timer)
+    timer = null
+  }
 })
 
-// SSR / 首屏：用 Mock 时钟算出一致初值，避免水合闪烁
 if (datasetStore.nextReleaseDateTime)
   calculateCountdown()
 
@@ -82,7 +88,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <VanCellGroup class="!mt-10" inset>
+  <VanCellGroup v-if="countdownVisible" class="!mt-10" inset>
     <VanCell>
       <template #title>
         <div class="text-center w-full">
@@ -93,7 +99,7 @@ onUnmounted(() => {
           </div>
           <div class="text-xs text-gray-500 mb-4">
             {{ t('home.next_release.period_prefix') }}{{ datasetStore.nextRelease?.period_code }}{{ t('home.next_release.period_suffix') }}
-            {{ t('home.next_release.draw_time') }}: {{ datasetStore.nextReleaseDateTime }}
+            {{ t('home.next_release.draw_time') }}: {{ scheduledLabel }}
           </div>
           <div class="flex gap-4 items-center justify-center">
             <div class="flex items-center">

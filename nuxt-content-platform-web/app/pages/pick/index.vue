@@ -5,18 +5,10 @@
  */
 import { useCurrentDomain } from '~/composables/useCurrentDomain'
 import { DEMO_BRAND } from '~/mock/brand'
+import type { DemoCombinationsDto } from '~/api/models'
+import { formatPublishDateForDisplay } from '~/utils/publishTime'
 
 const api = useContentApi()
-
-interface AiRecommendation {
-  numbers: number[]
-  reason: string
-  tags?: string[]
-}
-
-interface DemoCombinationsResponse {
-  items: AiRecommendation[]
-}
 
 const { locale, t } = useI18n()
 const { domain, getFullUrl } = useCurrentDomain()
@@ -138,31 +130,31 @@ definePageMeta({
   i18n: 'menu.pick',
 })
 
-const { data: predictions, error, pending, refresh } = await useAsyncData(
+const { data: sample, error, pending, refresh } = await useAsyncData(
   () => `demoCombinations-${locale.value}`,
   async () => {
-    try {
-      const data = await api.get<DemoCombinationsResponse>('/api/demo-combinations', {
-        params: { lang: locale.value },
-      })
+    const data = await api.get<DemoCombinationsDto>('/api/demo-combinations', {
+      params: { lang: locale.value },
+    })
 
-      if (!data?.items || !Array.isArray(data.items))
-        throw createError({ statusCode: 500, statusMessage: t('pick.fetch_failed') })
+    if (!data?.items || !Array.isArray(data.items) || data.is_generated !== false || data.source !== 'fixed_demo')
+      throw createError({ statusCode: 500, statusMessage: t('pick.fetch_failed') })
 
-      return data.items.map(item => ({
-        numbers: item.numbers,
-        reason: item.reason,
-      }))
-    }
-    catch {
-      return []
-    }
+    return data
   },
   {
-    default: () => [] as { numbers: number[], reason: string }[],
-
+    default: () => null,
   },
 )
+
+const predictions = computed(() => sample.value?.items ?? [])
+
+const generatedLabel = computed(() => {
+  if (!sample.value?.generated_at)
+    return ''
+  const localeTag = locale.value === 'zh-CN' ? 'zh-CN' : locale.value === 'en-US' ? 'en-US' : 'zh-HK'
+  return formatPublishDateForDisplay(sample.value.generated_at, localeTag)
+})
 
 async function refreshExample() {
   loading.value = true
@@ -182,7 +174,8 @@ async function refreshExample() {
         {{ t('pick.prediction_title') }}
       </h5>
       <p class="pick_page__note">
-        {{ t('pick.demo_note') }}
+        {{ t('pick.demo_note') }} · is_generated={{ sample?.is_generated === false ? 'false' : '' }}
+        <span v-if="generatedLabel"> · {{ generatedLabel }}</span>
       </p>
       <VanButton
         size="small"

@@ -1,5 +1,5 @@
 /**
- * Nitro /api/**：资讯路径在 NUXT_CONTENT_API_USE_REAL 时代理到 Express；其余（含统计）继续 Mock。
+ * Nitro /api/**：资讯与统计白名单在 NUXT_CONTENT_API_USE_REAL 时代理到 Express；其余继续 Mock。
  * 上游失败不回退 Mock。私有 base URL 不进入 public runtimeConfig。
  */
 import { createError, defineEventHandler, getQuery } from 'h3'

@@ -8,7 +8,7 @@ export function numbers(row: Row) {
 
 // 统计从同一份历史样本计算，返回实际窗口大小，避免请求期数超过样本时产生误导。
 function windowRows(params: Record<string, unknown>) {
-  const requested = positiveInteger(params.period, 'period', 10)
+  const requested = positiveInteger(params.period, 'period', 10, 120)
   const rows = MOCK_HISTORY.slice(0, requested)
   return { rows, period: rows.length, requested_period: requested }
 }

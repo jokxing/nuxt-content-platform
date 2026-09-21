@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { HistoryPageDto } from '~/api/models'
+import { formatHongKongDate, hongKongWeekdayIndex } from '~/utils/publishTime'
 
 const api = useContentApi()
 
@@ -26,10 +27,14 @@ function goToStatistics() {
   router.push(`${lang}/statistics/type/2`)
 }
 
-function getDayOfWeek(dateStr: number) {
-  const date = new Date(dateStr)
+function getDayOfWeek(timestamp: number) {
   const keys = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
-  return t(`weekdays.${keys[date.getDay()]}`)
+  return t(`weekdays.${keys[hongKongWeekdayIndex(timestamp)]}`)
+}
+
+function formatReleasedAt(timestamp: number) {
+  const localeTag = locale.value === 'zh-CN' ? 'zh-CN' : locale.value === 'en-US' ? 'en-US' : 'zh-HK'
+  return formatHongKongDate(timestamp, localeTag)
 }
 </script>
 
@@ -65,7 +70,7 @@ function getDayOfWeek(dateStr: number) {
                   {{ t('home.next_release.period', { period: draw.period_code }) }}
                 </span>
                 <span class="text-xs text-gray-500">
-                  {{ new Date(draw.released_at).toLocaleDateString(locale) }}({{ getDayOfWeek(draw.released_at) }})
+                  {{ formatReleasedAt(draw.released_at) }}({{ getDayOfWeek(draw.released_at) }})
                 </span>
               </div>
 

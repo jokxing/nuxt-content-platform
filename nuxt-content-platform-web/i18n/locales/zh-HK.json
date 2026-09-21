@@ -71,6 +71,7 @@
       "update_time": "更新時間",
       "view_more": "查看更多文章",
       "recommendation_explanation": "推薦說明",
+      "fixed_sample": "固定樣例",
       "fetch_failed": "獲取推薦組合失敗"
     },
     "history": {
@@ -224,7 +225,7 @@
   },
   "pick": {
     "prediction_title": "智能推薦組合（演示）",
-    "demo_note": "以下為固定 Mock 組合，僅供作品展示，非真實預測。",
+    "demo_note": "以下為固定樣例，僅供作品展示，不是預測。",
     "refresh_example": "重新整理範例",
     "ai_analyzing": "生成推薦中…",
     "group_label": "第 {n} 組",

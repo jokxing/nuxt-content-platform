@@ -4,10 +4,11 @@
  * 历史筛选选项和列表数据均来自同一个接口快照。
  */
 import type { HistoryPageDto } from '~/api/models'
+import { formatHongKongDate } from '~/utils/publishTime'
 
 const api = useContentApi()
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const error = ref<string | null>(null)
 const currentPage = ref(1)
@@ -59,7 +60,7 @@ const { data: records, error: fetchError, pending } = await useAsyncData(
 
       const formattedRecords = result.items.map(item => ({
         id: item.period_code,
-        date: item.released_at,
+        date: formatHongKongDate(item.released_at, locale.value),
         numbers: item.values.map(formatNumber),
         special: formatNumber(item.extra_value),
       }))

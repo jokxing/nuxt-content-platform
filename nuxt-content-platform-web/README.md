@@ -1,6 +1,6 @@
 # 讯览 ContentPulse 前端演示
 
-Nuxt 4、Vue 3、TypeScript、Vant、Pinia 与三语内容展示。默认本地 Mock；资讯可经 Nitro 代理联调 Express（`NUXT_CONTENT_API_USE_REAL`），统计仍为 Mock。认证与发布闭环尚未接入。
+Nuxt 4、Vue 3、TypeScript、Vant、Pinia 与三语内容展示。默认本地 Mock；资讯与统计可经 Nitro 白名单代理联调 Express（`NUXT_CONTENT_API_USE_REAL`）。认证与发布闭环尚未接入。
 
 面试阅读入口：[前端导览与简短问答](../docs/frontend/FRONTEND_GUIDE.md)。按 API/SSR、路由与 sitemap、多语言 SEO、数据展示、脱敏清理五个主题提供源码入口。原在职职责为独立前端开发及后端联调，当前脱敏与个人扩展另行说明。
 
@@ -13,7 +13,7 @@ corepack pnpm dev
 
 默认端口 3666。变量见 `.env.example`，真实 `.env` 不提交。数据在 `app/mock`，`server/api` 为本地模拟接口，不提供真实认证或持久化。
 
-页面统一使用 `useContentApi()`，SSR 客户端按 Nuxt 实例隔离；响应统一解包数字 `code`。设计、清理依据、直连与代理差异见 [API_CLIENT.md](../docs/frontend/API_CLIENT.md)。`NUXT_PUBLIC_USE_MOCK` 只影响演示时钟；资讯真实上游用私有 `NUXT_CONTENT_API_USE_REAL` + `NUXT_CONTENT_API_BASE_URL`（见 `.env.example`）。
+页面统一使用 `useContentApi()`，SSR 客户端按 Nuxt 实例隔离；响应统一解包数字 `code`。设计、清理依据、直连与代理差异见 [API_CLIENT.md](../docs/frontend/API_CLIENT.md)。Mock / 真实上游由私有 `NUXT_CONTENT_API_USE_REAL` + `NUXT_CONTENT_API_BASE_URL` 控制（见 `.env.example`）。
 
 ## 验证与预览
 
