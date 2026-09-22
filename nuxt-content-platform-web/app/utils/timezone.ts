@@ -112,7 +112,8 @@ export function calculateTimeDifference(targetTime: string, nowMs?: number): {
   seconds: number
   total: number
 } {
-  const now = nowMs ?? getBeijingTimestamp()
+  // 时间戳表示绝对时刻，倒计时直接使用 Date.now；时区只影响展示格式。
+  const now = nowMs ?? Date.now()
   const target = new Date(targetTime).getTime()
   const diff = target - now
 

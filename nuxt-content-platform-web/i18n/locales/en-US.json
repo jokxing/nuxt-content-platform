@@ -63,7 +63,10 @@
       "hours": "h",
       "minutes": "m",
       "seconds": "s",
-      "target_metric": "Target Metric"
+      "target_metric": "Target Metric",
+      "waiting_title": "Waiting for the next release",
+      "waiting_description": "The next schedule is pending. The latest dataset is period {period}. Updates are checked automatically.",
+      "check_now": "Check now"
     },
     "recommend": {
       "numbers_title": "Smart Recommendation Set",

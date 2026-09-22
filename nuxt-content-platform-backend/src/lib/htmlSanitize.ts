@@ -76,17 +76,20 @@ export function sanitizeArticleHtml(input: string): string {
 }
 
 /** cover_image：仅 /logo.svg 或 /images/ 下无 .. 的相对路径。 */
-export function normalizeCoverImage(value: string): string {
-  if (value === '/logo.svg') {
-    return value
-  }
-  if (
+export function isValidCoverImage(value: string): boolean {
+  if (value === '/logo.svg')
+    return true
+  return (
     value.startsWith('/images/')
     && !value.includes('..')
     && !value.includes('\\')
     && !value.includes('//')
-  ) {
+    && value.length <= 500
+  )
+}
+
+export function normalizeCoverImage(value: string): string {
+  if (isValidCoverImage(value))
     return value
-  }
   return '/logo.svg'
 }

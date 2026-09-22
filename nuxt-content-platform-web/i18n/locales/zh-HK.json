@@ -63,7 +63,10 @@
       "hours": "時",
       "minutes": "分",
       "seconds": "秒",
-      "target_metric": "目標指標值"
+      "target_metric": "目標指標值",
+      "waiting_title": "等待下一期發布",
+      "waiting_description": "下一期發布計劃尚未更新，最近數據為第{period}期。系統將自動檢查更新。",
+      "check_now": "立即檢查"
     },
     "recommend": {
       "numbers_title": "智能推薦組合",

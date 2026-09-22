@@ -13,8 +13,11 @@ const countdown = ref({
   seconds: 0,
 })
 
-let timer: ReturnType<typeof setInterval> | null = null
+const isRefreshing = ref(false)
 const countdownVisible = ref(false)
+let countdownTimer: ReturnType<typeof setInterval> | null = null
+let pollingTimer: ReturnType<typeof setInterval> | null = null
+const POLLING_INTERVAL_MS = 60_000
 
 const scheduledLabel = computed(() => {
   const scheduledAt = datasetStore.nextRelease?.scheduled_at
@@ -33,10 +36,7 @@ function calculateCountdown() {
 
   if (timeDiff.total <= 0) {
     countdownVisible.value = false
-    if (timer) {
-      clearInterval(timer)
-      timer = null
-    }
+    stopCountdown()
     countdown.value = { days: 0, hours: 0, minutes: 0, seconds: 0 }
     return
   }
@@ -50,14 +50,53 @@ function calculateCountdown() {
   }
 }
 
-function startCountdown() {
-  calculateCountdown()
-  if (timer)
-    clearInterval(timer)
-  if (!countdownVisible.value)
+function stopCountdown() {
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+}
+
+function stopPolling() {
+  if (pollingTimer) {
+    clearInterval(pollingTimer)
+    pollingTimer = null
+  }
+}
+
+async function refreshLatest() {
+  if (isRefreshing.value || (import.meta.client && document.hidden))
     return
-  timer = setInterval(() => {
+  isRefreshing.value = true
+  try {
+    await refreshNuxtData('latestResult')
+  }
+  finally {
+    isRefreshing.value = false
+  }
+}
+
+function startPolling() {
+  stopPolling()
+  if (!import.meta.client || countdownVisible.value || document.hidden)
+    return
+  pollingTimer = setInterval(() => void refreshLatest(), POLLING_INTERVAL_MS)
+}
+
+function startCountdown() {
+  stopPolling()
+  calculateCountdown()
+  stopCountdown()
+  if (!countdownVisible.value) {
+    startPolling()
+    return
+  }
+  countdownTimer = setInterval(() => {
     calculateCountdown()
+    if (!countdownVisible.value) {
+      void refreshLatest()
+      startPolling()
+    }
   }, 1000)
 }
 
@@ -65,9 +104,10 @@ watch(() => datasetStore.nextReleaseDateTime, () => {
   if (datasetStore.nextReleaseDateTime) {
     startCountdown()
   }
-  else if (timer) {
-    clearInterval(timer)
-    timer = null
+  else {
+    countdownVisible.value = false
+    stopCountdown()
+    startPolling()
   }
 })
 
@@ -77,31 +117,46 @@ if (datasetStore.nextReleaseDateTime)
 onMounted(() => {
   if (datasetStore.nextReleaseDateTime)
     startCountdown()
+  else
+    startPolling()
+})
+
+function onVisibilityChange() {
+  if (document.hidden) {
+    stopPolling()
+    return
+  }
+  void refreshLatest()
+  if (!countdownVisible.value)
+    startPolling()
+}
+
+onMounted(() => {
+  document.addEventListener('visibilitychange', onVisibilityChange)
 })
 
 onUnmounted(() => {
-  if (timer) {
-    clearInterval(timer)
-    timer = null
-  }
+  stopCountdown()
+  stopPolling()
+  document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 </script>
 
 <template>
-  <VanCellGroup v-if="countdownVisible" class="!mt-10" inset>
+  <VanCellGroup class="!mt-10" inset>
     <VanCell>
       <template #title>
         <div class="text-center w-full">
           <div class="mb-2">
             <h3 class="text-base text-gray-800 font-medium dark:text-gray-200">
-              {{ t('home.next_release.title') }}
+              {{ t(countdownVisible ? 'home.next_release.title' : 'home.next_release.waiting_title') }}
             </h3>
           </div>
-          <div class="text-xs text-gray-500 mb-4">
+          <div v-if="countdownVisible" class="text-xs text-gray-500 mb-4">
             {{ t('home.next_release.period_prefix') }}{{ datasetStore.nextRelease?.period_code }}{{ t('home.next_release.period_suffix') }}
             {{ t('home.next_release.draw_time') }}: {{ scheduledLabel }}
           </div>
-          <div class="flex gap-4 items-center justify-center">
+          <div v-if="countdownVisible" class="flex gap-4 items-center justify-center">
             <div class="flex items-center">
               <span class="countdown-number text-red-500">{{ countdown.days }}</span>
               <span class="text-xs text-gray-500">{{ t('home.next_release.days') }}</span>
@@ -121,6 +176,20 @@ onUnmounted(() => {
               <span class="countdown-number text-red-500">{{ countdown.seconds }}</span>
               <span class="text-xs text-gray-500">{{ t('home.next_release.seconds') }}</span>
             </div>
+          </div>
+          <div v-else class="text-sm text-gray-500">
+            <p class="!my-2">
+              {{ t('home.next_release.waiting_description', { period: datasetStore.latestPeriodCode || '-' }) }}
+            </p>
+            <VanButton
+              class="!mt-2"
+              size="small"
+              type="primary"
+              :loading="isRefreshing"
+              @click="refreshLatest"
+            >
+              {{ t('home.next_release.check_now') }}
+            </VanButton>
           </div>
         </div>
       </template>

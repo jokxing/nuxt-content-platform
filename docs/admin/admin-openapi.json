@@ -1,0 +1,646 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "ContentPulse 资讯管理 API",
+    "version": "0.1.0",
+    "description": "管理 API 契约。A2 认证三接口与 A4 文章/分类读写（list/detail/create/update、categories）已实现；publish/unpublish 与 deployments 仍待 A6/A7。浏览器应经同源 Nuxt Nitro BFF 访问，使用 HttpOnly Cookie 会话。"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3670",
+      "description": "本地管理站同源 BFF"
+    },
+    {
+      "url": "http://127.0.0.1:4000",
+      "description": "本地 Express 直连，仅供 Apifox/后端调试"
+    }
+  ],
+  "tags": [
+    { "name": "管理认证" },
+    { "name": "管理分类" },
+    { "name": "管理文章" },
+    { "name": "部署状态" }
+  ],
+  "paths": {
+    "/api/admin/auth/login": {
+      "post": {
+        "operationId": "adminLogin",
+        "summary": "单管理员登录",
+        "tags": ["管理认证"],
+        "security": [],
+        "parameters": [{ "$ref": "#/components/parameters/OriginHeader" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" },
+              "example": { "username": "admin", "password": "仅在本地输入，不写入仓库" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功，并通过 Set-Cookie 写入 HttpOnly 会话",
+            "headers": {
+              "Set-Cookie": {
+                "description": "cp_admin_session；生产环境带 Secure、HttpOnly、SameSite=Lax、Path=/",
+                "schema": { "type": "string" }
+              }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminSessionResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/InvalidArgument" },
+          "401": { "$ref": "#/components/responses/InvalidCredentials" },
+          "403": { "$ref": "#/components/responses/CsrfInvalid" },
+          "429": { "$ref": "#/components/responses/LoginRateLimited" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/admin/auth/logout": {
+      "post": {
+        "operationId": "adminLogout",
+        "summary": "撤销当前会话并清除 Cookie",
+        "tags": ["管理认证"],
+        "parameters": [
+          { "$ref": "#/components/parameters/CsrfHeader" },
+          { "$ref": "#/components/parameters/OriginHeader" }
+        ],
+        "responses": {
+          "200": {
+            "description": "幂等退出成功",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LogoutResponse" } } }
+          },
+          "403": { "$ref": "#/components/responses/CsrfInvalid" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/admin/auth/session": {
+      "get": {
+        "operationId": "getAdminSession",
+        "summary": "恢复当前管理员会话",
+        "tags": ["管理认证"],
+        "responses": {
+          "200": {
+            "description": "当前会话",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminSessionResponse" } } }
+          },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/admin/categories": {
+      "get": {
+        "operationId": "listAdminCategories",
+        "summary": "文章表单的固定分类选项",
+        "tags": ["管理分类"],
+        "responses": {
+          "200": {
+            "description": "九个分类，名称使用简体中文",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminCategoryListResponse" } } }
+          },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/admin/articles": {
+      "get": {
+        "operationId": "listAdminArticles",
+        "summary": "管理文章列表",
+        "tags": ["管理文章"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ArticleStatusQuery" },
+          { "$ref": "#/components/parameters/CategoryQuery" },
+          { "$ref": "#/components/parameters/KeywordQuery" },
+          { "$ref": "#/components/parameters/PageQuery" },
+          { "$ref": "#/components/parameters/PageSizeQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "按 updated_at DESC、id DESC 稳定分页",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminArticleListResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/InvalidArgument" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      },
+      "post": {
+        "operationId": "createAdminArticle",
+        "summary": "创建文章草稿",
+        "tags": ["管理文章"],
+        "parameters": [
+          { "$ref": "#/components/parameters/CsrfHeader" },
+          { "$ref": "#/components/parameters/OriginHeader" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ArticleWriteInput" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "草稿创建成功，不触发构建",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminArticleResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/InvalidArgument" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "403": { "$ref": "#/components/responses/CsrfInvalid" },
+          "409": { "$ref": "#/components/responses/UniqueConflict" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/admin/articles/{id}": {
+      "parameters": [{ "$ref": "#/components/parameters/ArticleIdPath" }],
+      "get": {
+        "operationId": "getAdminArticle",
+        "summary": "读取文章编辑详情",
+        "tags": ["管理文章"],
+        "responses": {
+          "200": {
+            "description": "包含固定三语翻译和当前 version",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminArticleResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/InvalidArgument" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "404": { "$ref": "#/components/responses/AdminArticleNotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      },
+      "put": {
+        "operationId": "updateAdminArticle",
+        "summary": "按 version 修改文章",
+        "description": "修改已发布文章会写 ARTICLE_UPDATED 构建事件；草稿或已下线文章修改不触发构建。",
+        "tags": ["管理文章"],
+        "parameters": [
+          { "$ref": "#/components/parameters/CsrfHeader" },
+          { "$ref": "#/components/parameters/OriginHeader" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ArticleUpdateInput" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "修改成功，version 已递增",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminArticleResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/InvalidArgument" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "403": { "$ref": "#/components/responses/CsrfInvalid" },
+          "404": { "$ref": "#/components/responses/AdminArticleNotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/admin/articles/{id}/publish": {
+      "post": {
+        "operationId": "publishAdminArticle",
+        "summary": "发布或重新发布文章",
+        "tags": ["管理文章"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ArticleIdPath" },
+          { "$ref": "#/components/parameters/CsrfHeader" },
+          { "$ref": "#/components/parameters/OriginHeader" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VersionCommand" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "内容已发布并已排队构建，不代表线上部署成功",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ArticleMutationResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/InvalidArgument" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "403": { "$ref": "#/components/responses/CsrfInvalid" },
+          "404": { "$ref": "#/components/responses/AdminArticleNotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/PublishValidationFailed" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/admin/articles/{id}/unpublish": {
+      "post": {
+        "operationId": "unpublishAdminArticle",
+        "summary": "下线已发布文章",
+        "tags": ["管理文章"],
+        "parameters": [
+          { "$ref": "#/components/parameters/ArticleIdPath" },
+          { "$ref": "#/components/parameters/CsrfHeader" },
+          { "$ref": "#/components/parameters/OriginHeader" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VersionCommand" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "内容已下线并已排队构建",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ArticleMutationResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/InvalidArgument" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "403": { "$ref": "#/components/responses/CsrfInvalid" },
+          "404": { "$ref": "#/components/responses/AdminArticleNotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/admin/deployments": {
+      "get": {
+        "operationId": "listAdminDeployments",
+        "summary": "查询真实构建事件",
+        "tags": ["部署状态"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DeploymentStatusQuery" },
+          { "$ref": "#/components/parameters/DeploymentReasonQuery" },
+          { "$ref": "#/components/parameters/PageQuery" },
+          { "$ref": "#/components/parameters/PageSizeQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "无事件时返回空 items，不伪造成功记录",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeploymentListResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/InvalidArgument" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/admin/deployments/{id}": {
+      "get": {
+        "operationId": "getAdminDeployment",
+        "summary": "读取单个构建事件详情",
+        "tags": ["部署状态"],
+        "parameters": [{ "$ref": "#/components/parameters/DeploymentIdPath" }],
+        "responses": {
+          "200": {
+            "description": "构建事件详情",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeploymentResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/InvalidArgument" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "404": { "$ref": "#/components/responses/RouteNotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "adminSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "cp_admin_session",
+        "description": "HttpOnly opaque 会话 Cookie；数据库仅保存 SHA-256 哈希。"
+      }
+    },
+    "parameters": {
+      "CsrfHeader": {
+        "name": "X-CSRF-Token",
+        "in": "header",
+        "required": true,
+        "schema": { "type": "string", "minLength": 32, "maxLength": 256 }
+      },
+      "OriginHeader": {
+        "name": "Origin",
+        "in": "header",
+        "required": true,
+        "schema": { "type": "string", "format": "uri" },
+        "description": "必须精确匹配允许的管理站 origin。"
+      },
+      "ArticleIdPath": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "integer", "minimum": 1, "maximum": 2147483647 }
+      },
+      "DeploymentIdPath": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "integer", "minimum": 1, "maximum": 2147483647 }
+      },
+      "ArticleStatusQuery": {
+        "name": "status",
+        "in": "query",
+        "schema": { "$ref": "#/components/schemas/ArticleStatus" }
+      },
+      "CategoryQuery": {
+        "name": "category",
+        "in": "query",
+        "schema": { "type": "string", "minLength": 1, "maxLength": 50 }
+      },
+      "KeywordQuery": {
+        "name": "q",
+        "in": "query",
+        "schema": { "type": "string", "minLength": 1, "maxLength": 100 }
+      },
+      "PageQuery": {
+        "name": "page",
+        "in": "query",
+        "schema": { "type": "integer", "minimum": 1, "maximum": 1000000, "default": 1 }
+      },
+      "PageSizeQuery": {
+        "name": "page_size",
+        "in": "query",
+        "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 10 }
+      },
+      "DeploymentStatusQuery": {
+        "name": "status",
+        "in": "query",
+        "schema": { "$ref": "#/components/schemas/DeploymentStatus" }
+      },
+      "DeploymentReasonQuery": {
+        "name": "reason",
+        "in": "query",
+        "schema": { "$ref": "#/components/schemas/DeploymentReason" }
+      }
+    },
+    "schemas": {
+      "ArticleStatus": {
+        "type": "string",
+        "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
+      },
+      "DeploymentStatus": {
+        "type": "string",
+        "enum": ["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "SKIPPED"]
+      },
+      "DeploymentReason": {
+        "type": "string",
+        "enum": ["article_published", "article_updated", "article_unpublished", "dataset_published", "schedule_updated", "daily_schedule", "manual"]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["username", "password"],
+        "properties": {
+          "username": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "password": { "type": "string", "minLength": 1, "maxLength": 1024, "format": "password", "writeOnly": true }
+        }
+      },
+      "AdminProfile": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "username", "display_name"],
+        "properties": {
+          "id": { "type": "integer", "minimum": 1 },
+          "username": { "type": "string" },
+          "display_name": { "type": "string" }
+        }
+      },
+      "AdminSession": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["admin", "csrf_token", "idle_expires_at", "absolute_expires_at"],
+        "properties": {
+          "admin": { "$ref": "#/components/schemas/AdminProfile" },
+          "csrf_token": { "type": "string", "minLength": 32, "description": "仅存内存，用于 X-CSRF-Token，不是认证令牌。" },
+          "idle_expires_at": { "type": "integer", "format": "int64", "example": 1790020800000 },
+          "absolute_expires_at": { "type": "integer", "format": "int64", "example": 1790582400000 }
+        }
+      },
+      "TranslationInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "content"],
+        "properties": {
+          "title": { "type": "string", "maxLength": 200 },
+          "content": { "type": "string", "maxLength": 100000 }
+        }
+      },
+      "TranslationsInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["zh-CN", "zh-HK", "en-US"],
+        "properties": {
+          "zh-CN": { "$ref": "#/components/schemas/TranslationInput" },
+          "zh-HK": { "$ref": "#/components/schemas/TranslationInput" },
+          "en-US": { "$ref": "#/components/schemas/TranslationInput" }
+        }
+      },
+      "ArticleWriteInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["slug", "author", "cover_image", "category_id", "translations"],
+        "properties": {
+          "slug": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          "author": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "cover_image": { "type": "string", "minLength": 1, "maxLength": 500, "example": "/logo.svg" },
+          "category_id": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+          "translations": { "$ref": "#/components/schemas/TranslationsInput" }
+        }
+      },
+      "ArticleUpdateInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["version", "slug", "author", "cover_image", "category_id", "translations"],
+        "properties": {
+          "version": { "type": "integer", "minimum": 1 },
+          "slug": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          "author": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "cover_image": { "type": "string", "minLength": 1, "maxLength": 500, "example": "/logo.svg" },
+          "category_id": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+          "translations": { "$ref": "#/components/schemas/TranslationsInput" }
+        }
+      },
+      "VersionCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["version"],
+        "properties": { "version": { "type": "integer", "minimum": 1 } }
+      },
+      "AdminCategory": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "slug", "name", "parent_route"],
+        "properties": {
+          "id": { "type": "integer", "minimum": 1 },
+          "slug": { "type": "string" },
+          "name": { "type": "string" },
+          "parent_route": { "type": "string", "enum": ["education", "analysis", "story"] }
+        }
+      },
+      "AdminArticleSummary": {
+        "type": "object",
+        "required": ["id", "slug", "title", "author", "cover_image", "category", "status", "published_at", "created_at", "updated_at", "version"],
+        "properties": {
+          "id": { "type": "integer", "minimum": 1 },
+          "slug": { "type": "string" },
+          "title": { "type": "string", "description": "优先简体中文标题；空草稿可为空字符串。" },
+          "author": { "type": "string" },
+          "cover_image": { "type": "string" },
+          "category": { "$ref": "#/components/schemas/AdminCategory" },
+          "status": { "$ref": "#/components/schemas/ArticleStatus" },
+          "published_at": { "type": "integer", "format": "int64", "nullable": true },
+          "created_at": { "type": "integer", "format": "int64" },
+          "updated_at": { "type": "integer", "format": "int64" },
+          "version": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "AdminArticle": {
+        "allOf": [
+          { "$ref": "#/components/schemas/AdminArticleSummary" },
+          {
+            "type": "object",
+            "required": ["translations"],
+            "properties": { "translations": { "$ref": "#/components/schemas/TranslationsInput" } }
+          }
+        ]
+      },
+      "BuildEventBrief": {
+        "type": "object",
+        "nullable": true,
+        "additionalProperties": false,
+        "required": ["id", "status", "reason"],
+        "properties": {
+          "id": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+          "status": { "$ref": "#/components/schemas/DeploymentStatus" },
+          "reason": { "$ref": "#/components/schemas/DeploymentReason" }
+        }
+      },
+      "ArticleMutationResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["article", "build_event"],
+        "properties": {
+          "article": { "$ref": "#/components/schemas/AdminArticle" },
+          "build_event": { "$ref": "#/components/schemas/BuildEventBrief" }
+        }
+      },
+      "DeploymentSummary": {
+        "type": "object",
+        "required": ["id", "status", "reason", "article_id", "article_version", "attempts", "created_at", "started_at", "finished_at"],
+        "properties": {
+          "id": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+          "status": { "$ref": "#/components/schemas/DeploymentStatus" },
+          "reason": { "$ref": "#/components/schemas/DeploymentReason" },
+          "article_id": { "type": "integer", "nullable": true },
+          "article_version": { "type": "integer", "nullable": true },
+          "attempts": { "type": "integer", "minimum": 0 },
+          "created_at": { "type": "integer", "format": "int64" },
+          "started_at": { "type": "integer", "format": "int64", "nullable": true },
+          "finished_at": { "type": "integer", "format": "int64", "nullable": true }
+        }
+      },
+      "DeploymentDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/DeploymentSummary" },
+          {
+            "type": "object",
+            "required": ["external_run_id", "external_run_url", "error_summary"],
+            "properties": {
+              "external_run_id": { "type": "string", "nullable": true },
+              "external_run_url": { "type": "string", "format": "uri", "nullable": true },
+              "error_summary": { "type": "string", "nullable": true, "maxLength": 1000 }
+            }
+          }
+        ]
+      },
+      "Pagination": {
+        "type": "object",
+        "required": ["total", "page", "page_size", "total_pages"],
+        "properties": {
+          "total": { "type": "integer", "minimum": 0 },
+          "page": { "type": "integer", "minimum": 1 },
+          "page_size": { "type": "integer", "minimum": 1, "maximum": 50 },
+          "total_pages": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "AdminArticlePage": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Pagination" },
+          {
+            "type": "object",
+            "required": ["items"],
+            "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/AdminArticleSummary" } } }
+          }
+        ]
+      },
+      "DeploymentPage": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Pagination" },
+          {
+            "type": "object",
+            "required": ["items"],
+            "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/DeploymentSummary" } } }
+          }
+        ]
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "msg", "data", "requestId"],
+        "properties": {
+          "code": { "type": "integer", "minimum": 1 },
+          "msg": { "type": "string" },
+          "data": { "nullable": true, "enum": [null] },
+          "requestId": { "type": "string" }
+        }
+      },
+      "AdminSessionResponse": {
+        "type": "object",
+        "required": ["code", "msg", "data"],
+        "properties": { "code": { "type": "integer", "enum": [0] }, "msg": { "type": "string", "enum": ["ok"] }, "data": { "$ref": "#/components/schemas/AdminSession" } }
+      },
+      "LogoutResponse": {
+        "type": "object",
+        "required": ["code", "msg", "data"],
+        "properties": { "code": { "type": "integer", "enum": [0] }, "msg": { "type": "string", "enum": ["ok"] }, "data": { "type": "object", "required": ["logged_out"], "properties": { "logged_out": { "type": "boolean", "enum": [true] } } } }
+      },
+      "AdminCategoryListResponse": {
+        "type": "object",
+        "required": ["code", "msg", "data"],
+        "properties": { "code": { "type": "integer", "enum": [0] }, "msg": { "type": "string", "enum": ["ok"] }, "data": { "type": "object", "required": ["items"], "properties": { "items": { "type": "array", "minItems": 9, "maxItems": 9, "items": { "$ref": "#/components/schemas/AdminCategory" } } } } }
+      },
+      "AdminArticleListResponse": {
+        "type": "object",
+        "required": ["code", "msg", "data"],
+        "properties": { "code": { "type": "integer", "enum": [0] }, "msg": { "type": "string", "enum": ["ok"] }, "data": { "$ref": "#/components/schemas/AdminArticlePage" } }
+      },
+      "AdminArticleResponse": {
+        "type": "object",
+        "required": ["code", "msg", "data"],
+        "properties": { "code": { "type": "integer", "enum": [0] }, "msg": { "type": "string", "enum": ["ok"] }, "data": { "$ref": "#/components/schemas/AdminArticle" } }
+      },
+      "ArticleMutationResponse": {
+        "type": "object",
+        "required": ["code", "msg", "data"],
+        "properties": { "code": { "type": "integer", "enum": [0] }, "msg": { "type": "string", "enum": ["ok"] }, "data": { "$ref": "#/components/schemas/ArticleMutationResult" } }
+      },
+      "DeploymentListResponse": {
+        "type": "object",
+        "required": ["code", "msg", "data"],
+        "properties": { "code": { "type": "integer", "enum": [0] }, "msg": { "type": "string", "enum": ["ok"] }, "data": { "$ref": "#/components/schemas/DeploymentPage" } }
+      },
+      "DeploymentResponse": {
+        "type": "object",
+        "required": ["code", "msg", "data"],
+        "properties": { "code": { "type": "integer", "enum": [0] }, "msg": { "type": "string", "enum": ["ok"] }, "data": { "$ref": "#/components/schemas/DeploymentDetail" } }
+      }
+    },
+    "responses": {
+      "InvalidArgument": { "description": "HTTP 400 / code 40000", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 40000, "msg": "参数不合法", "data": null, "requestId": "req-example" } } } },
+      "AuthRequired": { "description": "HTTP 401 / code 40100", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 40100, "msg": "请先登录", "data": null, "requestId": "req-example" } } } },
+      "InvalidCredentials": { "description": "HTTP 401 / code 40101", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 40101, "msg": "用户名或密码错误", "data": null, "requestId": "req-example" } } } },
+      "CsrfInvalid": { "description": "HTTP 403 / code 40301；也可返回 40300 账号禁用", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 40301, "msg": "请求来源校验失败", "data": null, "requestId": "req-example" } } } },
+      "AdminArticleNotFound": { "description": "HTTP 404 / code 40410", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 40410, "msg": "文章不存在", "data": null, "requestId": "req-example" } } } },
+      "RouteNotFound": { "description": "HTTP 404 / code 40400", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } } },
+      "Conflict": { "description": "HTTP 409 / code 40900、40901 或 40902", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 40900, "msg": "文章已被其他操作更新，请重新加载", "data": null, "requestId": "req-example" } } } },
+      "UniqueConflict": { "description": "HTTP 409 / code 40902", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 40902, "msg": "文章 slug 已存在", "data": null, "requestId": "req-example" } } } },
+      "PublishValidationFailed": { "description": "HTTP 422 / code 42200", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 42200, "msg": "简体中文标题不能为空", "data": null, "requestId": "req-example" } } } },
+      "LoginRateLimited": { "description": "HTTP 429 / code 42900", "headers": { "Retry-After": { "schema": { "type": "integer" } } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 42900, "msg": "登录尝试过多，请稍后再试", "data": null, "requestId": "req-example" } } } },
+      "InternalError": { "description": "HTTP 500 / code 50000", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 50000, "msg": "内部服务错误", "data": null, "requestId": "req-example" } } } }
+    }
+  },
+  "security": [{ "adminSession": [] }]
+}

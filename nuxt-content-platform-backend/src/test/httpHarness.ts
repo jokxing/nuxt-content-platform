@@ -17,6 +17,9 @@ export async function startTestServer(): Promise<TestServer> {
   const env = loadEnv({
     ...process.env,
     NODE_ENV: 'test',
+    ADMIN_ALLOWED_ORIGINS: process.env.ADMIN_ALLOWED_ORIGINS || 'http://localhost:3670',
+    ADMIN_ALLOW_MISSING_ORIGIN: process.env.ADMIN_ALLOW_MISSING_ORIGIN || 'false',
+    ADMIN_COOKIE_SECURE: process.env.ADMIN_COOKIE_SECURE || 'false',
   })
   await connectDatabase()
   const app: Express = createApp(env)
@@ -41,18 +44,85 @@ export async function startTestServer(): Promise<TestServer> {
   }
 }
 
-export async function apiGet(baseUrl: string, path: string): Promise<{
+export async function apiGet(baseUrl: string, path: string, init?: {
+  headers?: Record<string, string>
+}): Promise<{
   status: number
   body: JsonObject
   text: string
+  headers: Headers
 }> {
-  const response = await fetch(`${baseUrl}${path}`)
+  const response = await fetch(`${baseUrl}${path}`, init?.headers
+    ? { headers: init.headers }
+    : undefined)
   const text = await response.text()
   const parsed: unknown = text ? JSON.parse(text) : null
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw new Error(`expected JSON object from ${path}`)
   }
-  return { status: response.status, body: parsed as JsonObject, text }
+  return {
+    status: response.status,
+    body: parsed as JsonObject,
+    text,
+    headers: response.headers,
+  }
+}
+
+export async function apiSend(
+  baseUrl: string,
+  path: string,
+  options: {
+    method: 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+    body?: unknown
+    headers?: Record<string, string>
+  },
+): Promise<{
+  status: number
+  body: JsonObject
+  text: string
+  headers: Headers
+}> {
+  const headers: Record<string, string> = {
+    ...(options.headers || {}),
+  }
+  const init: RequestInit = {
+    method: options.method,
+    headers,
+  }
+  if (options.body !== undefined) {
+    headers['content-type'] = headers['content-type'] || 'application/json'
+    init.body = JSON.stringify(options.body)
+  }
+  const response = await fetch(`${baseUrl}${path}`, init)
+  const text = await response.text()
+  const parsed: unknown = text ? JSON.parse(text) : null
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error(`expected JSON object from ${path}`)
+  }
+  return {
+    status: response.status,
+    body: parsed as JsonObject,
+    text,
+    headers: response.headers,
+  }
+}
+
+export function readSetCookie(headers: Headers, cookieName: string): string | null {
+  const anyHeaders = headers as Headers & { getSetCookie?: () => string[] }
+  const lines = typeof anyHeaders.getSetCookie === 'function'
+    ? anyHeaders.getSetCookie()
+    : [headers.get('set-cookie')].filter((value): value is string => Boolean(value))
+  for (const line of lines) {
+    const first = line.split(';', 1)[0] || ''
+    const eq = first.indexOf('=')
+    if (eq <= 0)
+      continue
+    const name = first.slice(0, eq).trim()
+    if (name !== cookieName)
+      continue
+    return decodeURIComponent(first.slice(eq + 1))
+  }
+  return null
 }
 
 export function assertSuccessEnvelope(body: JsonObject) {

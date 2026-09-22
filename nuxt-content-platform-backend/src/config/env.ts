@@ -24,6 +24,17 @@ const boolFromEnv = z
     return value === 'true' || value === '1'
   })
 
+const optionalBoolFromEnv = z
+  .union([z.boolean(), z.enum(['true', 'false', '1', '0'])])
+  .optional()
+  .transform((value) => {
+    if (value === undefined)
+      return undefined
+    if (typeof value === 'boolean')
+      return value
+    return value === 'true' || value === '1'
+  })
+
 const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -32,6 +43,16 @@ const envSchema = z
     SHADOW_DATABASE_URL: mysqlUrl.optional(),
     /** 显式开启 /__debug；production 下禁止为 true。 */
     ENABLE_DEBUG_ROUTES: boolFromEnv,
+    /** 逗号分隔的管理站 Origin 白名单，例如 http://localhost:3670 */
+    ADMIN_ALLOWED_ORIGINS: z.string().default('http://localhost:3670'),
+    /** 仅本地/测试允许缺少 Origin 的非浏览器请求。 */
+    ADMIN_ALLOW_MISSING_ORIGIN: boolFromEnv,
+    /** Cookie Secure；缺省时 production=true，其它环境 false。 */
+    ADMIN_COOKIE_SECURE: optionalBoolFromEnv,
+    /** 仅 ensure-admin 使用；不进 seed、不写文档示例真值。 */
+    ADMIN_BOOTSTRAP_USERNAME: z.string().optional(),
+    ADMIN_BOOTSTRAP_PASSWORD: z.string().optional(),
+    ADMIN_BOOTSTRAP_DISPLAY_NAME: z.string().optional(),
   })
   .superRefine((value, ctx) => {
     if (value.DATABASE_URL && value.SHADOW_DATABASE_URL && value.DATABASE_URL === value.SHADOW_DATABASE_URL) {
@@ -48,6 +69,13 @@ const envSchema = z
         message: 'must not be enabled in production',
       })
     }
+    if (value.NODE_ENV === 'production' && value.ADMIN_ALLOW_MISSING_ORIGIN) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['ADMIN_ALLOW_MISSING_ORIGIN'],
+        message: 'must not be enabled in production',
+      })
+    }
   })
 
 export type Env = z.infer<typeof envSchema>
@@ -59,6 +87,12 @@ function readProcessEnv(): Record<string, string | undefined> {
     DATABASE_URL: process.env.DATABASE_URL,
     SHADOW_DATABASE_URL: process.env.SHADOW_DATABASE_URL,
     ENABLE_DEBUG_ROUTES: process.env.ENABLE_DEBUG_ROUTES,
+    ADMIN_ALLOWED_ORIGINS: process.env.ADMIN_ALLOWED_ORIGINS,
+    ADMIN_ALLOW_MISSING_ORIGIN: process.env.ADMIN_ALLOW_MISSING_ORIGIN,
+    ADMIN_COOKIE_SECURE: process.env.ADMIN_COOKIE_SECURE,
+    ADMIN_BOOTSTRAP_USERNAME: process.env.ADMIN_BOOTSTRAP_USERNAME,
+    ADMIN_BOOTSTRAP_PASSWORD: process.env.ADMIN_BOOTSTRAP_PASSWORD,
+    ADMIN_BOOTSTRAP_DISPLAY_NAME: process.env.ADMIN_BOOTSTRAP_DISPLAY_NAME,
   }
 }
 

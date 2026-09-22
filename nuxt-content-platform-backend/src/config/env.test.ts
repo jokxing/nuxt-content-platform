@@ -19,4 +19,11 @@ describe('debug route gating', () => {
       /ENABLE_DEBUG_ROUTES/,
     )
   })
+
+  it('rejects ADMIN_ALLOW_MISSING_ORIGIN in production', () => {
+    assert.throws(
+      () => loadEnv({ NODE_ENV: 'production', ADMIN_ALLOW_MISSING_ORIGIN: 'true' }),
+      /ADMIN_ALLOW_MISSING_ORIGIN/,
+    )
+  })
 })

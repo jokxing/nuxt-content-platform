@@ -21,7 +21,7 @@ const props = withDefaults(defineProps<Props>(), {
 const isLoaded = ref(false)
 const hasError = ref(false)
 const isExternal = computed(() => /^https?:\/\//.test(props.src))
-// SVG is already scalable; sending it through the raster IPX pipeline breaks offline prerendering.
+// SVG 本身可缩放；若再走 IPX 光栅化管线，会破坏离线预渲染。
 const useNativeImage = computed(() => isExternal.value || /\.svg(?:[?#]|$)/i.test(props.src))
 
 watch(() => props.src, () => {

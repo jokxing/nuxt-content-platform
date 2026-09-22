@@ -1106,3 +1106,188 @@ Git 状态：跳过
 - **验证**：前端 typecheck、lint、Mock 契约检查通过；Mock 与真实模式均完成生产构建，各预渲染 75 条路由。真实构建从 MySQL 内容目录取得 5 篇文章。
 - **路由/SEO**：sitemap 共 66 条正式 URL，全部有预渲染 HTML、Nuxt SSR 标记、canonical、四个 hreflang 和合法 JSON-LD；其余 9 条为 `/news`、`/statistics` 及旧详情的三语重定向/兼容入口，按设计不进 sitemap。首页、三个统计页、资讯列表、文章详情均抽查到服务端渲染数据。
 - 构建完成后 Nitro 在当前 Windows 环境仍不自动退出；看到 `Nuxt Nitro server built` 后手动结束。依赖数据陈旧提示不影响本次产物正确性。
+
+## 2026-09-21 — B8.8.2 倒计时发布闭环
+
+- 首页发布状态分为倒计时与等待更新：未来 `next_release` 显示倒计时；计划为空或已过期时显示最近期次和“等待下一期发布”，不再永久隐藏卡片。
+- 倒计时结束立即刷新 `latestResult`；尚未得到新计划时每 60 秒检查一次。页面进入后台暂停轮询，回到前台立即检查；用户也可手动点击“立即检查”。
+- `DatasetStore` 保存最新期次编号，刷新 `/api/latest` 后由既有 `LatestResult` 同步最新数据与下一计划；获得新的未来计划即自动恢复倒计时。
+- 修正倒计时当前时间：时间戳是绝对时刻，统一使用 `Date.now()`，避免 SSR 部署在 UTC 服务器时额外偏移 8 小时。
+- 浏览器只刷新业务接口，不持有部署密钥，也不直接触发 GitHub/Cloudflare 构建。构建应由后端在数据成功入库及下一计划生成后触发，并由每日定时构建兜底。
+- **验证**：前端 typecheck、变更文件 lint、Mock 契约检查通过；生产构建与 SSR/SEO/sitemap 审计见本节后续验证记录。
+
+## 2026-09-21 — 资讯管理后台提示词规划
+
+- 后台目录固定为 `nuxt-content-platform-admin`，由用户创建；与 web/backend 共用根 Git，不建立嵌套仓库。
+- 技术方向固定为 Nuxt + TypeScript + Naive UI；范围限于单管理员资讯管理，不复制旧公司后台，不扩展多租户、低代码或复杂 RBAC。
+- 新增 `docs/admin/README.md` 与 `ADMIN_HANDOFF_PROMPTS.md`，按 A0～A8 拆分工程骨架、契约、认证、CRUD、编辑器、发布、自动构建和收尾；每次只执行一段并停止。
+- 当前下一步：用户创建管理端项目后执行 **A0 管理端工程骨架**。管理接口与自动部署尚未实现。
+
+## 2026-09-21 17:35 — A0 管理端工程骨架
+
+- 确认用户已创建空目录 `nuxt-content-platform-admin`（无嵌套 `.git`）；无适用 AGENTS.md。以 STATUS / ADMIN_HANDOFF_PROMPTS / admin README / BACKEND_CONTRACT 为准执行 **仅 A0**。
+- 在该目录建立最小可运行 Nuxt 工程：`nuxt@4.0.3`（与公开站主版本对齐，未跟脚手架默认升到 4.5.x）、TypeScript、`@bg-dev/nuxt-naiveui`、sass、eslint。
+- 布局：`default`（侧栏 + 顶栏 + 内容区）、`blank`（登录）；错误页 `error.vue`；主题变量在 `app/assets/styles`。
+- 路由：`/` → `/articles`；`/login`、`/articles`、`/articles/new`、`/articles/:id`、`/deployments`。页面标题与导航为简体中文；未接入处统一 `ApiNotConnected`（「接口尚未接入」），无假文章/假部署记录。
+- 目录边界：`layouts` / `pages` / `components` / `composables` / `api` / `types`。`app/api/adminClient.ts` 仅白名单占位并抛出未接入错误。
+- `.env.example`：仅无密钥示例；`runtimeConfig.adminApiBaseUrl` 私有，公开站预览基址可进 public。README 说明启动、范围与未完成项。开发端口 **3670**。
+- **刻意未做**：登录实现、文章 CRUD、后端管理接口、BFF、自动部署、Mock 业务数据。
+- **已验证**（工作目录 `nuxt-content-platform-admin`）：`pnpm install`、`pnpm typecheck`、`pnpm lint`、`pnpm build` 均通过。
+- 未 commit/push。**下一步：A1 / B9.1 管理接口与认证契约（只设计）**（用户指定后再做）。
+
+```text
+日期时间：2026-09-21 17:35
+阶段及目标：A0 管理端工程骨架
+修改文件与原因：nuxt-content-platform-admin 全量骨架；docs/admin/README.md、docs/README.md、本 STATUS 追加
+执行的验证命令、工作目录、结果：admin 下 install/typecheck/lint/build 通过
+未验证内容及原因：未起 dev 浏览器肉眼回归；登录与业务联调不在本阶段
+当前阻碍/已知问题：无
+新增设计决策：Nuxt 对齐公开站 4.0.3；Naive UI 经 @bg-dev/nuxt-naiveui；端口 3670；未接入明示警告
+Git 状态：未 commit/push
+下一步最小可执行任务：A1 / B9.1 管理接口与认证契约（只设计）
+```
+
+## 2026-09-21 — A0 后复盘与文章弹窗决策
+
+- A0 骨架的 Nuxt/Naive UI 版本、布局边界、私有 runtimeConfig、未接入提示及构建验证符合要求。
+- 发现当前 `/articles/new`、`/articles/:id` 与侧栏“新建文章”不符合最新交互要求；layout 和 `useAdminNav` 还存在导航配置重复维护。
+- 最新决定：文章新建和编辑统一在 `/articles` 列表页复用一个 Naive UI 表单弹窗；不保留独立文章表单路由，侧栏只保留文章列表和构建状态。
+- 已在 `ADMIN_HANDOFF_PROMPTS.md` 新增 **A0.1** 单独修正提示词，并同步约束 A0 与 A5。下一步先执行 A0.1，完成复盘后再执行 A1/B9.1。
+
+## 2026-09-21 18:09 — A0.1 文章表单改为列表页弹窗
+
+- 确认 A0 已完成；无适用 AGENTS.md。实际路由仍含 `/articles/new`、`/articles/:id`，且 `layouts/default.vue` 与 `useAdminNav` 各维护一份导航。本轮只做 A0.1。
+- 删除 `app/pages/articles/new.vue` 与 `app/pages/articles/[id].vue`。侧栏改为只读 `useAdminNav`：文章列表、构建状态。`/articles` 的「新建文章」打开同一个 `ArticleFormModal`；组件同时暴露 `openCreate` / `openEdit`，编辑模式接收 `ArticleFormDraft`，供后续表格行复用。
+- 弹窗 create 打开时重置空草稿；关闭时恢复校验并清空临时状态。相对打开基线有改动时先确认再关闭。封面、分类、三语标题/正文当前全部禁用，保存按钮禁用，不写假数据、不提示成功。未保存确认因此在本阶段不会触发，留到 **A5 启用输入后**生效。
+- 弹窗宽度 `min(880px, calc(100vw - 24px))`，正文区 `max-height: calc(100vh - 220px)` 内部滚动。直接访问 `/articles/new` 与 `/articles/:id` 走既有 404（「页面不存在」），无兼容跳转。
+- **已验证**（`nuxt-content-platform-admin`）：`pnpm typecheck`、`pnpm lint`、`pnpm build` 通过。预览 `http://127.0.0.1:3670`：`/` 302 到 `/articles`；侧栏仅为文章列表/构建状态；点击新建打开标题「新建文章」、含未接入说明、保存禁用，取消后弹窗关闭；桌面弹窗宽 880px，390px 视口下宽 366px；`/articles/new` 与 `/articles/101` 为 404 错误页。
+- 未 commit/push。未做契约、认证、文章接口、发布或部署。**下一步：A1 / B9.1 管理接口与认证契约（只设计）**。
+
+```text
+日期时间：2026-09-21 18:09
+阶段及目标：A0.1 文章表单改为列表页弹窗
+修改文件与原因：删除独立新建/编辑页；侧栏单一导航；新增 ArticleFormModal 与 ArticleFormDraft；同步 README / STATUS
+执行的验证命令、工作目录、结果：admin typecheck、lint、build 通过；预览端口弹窗开关与旧路由 404 已核对
+未验证内容及原因：未保存关闭确认未实际弹出，因字段仍全部禁用
+当前阻碍/已知问题：无
+新增设计决策：新建与编辑共用列表页弹窗；导航只保留 useAdminNav
+Git 状态：未 commit/push
+下一步最小可执行任务：A1 / B9.1 管理接口与认证契约（只设计）
+```
+
+## 2026-09-21 — A0.1 复盘与编辑器诊断清理
+
+- 复核 A0.1 实现：独立文章新建/编辑路由已删除，侧栏导航收敛到 `useAdminNav` 单一数据源，文章列表通过同一个 `ArticleFormModal` 承载 create/edit 模式；实现与最新交互决定一致。
+- 截图中 `~/types/admin`、`useHead`、`ref` 同时标红并非实际 ESLint 错误，而是编辑器尚未加载 Nuxt 生成的别名与自动导入类型。项目现有 ESLint 与 Nuxt typecheck 均为 0 错误。
+- 删除 `package.json` 中已被当前 pnpm 忽略的 `pnpm.peerDependencyRules`；项目已固定 TypeScript 5.8.3，现有依赖的 peer 范围兼容，无需保留失效配置。
+- 已重新执行 Nuxt prepare；管理端 ESLint、Nuxt typecheck 与生产构建全部通过。若 VS Code 仍显示旧红线，应重新加载窗口或重启 Vue/TypeScript language server，不通过添加多余显式导入规避编辑器缓存。
+
+## 2026-09-21 — A1 / B9.1 管理接口与认证契约设计
+
+- 新增 `docs/admin/ADMIN_CONTRACT.md` 与独立的 `admin-openapi.json`，没有修改公开查询 OpenAPI。管理契约共 12 个接口：登录/退出/会话、只读分类选项、文章列表/详情/创建/修改/发布/下线、部署列表/详情。
+- 认证确定为管理站同源 Nitro BFF + host-only HttpOnly Cookie；生产使用 Secure + SameSite=Lax。数据库只保存 opaque session token 的 SHA-256 哈希；会话采用 12 小时空闲、7 天绝对过期，写请求使用会话绑定 CSRF token 和 Origin 双重校验，不使用 localStorage token，也不开放注册/OAuth。
+- 文章沿用 `DRAFT / PUBLISHED / ARCHIVED`。创建固定为草稿；更新、发布、下线携带 `version` 做乐观并发。草稿/下线态修改不构建，首次/再次发布、发布态修改和下线分别产生可去重 BuildEvent。
+- 数据库发布和站点部署保持两个状态。文章、翻译、版本、AuditLog 和 BuildEvent(outbox) 在同一事务提交；事务后的外部构建失败不回滚文章，事件可观察、重试并由唯一 dedupeKey 防重。
+- 最小追加迁移顺序确定为：AdminUser/AdminSession → Article.version → AuditLog/BuildEvent；不改已应用迁移。单管理员不增加角色权限表，审计与构建事件分表。
+- 管理端占位白名单和占位枚举已与契约对齐，但没有实现请求、认证、路由、Prisma 或数据库写入。
+- **验证**：`admin-openapi.json` 通过 JSON 解析与 Swagger Parser OpenAPI 3.0.3 校验；管理端 ESLint 与 Nuxt typecheck 通过。未连接数据库，未调用生产服务。
+- **下一步：A2 / B9.2 单管理员认证后端**。只实现认证模型、迁移及登录/退出/会话接口，不提前实现文章 CRUD。
+
+## 2026-09-21 22:04 — A2 / B9.2 单管理员认证后端
+
+- 确认 A1 契约与 `admin-openapi.json` 可校验；无适用 AGENTS.md。本轮只实现认证，未做文章写接口或管理端登录联调。
+- Prisma 追加 `AdminUser` / `AdminSession`，迁移 `20260921210000_admin_auth` 已 `migrate deploy`（库 up to date）。密码使用 **bcryptjs**（Windows 下避免原生 bcrypt 编译门禁）。
+- 实现 `POST /api/admin/auth/login`、`POST /api/admin/auth/logout`、`GET /api/admin/auth/session`：Route → Controller → Service → Prisma；Cookie `cp_admin_session`（HttpOnly、SameSite=Lax、Path=/，production/显式配置才 Secure）；DB 只存 SHA-256；空闲 12h / 绝对 7d；登录 IP+规范化用户名限速（5 次 / 15 分钟 → 42900）；Origin 白名单；logout 在有效会话下校验 CSRF。
+- 本地初始化：`pnpm admin:ensure` 只创建缺失管理员，凭据仅 `ADMIN_BOOTSTRAP_*` 环境变量，不进 seed / 示例真值 / 日志。
+- 同步：`.env.example`、backend README、`ADMIN_CONTRACT` 实现进度、`admin-openapi` 描述、`openapi:validate:admin`、`docs/admin/README`、`docs/README`。
+- **已验证**（`nuxt-content-platform-backend`）：migrate status up to date；typecheck；lint；openapi:validate；openapi:validate:admin；unit 29；integration 38（含认证 8）；build。为生成 Prisma Client 曾短暂结束占用 DLL 的本地 `tsx watch`。
+- **刻意未做**：文章 CRUD、管理端 BFF/登录页、发布与部署。未 commit/push。
+- **下一步：A3 管理端登录与会话守卫**。
+
+```text
+日期时间：2026-09-21 22:04
+阶段及目标：A2 / B9.2 单管理员认证后端
+修改文件与原因：AdminUser/AdminSession 迁移与认证三接口；限速/Cookie/初始化脚本；文档与 OpenAPI 同步
+执行的验证命令、工作目录、结果：backend migrate/typecheck/lint/openapi×2/unit+integration/build 通过
+未验证内容及原因：未联调管理端页面（A3）；未创建真实生产管理员
+当前阻碍/已知问题：Windows 上 prisma generate 可能被运行中的 Node 占用 DLL（已知遗留）
+新增设计决策：bcryptjs 替代原生 bcrypt；会话 GET 轮换 CSRF 明文；客户端 IP 只用 socket.remoteAddress
+Git 状态：未 commit/push
+下一步最小可执行任务：A3 管理端登录与会话守卫
+```
+
+## 2026-09-22 10:02 — A3 管理端登录与会话守卫
+
+- 确认 A2 认证三接口可用。本轮只做管理端 BFF / 登录 / 守卫，不实现文章 CRUD。
+- Nitro 白名单 BFF：`server/api/admin/[...].ts` + `server/utils/adminApiProxy.ts`。仅允许固定方法+路径+query；转发 Cookie / Origin / CSRF；不转发 Authorization；未知路径/方法/query 拒绝。私有 `NUXT_ADMIN_API_BASE_URL`。
+- 集中客户端 `app/api/adminClient.ts`：浏览器只打同源 `/api/admin/*`，`credentials: 'include'`；SSR 转发请求 Cookie；csrf 不进 localStorage。
+- `useAdminAuth` + `admin-auth.global`：会话恢复、未登录进 `/login`、已登录访问 `/login` 转 `/articles`、退出清会话；40100 回登录页。登录页 Naive UI 校验与提交态；顶栏显示管理员并支持退出。
+- **已验证**（`nuxt-content-platform-admin`）：typecheck、lint、build 通过。预览冒烟：未知路径 404、非法 query 400；经 BFF 登录成功并下发 `cp_admin_session`；session 可恢复；无 Cookie 访问 `/articles` → 302 `/login?redirect=/articles`。探针账号测完已删除。
+- **刻意未做**：文章列表真实数据、CRUD、发布、部署。未 commit/push。
+- **下一步：A4 / B9.3 文章管理读写接口**。
+
+```text
+日期时间：2026-09-22 10:02
+阶段及目标：A3 管理端登录与会话守卫
+修改文件与原因：Nitro 管理 BFF、API 客户端、useAdminAuth、全局守卫、登录/退出 UI；文档与 .env.example
+执行的验证命令、工作目录、结果：admin typecheck/lint/build 通过；BFF 登录/session/白名单/守卫冒烟通过
+未验证内容及原因：未做完整浏览器多标签长时间回归；文章接口仍未接入
+当前阻碍/已知问题：无
+新增设计决策：BFF 白名单含后续文章路径但上游未实现时由 Express 404；会话用 useState 内存 + HttpOnly Cookie
+Git 状态：未 commit/push
+下一步最小可执行任务：A4 / B9.3 文章管理读写接口
+```
+
+## 2026-09-22 — A4 / B9.3 文章管理读写接口
+
+- 确认 A3 认证/BFF 可用。本轮只做后端文章管理读写，不改管理端页面，不实现发布/构建。
+- Prisma 追加 `Article.version Int @default(1)`，迁移 `20260922110000_article_version`。
+- 实现 `GET /api/admin/categories`、`GET/POST /api/admin/articles`、`GET/PUT /api/admin/articles/{id}`：读接口 `requireAdminSession`（不轮换 CSRF）；写接口 Origin + CSRF + `requireAdminWriteSession`；Zod 校验 slug/author/cover/category/三语；HTML 白名单清理；创建固定 DRAFT；更新 `id+version` 乐观并发（40410 / 40900 / 40902）。
+- 集成测试覆盖：未登录 40100、空翻译草稿、公开接口不泄露草稿、CSRF/封面/slug 校验、slug 冲突、版本冲突、筛选、HTML 清理、40410。
+- 同步：`admin-openapi` 描述、`ADMIN_CONTRACT` 进度、`docs/admin/README`、`docs/README`。
+- **已验证**（`nuxt-content-platform-backend`）：`migrate deploy`（含 `article_version`）、`db:generate`、typecheck、lint、openapi:validate、openapi:validate:admin、unit 29、integration 47（含 A4 文章 9）、build 通过。为释放 Prisma DLL 曾结束占用中的 `tsx watch`。
+- **刻意未做**：publish/unpublish、BuildEvent、A5 管理端列表/弹窗。未 commit/push。
+- **下一步：A5 文章列表与编辑器页面**。
+
+```text
+日期时间：2026-09-22
+阶段及目标：A4 / B9.3 文章管理读写接口
+修改文件与原因：Article.version 迁移；管理分类/文章 Route→Controller→Service；校验与错误码；集成测试与文档
+执行的验证命令、工作目录、结果：backend migrate/generate/typecheck/lint/openapi×2/unit+integration(47)/build 通过
+未验证内容及原因：未联调管理端文章 UI（A5）；未实现发布/部署
+当前阻碍/已知问题：Windows 上 prisma generate 可能被运行中的 Node 占用 DLL（已知遗留）
+新增设计决策：管理读接口不轮换 CSRF；草稿空翻译允许；A4 修改已发布文章只保存内容不写 BuildEvent（留给 A6）
+Git 状态：未 commit/push
+下一步最小可执行任务：A5 文章列表与编辑器页面
+```
+
+## 2026-09-22 — A5 文章列表与编辑器页面
+
+- 确认 A4 管理文章接口可用；A0.1 已无独立 `/articles/new`、`/articles/:id` 路由。本轮只做管理端列表与弹窗编辑，不实现发布/下线/部署。
+- `/articles`：状态/分类/关键词筛选、分页表格、加载/空/错误态；新建与行内「编辑」共用 `ArticleFormModal`；弹窗按 articleId 拉详情，保存成功后由列表刷新。
+- 弹窗：slug/作者/分类/封面（可预览）+ 三语 Tab + textarea；未保存关闭确认；40900 版本冲突提示与重新加载；无假发布按钮；正文不 `v-html` 回显。
+- API：`app/api/adminArticles.ts` 经既有 BFF 白名单调用 categories/articles CRUD。
+- **已验证**（`nuxt-content-platform-admin`）：typecheck、lint、build 通过。
+- **刻意未做**：publish/unpublish、BuildEvent、部署页真实数据。未 commit/push。
+- **下一步：A6 / B9.4 发布、下线与公开预览闭环**。
+
+```text
+日期时间：2026-09-22
+阶段及目标：A5 文章列表与编辑器页面
+修改文件与原因：articles 列表接 API；ArticleFormModal 可读写草稿；类型与 adminArticles 客户端；文档进度
+执行的验证命令、工作目录、结果：admin typecheck/lint/build 通过
+未验证内容及原因：未做完整浏览器手工回归账号长测；发布能力仍未接入
+当前阻碍/已知问题：封面预览依赖管理站可访问的相对路径资源，缺文件时自动隐藏破图
+新增设计决策：第一版正文用 textarea；编辑态 openEdit(id) 每次拉详情；列表与弹窗通过 saved 事件解耦
+Git 状态：未 commit/push
+下一步最小可执行任务：A6 / B9.4 发布、下线与公开预览闭环
+```
+
+## 2026-09-22 — A3～A5 复盘、弃用清理与新增需求规划
+
+- 复盘结论见 `docs/admin/A5_REVIEW.md`。A3～A5 的同源 BFF、Cookie 会话、固定白名单、文章筛选分页、共用编辑弹窗和乐观并发主链路合理。
+- 清理 H3 已弃用的 `getMethod(event)`，改用 `event.method`；全局未发现其他业务代码调用该弃用 API。登录 redirect 同时拒绝 `//host` 形式，进一步限定为站内路径。
+- 视觉/错误态：登录、列表和弹窗已有持久 n-alert，列表失败有重试，版本冲突有专用重载入口；仍需补分类失败和详情首次加载失败的局部重试，并移除未知保存错误的内联 + message 重复提示。
+- 新增需求拆为四个单任务提示词：A5.0 错误状态收尾、A5.1/B9.3.1 受限文章删除、A5.2/B9.3.2 封面上传契约与存储设计、A5.3/B9.3.3 上传实现联调。删除只允许 DRAFT/ARCHIVED；上传生产方向为后端 StorageAdapter + Cloudflare R2，本地使用 gitignore 存储适配器。
+- **验证**：管理端 ESLint、Nuxt typecheck、生产构建通过。构建仅出现 Nuxt 4.0.3 内部依赖 `@vue/shared` 的 Node DEP0155 警告，业务代码无对应弃用调用，不修改 node_modules。
+- **下一步：A5.0**。依次完成 A5.0 → A5.1 → A5.2 → A5.3 后，再进入 A6 发布闭环。

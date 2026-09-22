@@ -26,6 +26,10 @@ export function errorHandler(
         statusCode: err.statusCode,
       })
     }
+    if (err.headers) {
+      for (const [key, value] of Object.entries(err.headers))
+        res.setHeader(key, value)
+    }
     res.status(err.statusCode).json(
       failResponse(
         err.code,
