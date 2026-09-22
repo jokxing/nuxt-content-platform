@@ -7,6 +7,7 @@ import {
   parseAdminArticleStatus,
   parseAdminCategorySlug,
   parseAdminKeyword,
+  parseArticleDeleteInput,
   parseArticleUpdateInput,
   parseArticleWriteInput,
 } from '../lib/adminArticleValidation.js'
@@ -17,6 +18,7 @@ import { okResponse } from '../lib/response.js'
 import { assertAllowedQuery, getOptionalQueryString } from '../middleware/queryGuard.js'
 import {
   createAdminArticle,
+  deleteAdminArticle,
   getAdminArticle,
   listAdminArticles,
   updateAdminArticle,
@@ -102,5 +104,22 @@ export async function putAdminArticle(req: Request, res: Response): Promise<void
   const id = parseArticleId(rawId)
   const input = parseArticleUpdateInput(req.body)
   const data = await updateAdminArticle(id, input)
+  res.status(200).json(okResponse(data))
+}
+
+export async function deleteAdminArticleById(req: Request, res: Response): Promise<void> {
+  assertAllowedQuery(req, [])
+  assertAllowedOrigin(req)
+  assertJsonContentType(req)
+
+  const token = readCookie(req.get('cookie'), ADMIN_SESSION_COOKIE)
+  await requireAdminWriteSession(token, readCsrfHeader(req))
+
+  const rawId = req.params.id
+  if (typeof rawId !== 'string')
+    throw invalidArgument('参数不合法')
+  const id = parseArticleId(rawId)
+  const input = parseArticleDeleteInput(req.body)
+  const data = await deleteAdminArticle(id, input.version)
   res.status(200).json(okResponse(data))
 }

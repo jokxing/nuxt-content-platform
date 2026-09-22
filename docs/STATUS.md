@@ -1291,3 +1291,93 @@ Git 状态：未 commit/push
 - 新增需求拆为四个单任务提示词：A5.0 错误状态收尾、A5.1/B9.3.1 受限文章删除、A5.2/B9.3.2 封面上传契约与存储设计、A5.3/B9.3.3 上传实现联调。删除只允许 DRAFT/ARCHIVED；上传生产方向为后端 StorageAdapter + Cloudflare R2，本地使用 gitignore 存储适配器。
 - **验证**：管理端 ESLint、Nuxt typecheck、生产构建通过。构建仅出现 Nuxt 4.0.3 内部依赖 `@vue/shared` 的 Node DEP0155 警告，业务代码无对应弃用调用，不修改 node_modules。
 - **下一步：A5.0**。依次完成 A5.0 → A5.1 → A5.2 → A5.3 后，再进入 A6 发布闭环。
+
+## 2026-09-22 — A5.0 错误状态与视觉收尾
+
+- 文章列表筛选区：分类加载失败改为筛选卡片内持久 `n-alert` +「重试分类」，不再只用短暂 message；分类下拉在失败时禁用并显示局部 loading。
+- `ArticleFormModal`：拆分 `categoryError` / `detailError`；新建提供「重新加载分类」，编辑提供「重试文章详情」；分类与详情独立请求，重试成功前不覆盖已填草稿；分类重试仅局部 loading。
+- 登录与保存失败统一以内联 alert 为主，去掉「内联 + message」重复提示；成功反馈仍用短 message。错误区补充 `role="alert"`、`aria-live` 与焦点落点，重试按钮可键盘操作。
+- **验证**：`nuxt-content-platform-admin` 下 `pnpm typecheck`、`pnpm lint`、`pnpm build` 通过。构建仍仅有 Nuxt 4.0.3 内部 `@vue/shared` DEP0155 警告。未做真实账号浏览器自动化；桌面/390px 行为按模板与响应式样式核对。
+- **刻意未做**：删除、封面上传、发布/下线。未 commit/push。
+- **下一步：A5.1 / B9.3.1 受限文章删除**。
+
+```text
+日期时间：2026-09-22
+阶段及目标：A5.0 错误状态与视觉收尾
+修改文件与原因：articles/index、ArticleFormModal、login 补充分类/详情可重试错误态并去重 message
+执行的验证命令、工作目录、结果：admin 目录 typecheck/lint/build 通过
+未验证内容及原因：未跑真实账号浏览器自动化回归
+当前阻碍/已知问题：无
+新增设计决策：分类失败与详情失败分轨重试；表单错误以内联 alert 为主
+Git 状态：未 commit/push
+下一步最小可执行任务：A5.1 / B9.3.1 受限文章删除
+```
+
+## 2026-09-22 — A5.1 / B9.3.1 受限文章删除
+
+- 契约：`ADMIN_CONTRACT` / `admin-openapi` 新增 `DELETE /api/admin/articles/{id}`，body `{ version }`，成功 `{ id, deleted: true }`；仅 DRAFT/ARCHIVED；PUBLISHED → 40901；缺失 40410；版本冲突 40900。明确删除草稿/已下线不写 BuildEvent，A6 再补 AuditLog。
+- 后端：Route → Controller → Service → Prisma；事务内 `id + version + 允许状态` 硬删除，翻译外键级联；新增 `articleStateConflict`。
+- BFF / 客户端：白名单增加 DELETE `articles/:id`；`deleteAdminArticle` 走 CSRF + credentials。
+- 列表 UI：操作列「删除」+ warning Dialog（标题/slug、不可恢复）；PUBLISHED 禁用并提示先下线；成功短 message；当前页最后一条删除后页码回退；失败内联 alert（40900 提示刷新列表）。
+- **验证**：backend `openapi:validate:admin`、typecheck、lint；`adminArticles.integration.test.ts` 17 通过（含未登录/CSRF/非法 body/40410/40900/40901/草稿与已下线删除/翻译级联/公开列表不受影响）；admin typecheck、lint、build 通过。
+- **刻意未做**：上传、发布/下线、AuditLog 写入。未 commit/push。
+- **下一步：A5.2 / B9.3.2 封面上传契约与存储设计（只设计）**。
+
+```text
+日期时间：2026-09-22
+阶段及目标：A5.1 / B9.3.1 受限文章删除
+修改文件与原因：契约与 OpenAPI、后端 DELETE、BFF/客户端白名单、文章列表删除确认
+执行的验证命令、工作目录、结果：backend openapi/typecheck/lint + adminArticles 集成测试 17 通过；admin typecheck/lint/build 通过
+未验证内容及原因：未跑真实账号浏览器自动化；桌面/390px 按模板与响应式样式核对
+当前阻碍/已知问题：无
+新增设计决策：硬删除仅 DRAFT/ARCHIVED；删除不产生 BuildEvent；A6 再写 AuditLog
+Git 状态：未 commit/push
+下一步最小可执行任务：A5.2 / B9.3.2 封面上传契约与存储设计
+```
+
+## 2026-09-22 — A5.2 / B9.3.2 封面上传契约与存储设计（只设计）
+
+- 新增设计文档 `docs/admin/MEDIA_UPLOAD_DESIGN.md`：审查现行 `cover_image`（仅 `/logo.svg`、`/images/`）、BFF raw body、无 multipart、公开站相对路径渲染与 Cloudflare/R2 目标态。
+- 契约定稿：`POST /api/admin/media/images`（multipart `file`）；≤5 MiB；JPEG/PNG/WebP 魔数校验；服务端重编码 WebP；最长边 2048；服务端随机 key；禁 SVG；返回 `MediaAsset` DTO。
+- 存储：`StorageAdapter`；本地 `.data/media`（已在根 gitignore）+ `GET /media/*`；生产 Cloudflare R2；凭据仅后端；`MEDIA_PUBLIC_BASE_URL` 前缀约束公开 URL。
+- 建议 A5.3 追加 `MediaAsset` 迁移；删文/换封面不立即删对象；孤儿定时清理。BFF：白名单、约 6 MiB 体上限、上传超时约 60s。新增业务码 `41300`。手动可信 URL 可保留编辑。
+- `ADMIN_CONTRACT` / `admin-openapi`（11 paths / 14 ops）已同步；校验脚本已更新。
+- **验证**：`pnpm openapi:validate:admin` 通过。未安装依赖、未改数据库、未写上传实现。
+- **刻意未做**：A5.3 实现。未 commit/push。
+- **下一步：A5.3 / B9.3.3 封面上传实现与管理端联调**。
+
+```text
+日期时间：2026-09-22
+阶段及目标：A5.2 / B9.3.2 封面上传契约与存储设计（只设计）
+修改文件与原因：MEDIA_UPLOAD_DESIGN、ADMIN_CONTRACT、admin-openapi、校验脚本与文档导航
+执行的验证命令、工作目录、结果：backend 目录 openapi:validate:admin 通过（11 paths, 14 operations）
+未验证内容及原因：本阶段不实现上传，无集成测试/构建要求
+当前阻碍/已知问题：无
+新增设计决策：统一 WebP；MediaAsset 表；R2+本地适配器；cover_image 可信基址；不立即删对象
+Git 状态：未 commit/push
+下一步最小可执行任务：A5.3 / B9.3.3 封面上传实现与管理端联调
+```
+
+## 2026-09-22 — A5.0～A5.2 复盘与媒体存储确认
+
+- 截图中的 `row.version` 已确认有完整定义：Prisma `Article.version`、追加迁移、生成的 Prisma Client、`ArticleFullRow` 推导类型及 DTO 均包含该字段；后端 typecheck/lint 通过。红线属于 VS Code TypeScript/Prisma 缓存，不修改正确代码。
+- A5.0 错误分轨与局部重试实现合理。A5.1 删除的后端状态/版本约束和测试覆盖合理；复盘修正删除失败时确认弹窗仍遮挡列表错误条的问题，现在先关闭 Dialog，再聚焦持久内联错误。
+- A5.2 存储方案确认：本地对象写入 `nuxt-content-platform-backend/.data/media/covers/...`；生产对象写入 Cloudflare R2 Standard，公开读取使用自定义媒体域名，例如 `https://media.example.com/covers/...`。`r2.dev` 只用于开发测试。
+- 收紧媒体 URL 设计：实现时使用 URL 解析比较 protocol/origin/path 边界，不能只做 `startsWith`；随机 key 永不覆盖并使用长期 immutable 缓存。公开站绝对图片已走原生 img，SEO URL 解析会保留绝对地址，无需 Nuxt Image 远程域白名单。
+- 修正文档验收状态：上传成功为 HTTP 201，与 OpenAPI 一致。
+- **验证**：backend typecheck/lint、admin ESLint/Nuxt typecheck、`git diff --check` 通过。下一步仍为 A5.3；尚未创建 R2 bucket 或写入任何媒体文件。
+
+## 2026-09-22 — 管理文章新增/编辑 40301 修复
+
+- 截图中的新增、编辑失败并非字段契约问题：读请求可用、写请求统一返回 `40301 请求来源校验失败`，定位为管理站 Origin 与后端默认白名单不一致。
+- 后端开发默认值及 `.env.example` 同时允许 `http://localhost:3670`、`http://127.0.0.1:3670`；本机 `.env` 已同步，需重启后端进程后生效。生产环境仍须显式配置实际管理站 HTTPS Origin，不开放通配符。
+- 清理 `.env.example` 中残留的本地数据库口令和管理员示例密码，全部替换为占位值；真实 `.env` 继续由根忽略规则排除。
+- **验证**：后端单元测试 30 项、主/seed TypeScript、ESLint 通过；管理端 Nuxt typecheck、ESLint 通过。因当前 `pnpm` 运行时尝试无 TTY 重装依赖，验证改用项目本地 bin，未改依赖。
+- **手工验证待办**：重启后端，重新登录管理端，再测试新建草稿和编辑保存。
+
+### 40301 二次定位：CSRF 轮换后的旧页面写入
+
+- 重启并重新登录后仍可复现；截图确认请求来自允许的 `http://localhost:3670`，因此排除 Origin 白名单，实际为页面内存 CSRF 与后端当前会话哈希不一致。
+- 原因边界：`GET /api/admin/auth/session` 会轮换 CSRF；另一标签页、SSR 会话恢复或同名旧 Cookie 可能让已打开页面持有旧 token。读接口只校验会话，因而表现为列表/详情正常、所有写操作 40301。
+- 管理端 `useAdminAuth` 新增 `withCsrfRetry`：写请求首次遇到 40301 时强制恢复一次当前会话，并用最新 CSRF 仅重试一次；403 在数据库写入前发生，因此不会造成重复新增。文章新增、编辑、删除均接入，后续上传/发布可复用。
+- **验证**：管理端 Nuxt typecheck、ESLint、生产构建通过。构建仅有既有 Nuxt 依赖 DEP0155 警告。仍需浏览器重新测试新增与编辑；管理端开发服务器通常可热更新，无需再次重启后端。

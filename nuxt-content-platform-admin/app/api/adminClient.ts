@@ -14,6 +14,7 @@ export const ADMIN_API_WHITELIST = [
   'GET /api/admin/articles/:id',
   'POST /api/admin/articles',
   'PUT /api/admin/articles/:id',
+  'DELETE /api/admin/articles/:id',
   'POST /api/admin/articles/:id/publish',
   'POST /api/admin/articles/:id/unpublish',
   'GET /api/admin/deployments',

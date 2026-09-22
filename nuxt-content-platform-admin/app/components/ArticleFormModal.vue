@@ -47,12 +47,17 @@ const baseline = ref<ArticleFormDraft>(createEmptyArticleFormDraft())
 const formRef = ref<FormInst | null>(null)
 const saving = ref(false)
 const loadingDetail = ref(false)
-const loadError = ref('')
+const loadingCategories = ref(false)
+const categoryError = ref('')
+const detailError = ref('')
 const formError = ref('')
 const versionConflict = ref(false)
 const currentStatus = ref<ArticleStatus | null>(null)
 const categoryOptions = ref<SelectOption[]>([])
 const categoriesLoaded = ref(false)
+const categoryErrorAlertRef = ref<HTMLElement | null>(null)
+const detailErrorAlertRef = ref<HTMLElement | null>(null)
+const formErrorAlertRef = ref<HTMLElement | null>(null)
 
 const title = computed(() => {
   if (mode.value === 'create')
@@ -83,6 +88,10 @@ const statusHint = computed(() => {
     : '未知'
   return `当前状态：${statusText}。仅保存内容与版本；发布/下线尚未接入。`
 })
+
+const formBlocked = computed(() =>
+  loadingDetail.value || Boolean(detailError.value) || saving.value,
+)
 
 const rules: FormRules = {
   slug: [
@@ -137,15 +146,58 @@ const rules: FormRules = {
   ],
 }
 
-async function ensureCategories() {
-  if (categoriesLoaded.value)
+function focusAlert(el: HTMLElement | null) {
+  if (!el)
     return
-  const items = await listAdminCategories()
-  categoryOptions.value = items.map(item => ({
-    label: `${item.name}（${item.slug}）`,
-    value: item.id,
-  }))
-  categoriesLoaded.value = true
+  el.focus({ preventScroll: true })
+}
+
+async function loadCategories(force = false) {
+  if (categoriesLoaded.value && !force)
+    return
+  loadingCategories.value = true
+  categoryError.value = ''
+  try {
+    const items = await listAdminCategories()
+    categoryOptions.value = items.map(item => ({
+      label: `${item.name}（${item.slug}）`,
+      value: item.id,
+    }))
+    categoriesLoaded.value = true
+  }
+  catch (error: unknown) {
+    categoriesLoaded.value = false
+    categoryError.value = error instanceof AdminApiError
+      ? error.message
+      : '分类加载失败，请稍后重试'
+    await nextTick()
+    focusAlert(categoryErrorAlertRef.value)
+  }
+  finally {
+    loadingCategories.value = false
+  }
+}
+
+async function loadArticleDetail(id: number) {
+  loadingDetail.value = true
+  detailError.value = ''
+  try {
+    const article = await getAdminArticle(id)
+    const next = articleToFormDraft(article)
+    currentStatus.value = article.status
+    draft.value = next
+    baseline.value = cloneArticleFormDraft(next)
+  }
+  catch (error: unknown) {
+    detailError.value = error instanceof AdminApiError
+      ? error.message
+      : '文章加载失败，请稍后重试'
+    await nextTick()
+    focusAlert(detailErrorAlertRef.value)
+  }
+  finally {
+    loadingDetail.value = false
+  }
 }
 
 function resetState() {
@@ -154,11 +206,13 @@ function resetState() {
   activeLang.value = 'zh-CN'
   draft.value = createEmptyArticleFormDraft()
   baseline.value = createEmptyArticleFormDraft()
-  loadError.value = ''
+  categoryError.value = ''
+  detailError.value = ''
   formError.value = ''
   versionConflict.value = false
   currentStatus.value = null
   loadingDetail.value = false
+  loadingCategories.value = false
   saving.value = false
   formRef.value?.restoreValidation()
 }
@@ -166,12 +220,7 @@ function resetState() {
 async function openCreate() {
   resetState()
   visible.value = true
-  try {
-    await ensureCategories()
-  }
-  catch (error: unknown) {
-    loadError.value = error instanceof AdminApiError ? error.message : '分类加载失败'
-  }
+  await loadCategories()
 }
 
 async function openEdit(id: number) {
@@ -179,21 +228,19 @@ async function openEdit(id: number) {
   mode.value = 'edit'
   articleId.value = id
   visible.value = true
-  loadingDetail.value = true
-  try {
-    await ensureCategories()
-    const article = await getAdminArticle(id)
-    const next = articleToFormDraft(article)
-    currentStatus.value = article.status
-    draft.value = next
-    baseline.value = cloneArticleFormDraft(next)
-  }
-  catch (error: unknown) {
-    loadError.value = error instanceof AdminApiError ? error.message : '文章加载失败'
-  }
-  finally {
-    loadingDetail.value = false
-  }
+  // 分类与详情独立加载，互不影响已填草稿
+  void loadCategories()
+  await loadArticleDetail(id)
+}
+
+async function retryCategories() {
+  await loadCategories(true)
+}
+
+async function retryDetail() {
+  if (articleId.value == null)
+    return
+  await loadArticleDetail(articleId.value)
 }
 
 async function reloadCurrent() {
@@ -208,10 +255,15 @@ async function reloadCurrent() {
     currentStatus.value = article.status
     draft.value = next
     baseline.value = cloneArticleFormDraft(next)
+    detailError.value = ''
     message.success('已重新加载最新内容')
   }
   catch (error: unknown) {
-    loadError.value = error instanceof AdminApiError ? error.message : '重新加载失败'
+    detailError.value = error instanceof AdminApiError
+      ? error.message
+      : '重新加载失败，请稍后重试'
+    await nextTick()
+    focusAlert(detailErrorAlertRef.value)
   }
   finally {
     loadingDetail.value = false
@@ -271,7 +323,7 @@ function buildPayload(): ArticleWritePayload | null {
 async function onSave() {
   formError.value = ''
   versionConflict.value = false
-  if (loadingDetail.value || loadError.value)
+  if (formBlocked.value)
     return
 
   try {
@@ -282,28 +334,31 @@ async function onSave() {
   }
 
   const payload = buildPayload()
-  const csrf = auth.csrfToken.value
-  if (!payload || !csrf) {
+  if (!payload || !auth.csrfToken.value) {
     formError.value = '会话已失效，请重新登录后再保存'
+    await nextTick()
+    focusAlert(formErrorAlertRef.value)
     return
   }
 
   saving.value = true
   try {
     if (mode.value === 'create') {
-      await createAdminArticle(payload, csrf)
+      await auth.withCsrfRetry(csrf => createAdminArticle(payload, csrf))
       message.success('草稿已创建')
     }
     else {
       if (articleId.value == null || draft.value.version == null) {
         formError.value = '缺少文章版本，请重新打开编辑'
+        await nextTick()
+        focusAlert(formErrorAlertRef.value)
         return
       }
-      await updateAdminArticle(
-        articleId.value,
-        { ...payload, version: draft.value.version },
+      await auth.withCsrfRetry(csrf => updateAdminArticle(
+        articleId.value!,
+        { ...payload, version: draft.value.version! },
         csrf,
-      )
+      ))
       message.success('已保存')
     }
     forceClose()
@@ -314,6 +369,8 @@ async function onSave() {
       if (error.code === 40900) {
         versionConflict.value = true
         formError.value = error.message || '文章已被其他操作更新，请重新加载'
+        await nextTick()
+        focusAlert(formErrorAlertRef.value)
         return
       }
       if (
@@ -323,11 +380,14 @@ async function onSave() {
         || error.code === 40410
       ) {
         formError.value = error.message
+        await nextTick()
+        focusAlert(formErrorAlertRef.value)
         return
       }
     }
     formError.value = '保存失败，请稍后重试'
-    message.error(formError.value)
+    await nextTick()
+    focusAlert(formErrorAlertRef.value)
   }
   finally {
     saving.value = false
@@ -363,41 +423,96 @@ defineExpose({
         </template>
       </n-alert>
 
-      <n-alert
-        v-if="versionConflict"
-        type="warning"
-        title="版本冲突"
-        :bordered="false"
-        class="form_banner"
+      <div
+        v-if="categoryError"
+        ref="categoryErrorAlertRef"
+        class="form_banner error_focus"
+        tabindex="-1"
+        role="alert"
+        aria-live="assertive"
       >
-        <p>{{ formError || '文章已被其他操作更新，请重新加载最新内容后再编辑。' }}</p>
-        <n-button
-          size="small"
-          class="reload_btn"
-          :loading="loadingDetail"
-          @click="reloadCurrent"
+        <n-alert
+          type="error"
+          :bordered="false"
         >
-          重新加载
-        </n-button>
-      </n-alert>
+          <div class="alert_row">
+            <span>{{ categoryError }}</span>
+            <n-button
+              size="small"
+              :loading="loadingCategories"
+              @click="retryCategories"
+            >
+              重新加载分类
+            </n-button>
+          </div>
+        </n-alert>
+      </div>
 
-      <n-alert
+      <div
+        v-if="detailError"
+        ref="detailErrorAlertRef"
+        class="form_banner error_focus"
+        tabindex="-1"
+        role="alert"
+        aria-live="assertive"
+      >
+        <n-alert
+          type="error"
+          :bordered="false"
+        >
+          <div class="alert_row">
+            <span>{{ detailError }}</span>
+            <n-button
+              size="small"
+              :loading="loadingDetail"
+              @click="retryDetail"
+            >
+              重试文章详情
+            </n-button>
+          </div>
+        </n-alert>
+      </div>
+
+      <div
+        v-if="versionConflict"
+        ref="formErrorAlertRef"
+        class="form_banner error_focus"
+        tabindex="-1"
+        role="alert"
+        aria-live="assertive"
+      >
+        <n-alert
+          type="warning"
+          title="版本冲突"
+          :bordered="false"
+        >
+          <p>{{ formError || '文章已被其他操作更新，请重新加载最新内容后再编辑。' }}</p>
+          <n-button
+            size="small"
+            class="reload_btn"
+            :loading="loadingDetail"
+            @click="reloadCurrent"
+          >
+            重新加载
+          </n-button>
+        </n-alert>
+      </div>
+
+      <div
         v-else-if="formError"
-        type="error"
-        :bordered="false"
-        class="form_banner"
+        ref="formErrorAlertRef"
+        class="form_banner error_focus"
+        tabindex="-1"
+        role="alert"
+        aria-live="assertive"
       >
-        {{ formError }}
-      </n-alert>
-
-      <n-alert
-        v-if="loadError"
-        type="error"
-        :bordered="false"
-        class="form_banner"
-      >
-        {{ loadError }}
-      </n-alert>
+        <n-alert
+          type="error"
+          :bordered="false"
+        >
+          {{ formError }}
+        </n-alert>
+      </div>
 
       <n-spin :show="loadingDetail">
         <n-form
@@ -406,7 +521,7 @@ defineExpose({
           :model="draft"
           :rules="rules"
           label-placement="top"
-          :disabled="loadingDetail || Boolean(loadError) || saving"
+          :disabled="formBlocked"
         >
           <div class="form_grid">
             <n-form-item
@@ -441,6 +556,8 @@ defineExpose({
               v-model:value="draft.categoryId"
               placeholder="选择分类"
               :options="categoryOptions"
+              :loading="loadingCategories"
+              :disabled="Boolean(categoryError) || formBlocked"
               filterable
             />
           </n-form-item>
@@ -511,7 +628,7 @@ defineExpose({
         <n-button
           type="primary"
           :loading="saving"
-          :disabled="loadingDetail || Boolean(loadError)"
+          :disabled="formBlocked"
           @click="onSave"
         >
           保存草稿
@@ -540,6 +657,18 @@ defineExpose({
 
 .form_banner {
   margin-bottom: 12px;
+}
+
+.error_focus {
+  outline: none;
+}
+
+.alert_row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .reload_btn {

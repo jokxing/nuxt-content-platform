@@ -3,6 +3,14 @@ import { describe, it } from 'node:test'
 import { loadEnv, shouldMountDebugRoutes } from '../config/env.js'
 
 describe('debug route gating', () => {
+  it('allows both local admin loopback origins by default', () => {
+    const env = loadEnv({ NODE_ENV: 'development' })
+    assert.equal(
+      env.ADMIN_ALLOWED_ORIGINS,
+      'http://localhost:3670,http://127.0.0.1:3670',
+    )
+  })
+
   it('mounts only for test env or explicit ENABLE_DEBUG_ROUTES', () => {
     assert.equal(shouldMountDebugRoutes(loadEnv({ NODE_ENV: 'test' })), true)
     assert.equal(shouldMountDebugRoutes(loadEnv({ NODE_ENV: 'development' })), false)

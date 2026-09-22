@@ -3,7 +3,7 @@
   "info": {
     "title": "ContentPulse 资讯管理 API",
     "version": "0.1.0",
-    "description": "管理 API 契约。A2 认证三接口与 A4 文章/分类读写（list/detail/create/update、categories）已实现；publish/unpublish 与 deployments 仍待 A6/A7。浏览器应经同源 Nuxt Nitro BFF 访问，使用 HttpOnly Cookie 会话。"
+    "description": "管理 API 契约。认证、文章 CRUD/删除已实现；POST /api/admin/media/images 为 A5.2 定稿设计、A5.3 实现；publish/unpublish 与 deployments 仍待 A6/A7。浏览器应经同源 Nuxt Nitro BFF 访问，使用 HttpOnly Cookie 会话。封面上传设计见 docs/admin/MEDIA_UPLOAD_DESIGN.md。"
   },
   "servers": [
     {
@@ -19,6 +19,7 @@
     { "name": "管理认证" },
     { "name": "管理分类" },
     { "name": "管理文章" },
+    { "name": "管理媒体" },
     { "name": "部署状态" }
   ],
   "paths": {
@@ -195,6 +196,32 @@
           "409": { "$ref": "#/components/responses/Conflict" },
           "500": { "$ref": "#/components/responses/InternalError" }
         }
+      },
+      "delete": {
+        "operationId": "deleteAdminArticle",
+        "summary": "受限硬删除文章",
+        "description": "仅允许删除 DRAFT 或 ARCHIVED。请求体为 VersionCommand。PUBLISHED 返回 40901 并提示先下线。翻译随外键级联删除。不产生 BuildEvent；A6 接入 AuditLog 时应记录删除但不写部署事件。",
+        "tags": ["管理文章"],
+        "parameters": [
+          { "$ref": "#/components/parameters/CsrfHeader" },
+          { "$ref": "#/components/parameters/OriginHeader" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VersionCommand" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ArticleDeleteResultResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/InvalidArgument" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "403": { "$ref": "#/components/responses/CsrfInvalid" },
+          "404": { "$ref": "#/components/responses/AdminArticleNotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
       }
     },
     "/api/admin/articles/{id}/publish": {
@@ -251,6 +278,67 @@
           "404": { "$ref": "#/components/responses/AdminArticleNotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/api/admin/media/images": {
+      "post": {
+        "operationId": "uploadAdminMediaImage",
+        "summary": "上传封面图片",
+        "description": "A5.2 定稿 / A5.3 实现。multipart 单文件字段 file；原始 ≤5MiB；仅 JPEG/PNG/WebP（魔数校验）；服务端重编码为 WebP；对象 key 服务端生成；禁止 SVG。成功返回 MediaAsset，文章仍只保存 cover_image URL。R2 密钥不得出现在浏览器。",
+        "tags": ["管理媒体"],
+        "parameters": [
+          { "$ref": "#/components/parameters/CsrfHeader" },
+          { "$ref": "#/components/parameters/OriginHeader" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["file"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "单张封面图，原始 ≤5MiB，JPEG/PNG/WebP"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "上传成功，已写入存储并登记 MediaAsset",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MediaAssetResponse" },
+                "example": {
+                  "code": 0,
+                  "msg": "ok",
+                  "data": {
+                    "id": 1,
+                    "key": "covers/2026/09/01HZYXEXAMPLE.webp",
+                    "url": "http://127.0.0.1:4000/media/covers/2026/09/01HZYXEXAMPLE.webp",
+                    "mime_type": "image/webp",
+                    "width": 1200,
+                    "height": 630,
+                    "size": 87654,
+                    "created_at": 1727000000000
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/InvalidArgument" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "403": { "$ref": "#/components/responses/CsrfInvalid" },
+          "413": { "$ref": "#/components/responses/PayloadTooLarge" },
+          "500": { "$ref": "#/components/responses/InternalError" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -435,7 +523,13 @@
         "properties": {
           "slug": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
           "author": { "type": "string", "minLength": 1, "maxLength": 100 },
-          "cover_image": { "type": "string", "minLength": 1, "maxLength": 500, "example": "/logo.svg" },
+          "cover_image": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "example": "/logo.svg",
+            "description": "合法值：/logo.svg；或以 /images/ 开头的相对路径；或以 MEDIA_PUBLIC_BASE_URL 为前缀的媒体 URL。A5.3 起生效可信媒体 URL。"
+          },
           "category_id": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
           "translations": { "$ref": "#/components/schemas/TranslationsInput" }
         }
@@ -448,7 +542,13 @@
           "version": { "type": "integer", "minimum": 1 },
           "slug": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
           "author": { "type": "string", "minLength": 1, "maxLength": 100 },
-          "cover_image": { "type": "string", "minLength": 1, "maxLength": 500, "example": "/logo.svg" },
+          "cover_image": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "example": "/logo.svg",
+            "description": "合法值：/logo.svg；或以 /images/ 开头的相对路径；或以 MEDIA_PUBLIC_BASE_URL 为前缀的媒体 URL。A5.3 起生效可信媒体 URL。"
+          },
           "category_id": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
           "translations": { "$ref": "#/components/schemas/TranslationsInput" }
         }
@@ -458,6 +558,24 @@
         "additionalProperties": false,
         "required": ["version"],
         "properties": { "version": { "type": "integer", "minimum": 1 } }
+      },
+      "ArticleDeleteResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "deleted"],
+        "properties": {
+          "id": { "type": "integer", "minimum": 1 },
+          "deleted": { "type": "boolean", "enum": [true] }
+        }
+      },
+      "ArticleDeleteResultResponse": {
+        "type": "object",
+        "required": ["code", "msg", "data"],
+        "properties": {
+          "code": { "type": "integer", "enum": [0] },
+          "msg": { "type": "string", "enum": ["ok"] },
+          "data": { "$ref": "#/components/schemas/ArticleDeleteResult" }
+        }
       },
       "AdminCategory": {
         "type": "object",
@@ -617,6 +735,26 @@
         "required": ["code", "msg", "data"],
         "properties": { "code": { "type": "integer", "enum": [0] }, "msg": { "type": "string", "enum": ["ok"] }, "data": { "$ref": "#/components/schemas/ArticleMutationResult" } }
       },
+      "MediaAsset": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "key", "url", "mime_type", "width", "height", "size", "created_at"],
+        "properties": {
+          "id": { "type": "integer", "minimum": 1 },
+          "key": { "type": "string", "description": "对象存储 key，如 covers/2026/09/{ulid}.webp" },
+          "url": { "type": "string", "description": "MEDIA_PUBLIC_BASE_URL + / + key" },
+          "mime_type": { "type": "string", "enum": ["image/webp"] },
+          "width": { "type": "integer", "minimum": 1 },
+          "height": { "type": "integer", "minimum": 1 },
+          "size": { "type": "integer", "minimum": 1, "description": "重编码后字节数" },
+          "created_at": { "type": "integer", "format": "int64", "description": "13 位 Unix 毫秒" }
+        }
+      },
+      "MediaAssetResponse": {
+        "type": "object",
+        "required": ["code", "msg", "data"],
+        "properties": { "code": { "type": "integer", "enum": [0] }, "msg": { "type": "string", "enum": ["ok"] }, "data": { "$ref": "#/components/schemas/MediaAsset" } }
+      },
       "DeploymentListResponse": {
         "type": "object",
         "required": ["code", "msg", "data"],
@@ -639,6 +777,8 @@
       "UniqueConflict": { "description": "HTTP 409 / code 40902", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 40902, "msg": "文章 slug 已存在", "data": null, "requestId": "req-example" } } } },
       "PublishValidationFailed": { "description": "HTTP 422 / code 42200", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 42200, "msg": "简体中文标题不能为空", "data": null, "requestId": "req-example" } } } },
       "LoginRateLimited": { "description": "HTTP 429 / code 42900", "headers": { "Retry-After": { "schema": { "type": "integer" } } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 42900, "msg": "登录尝试过多，请稍后再试", "data": null, "requestId": "req-example" } } } },
+      "PayloadTooLarge": { "description": "HTTP 413 / code 41300", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 41300, "msg": "图片超过 5 MiB 上限", "data": null, "requestId": "req-example" } } } },
+      "ServiceUnavailable": { "description": "HTTP 503 / code 50300", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 50300, "msg": "媒体存储暂不可用", "data": null, "requestId": "req-example" } } } },
       "InternalError": { "description": "HTTP 500 / code 50000", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }, "example": { "code": 50000, "msg": "内部服务错误", "data": null, "requestId": "req-example" } } } }
     }
   },

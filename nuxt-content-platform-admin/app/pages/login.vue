@@ -12,9 +12,9 @@ useHead({
 
 const route = useRoute()
 const auth = useAdminAuth()
-const message = useMessage()
 
 const formRef = ref<FormInst | null>(null)
+const errorAlertRef = ref<HTMLElement | null>(null)
 const submitting = ref(false)
 const formError = ref('')
 const formModel = reactive({
@@ -58,11 +58,14 @@ async function onSubmit() {
     if (error instanceof AdminApiError) {
       if (error.code === 40101 || error.code === 42900 || error.code === 40301 || error.code === 40000) {
         formError.value = error.message
+        await nextTick()
+        errorAlertRef.value?.focus({ preventScroll: true })
         return
       }
     }
     formError.value = '登录失败，请稍后重试'
-    message.error(formError.value)
+    await nextTick()
+    errorAlertRef.value?.focus({ preventScroll: true })
   }
   finally {
     submitting.value = false
@@ -115,14 +118,21 @@ async function onSubmit() {
             @keyup.enter="onSubmit"
           />
         </n-form-item>
-        <n-alert
+        <div
           v-if="formError"
-          type="error"
-          :bordered="false"
+          ref="errorAlertRef"
           class="login_error"
+          tabindex="-1"
+          role="alert"
+          aria-live="assertive"
         >
-          {{ formError }}
-        </n-alert>
+          <n-alert
+            type="error"
+            :bordered="false"
+          >
+            {{ formError }}
+          </n-alert>
+        </div>
         <n-button
           type="primary"
           block
@@ -173,5 +183,6 @@ async function onSubmit() {
 
 .login_error {
   margin-bottom: 16px;
+  outline: none;
 }
 </style>

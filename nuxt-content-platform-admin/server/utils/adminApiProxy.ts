@@ -10,7 +10,7 @@ import {
 } from 'h3'
 
 type AdminRouteRule = {
-  method: 'GET' | 'POST' | 'PUT'
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE'
   /** 相对 /api/admin 的路径模式，如 auth/login、articles/:id */
   pattern: string
   queryKeys: readonly string[]
@@ -29,6 +29,7 @@ const ADMIN_ROUTE_RULES: readonly AdminRouteRule[] = [
   { method: 'POST', pattern: 'articles', queryKeys: [] },
   { method: 'GET', pattern: 'articles/:id', queryKeys: [] },
   { method: 'PUT', pattern: 'articles/:id', queryKeys: [] },
+  { method: 'DELETE', pattern: 'articles/:id', queryKeys: [] },
   { method: 'POST', pattern: 'articles/:id/publish', queryKeys: [] },
   { method: 'POST', pattern: 'articles/:id/unpublish', queryKeys: [] },
   { method: 'GET', pattern: 'deployments', queryKeys: ['status', 'reason', 'page', 'page_size'] },

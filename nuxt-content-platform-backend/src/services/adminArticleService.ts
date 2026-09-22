@@ -8,6 +8,7 @@ import type {
 import { LOCALES } from '../lib/domainConstants.js'
 import {
   adminArticleNotFound,
+  articleStateConflict,
   dataIntegrityError,
   invalidArgument,
   uniqueConflict,
@@ -21,6 +22,11 @@ export type AdminCategoryBrief = {
   slug: string
   name: string
   parent_route: string
+}
+
+export type AdminArticleDeleteResult = {
+  id: number
+  deleted: true
 }
 
 export type AdminTranslationDto = {
@@ -312,4 +318,35 @@ export async function updateAdminArticle(
       throw uniqueConflict('文章 slug 已存在')
     throw error
   }
+}
+
+/**
+ * 受限硬删除：仅 DRAFT / ARCHIVED。
+ * 不写 BuildEvent；A6 接入 AuditLog 时应记录删除动作但不产生部署事件。
+ */
+export async function deleteAdminArticle(
+  id: number,
+  version: number,
+): Promise<AdminArticleDeleteResult> {
+  return prisma.$transaction(async (tx) => {
+    const result = await tx.article.deleteMany({
+      where: {
+        id,
+        version,
+        status: { in: [ArticleStatus.DRAFT, ArticleStatus.ARCHIVED] },
+      },
+    })
+
+    if (result.count === 1)
+      return { id, deleted: true as const }
+
+    const existing = await tx.article.findUnique({ where: { id } })
+    if (!existing)
+      throw adminArticleNotFound()
+    if (existing.version !== version)
+      throw versionConflict()
+    if (existing.status === ArticleStatus.PUBLISHED)
+      throw articleStateConflict('已发布文章请先下线后再删除')
+    throw versionConflict()
+  })
 }

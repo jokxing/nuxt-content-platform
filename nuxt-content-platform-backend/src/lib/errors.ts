@@ -90,6 +90,10 @@ export function versionConflict(message = '文章已被其他操作更新，请�
   return new AppError(409, BusinessCode.VERSION_CONFLICT, message)
 }
 
+export function articleStateConflict(message = '当前状态不允许该操作'): AppError {
+  return new AppError(409, BusinessCode.ARTICLE_STATE_CONFLICT, message)
+}
+
 export function uniqueConflict(message = '资源已存在'): AppError {
   return new AppError(409, BusinessCode.UNIQUE_CONFLICT, message)
 }

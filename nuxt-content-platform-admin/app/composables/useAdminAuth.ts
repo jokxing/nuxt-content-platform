@@ -67,6 +67,34 @@ export function useAdminAuth() {
     return data
   }
 
+  /**
+   * 执行需要 CSRF 的管理写请求。多标签页或 SSR 恢复会话可能轮换 token；
+   * 首次 40301 时恢复最新会话并安全重试一次，避免旧页面永久无法保存。
+   */
+  async function withCsrfRetry<T>(operation: (csrfToken: string) => Promise<T>): Promise<T> {
+    const currentToken = csrfToken.value
+    if (!currentToken) {
+      throw new AdminApiError(401, {
+        code: 40100,
+        msg: '会话已失效，请重新登录',
+        data: null,
+      })
+    }
+
+    try {
+      return await operation(currentToken)
+    }
+    catch (error: unknown) {
+      if (!(error instanceof AdminApiError) || error.code !== 40301)
+        throw error
+
+      const refreshed = await ensureSession(true)
+      if (!refreshed?.csrf_token)
+        throw error
+      return operation(refreshed.csrf_token)
+    }
+  }
+
   async function logout(): Promise<void> {
     try {
       await adminApiRequest<{ logged_out: true }>('/api/admin/auth/logout', {
@@ -96,6 +124,7 @@ export function useAdminAuth() {
     clearSession,
     ensureSession,
     fetchSession,
+    withCsrfRetry,
     login,
     logout,
   }

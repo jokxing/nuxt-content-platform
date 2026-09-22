@@ -62,3 +62,15 @@ export async function updateAdminArticle(
     csrfToken,
   })
 }
+
+export async function deleteAdminArticle(
+  id: number,
+  version: number,
+  csrfToken: string,
+): Promise<{ id: number, deleted: true }> {
+  return adminApiRequest<{ id: number, deleted: true }>(`/api/admin/articles/${id}`, {
+    method: 'DELETE',
+    body: { version },
+    csrfToken,
+  })
+}

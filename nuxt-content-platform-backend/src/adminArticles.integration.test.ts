@@ -431,4 +431,253 @@ describe('A4 admin articles integration', () => {
     assert.equal(res.status, 404)
     assertErrorEnvelope(res.body, 40410)
   })
+
+  it('rejects unauthenticated delete with 40100', async () => {
+    const res = await apiSend(server.baseUrl, '/api/admin/articles/1', {
+      method: 'DELETE',
+      headers: { Origin: ORIGIN },
+      body: { version: 1 },
+    })
+    assert.equal(res.status, 401)
+    assertErrorEnvelope(res.body, 40100)
+  })
+
+  it('rejects delete without CSRF with 40301', async () => {
+    const slug = probeSlug(`del-csrf-${randomBytes(3).toString('hex')}`)
+    const created = await apiSend(server.baseUrl, '/api/admin/articles', {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: writeBody(slug, catId),
+    })
+    assert.equal(created.status, 201)
+    const article = asObject(created.body.data, 'data')
+    const id = Number(article.id)
+
+    const res = await apiSend(server.baseUrl, `/api/admin/articles/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+      },
+      body: { version: Number(article.version) },
+    })
+    assert.equal(res.status, 403)
+    assertErrorEnvelope(res.body, 40301)
+  })
+
+  it('rejects illegal delete id and body', async () => {
+    const badId = await apiSend(server.baseUrl, '/api/admin/articles/0', {
+      method: 'DELETE',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version: 1 },
+    })
+    assert.equal(badId.status, 400)
+    assertErrorEnvelope(badId.body, 40000)
+
+    const slug = probeSlug(`del-body-${randomBytes(3).toString('hex')}`)
+    const created = await apiSend(server.baseUrl, '/api/admin/articles', {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: writeBody(slug, catId),
+    })
+    assert.equal(created.status, 201)
+    const id = Number(asObject(created.body.data, 'data').id)
+
+    const badBody = await apiSend(server.baseUrl, `/api/admin/articles/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version: 1, extra: true },
+    })
+    assert.equal(badBody.status, 400)
+    assertErrorEnvelope(badBody.body, 40000)
+  })
+
+  it('delete missing article returns 40410', async () => {
+    const res = await apiSend(server.baseUrl, '/api/admin/articles/2147483646', {
+      method: 'DELETE',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version: 1 },
+    })
+    assert.equal(res.status, 404)
+    assertErrorEnvelope(res.body, 40410)
+  })
+
+  it('delete stale version returns 40900', async () => {
+    const slug = probeSlug(`del-ver-${randomBytes(3).toString('hex')}`)
+    const created = await apiSend(server.baseUrl, '/api/admin/articles', {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: writeBody(slug, catId),
+    })
+    assert.equal(created.status, 201)
+    const article = asObject(created.body.data, 'data')
+    const id = Number(article.id)
+
+    const res = await apiSend(server.baseUrl, `/api/admin/articles/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version: Number(article.version) + 1 },
+    })
+    assert.equal(res.status, 409)
+    assertErrorEnvelope(res.body, 40900)
+
+    const still = await prisma.article.findUnique({ where: { id } })
+    assert.ok(still)
+  })
+
+  it('rejects deleting published article with 40901', async () => {
+    const slug = probeSlug(`del-pub-${randomBytes(3).toString('hex')}`)
+    const created = await apiSend(server.baseUrl, '/api/admin/articles', {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: writeBody(slug, catId),
+    })
+    assert.equal(created.status, 201)
+    const article = asObject(created.body.data, 'data')
+    const id = Number(article.id)
+    const version = Number(article.version)
+
+    await prisma.article.update({
+      where: { id },
+      data: {
+        status: 'PUBLISHED',
+        publishedAt: new Date(),
+      },
+    })
+
+    const res = await apiSend(server.baseUrl, `/api/admin/articles/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version },
+    })
+    assert.equal(res.status, 409)
+    assertErrorEnvelope(res.body, 40901)
+
+    const still = await prisma.article.findUnique({ where: { id } })
+    assert.ok(still)
+    assert.equal(still.status, 'PUBLISHED')
+  })
+
+  it('deletes draft and cascades translations; public list unaffected', async () => {
+    const slug = probeSlug(`del-draft-${randomBytes(3).toString('hex')}`)
+    const created = await apiSend(server.baseUrl, '/api/admin/articles', {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: writeBody(slug, catId, {
+        translations: {
+          'zh-CN': { title: '待删草稿', content: '<p>draft</p>' },
+          'zh-HK': { title: '待刪', content: '' },
+          'en-US': { title: 'to-delete', content: '' },
+        },
+      }),
+    })
+    assert.equal(created.status, 201)
+    const article = asObject(created.body.data, 'data')
+    const id = Number(article.id)
+    const version = Number(article.version)
+
+    const beforeTranslations = await prisma.articleTranslation.count({ where: { articleId: id } })
+    assert.equal(beforeTranslations, 3)
+
+    const publicBefore = await apiGet(server.baseUrl, '/api/articles?lang=zh-CN&page=1&page_size=10')
+    assert.equal(publicBefore.status, 200)
+    const publicTotalBefore = Number(asObject(publicBefore.body.data, 'd').total)
+
+    const deleted = await apiSend(server.baseUrl, `/api/admin/articles/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version },
+    })
+    assert.equal(deleted.status, 200)
+    assertSuccessEnvelope(deleted.body)
+    const data = asObject(deleted.body.data, 'data')
+    assert.equal(data.id, id)
+    assert.equal(data.deleted, true)
+
+    assert.equal(await prisma.article.findUnique({ where: { id } }), null)
+    assert.equal(await prisma.articleTranslation.count({ where: { articleId: id } }), 0)
+
+    const publicAfter = await apiGet(server.baseUrl, '/api/articles?lang=zh-CN&page=1&page_size=10')
+    assert.equal(publicAfter.status, 200)
+    assert.equal(Number(asObject(publicAfter.body.data, 'd').total), publicTotalBefore)
+  })
+
+  it('deletes archived article', async () => {
+    const slug = probeSlug(`del-arch-${randomBytes(3).toString('hex')}`)
+    const created = await apiSend(server.baseUrl, '/api/admin/articles', {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: writeBody(slug, catId),
+    })
+    assert.equal(created.status, 201)
+    const article = asObject(created.body.data, 'data')
+    const id = Number(article.id)
+    const version = Number(article.version)
+
+    await prisma.article.update({
+      where: { id },
+      data: { status: 'ARCHIVED' },
+    })
+
+    const deleted = await apiSend(server.baseUrl, `/api/admin/articles/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version },
+    })
+    assert.equal(deleted.status, 200)
+    assertSuccessEnvelope(deleted.body)
+    assert.equal(await prisma.article.findUnique({ where: { id } }), null)
+  })
 })

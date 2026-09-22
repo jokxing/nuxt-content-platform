@@ -44,7 +44,7 @@ const envSchema = z
     /** 显式开启 /__debug；production 下禁止为 true。 */
     ENABLE_DEBUG_ROUTES: boolFromEnv,
     /** 逗号分隔的管理站 Origin 白名单，例如 http://localhost:3670 */
-    ADMIN_ALLOWED_ORIGINS: z.string().default('http://localhost:3670'),
+    ADMIN_ALLOWED_ORIGINS: z.string().default('http://localhost:3670,http://127.0.0.1:3670'),
     /** 仅本地/测试允许缺少 Origin 的非浏览器请求。 */
     ADMIN_ALLOW_MISSING_ORIGIN: boolFromEnv,
     /** Cookie Secure；缺省时 production=true，其它环境 false。 */

@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import {
+  deleteAdminArticleById,
   getAdminArticleById,
   getAdminArticles,
   getAdminCategories,
@@ -20,5 +21,6 @@ export function createAdminArticlesRouter(): Router {
   router.post('/', asyncHandler(postAdminArticle))
   router.get('/:id', asyncHandler(getAdminArticleById))
   router.put('/:id', asyncHandler(putAdminArticle))
+  router.delete('/:id', asyncHandler(deleteAdminArticleById))
   return router
 }

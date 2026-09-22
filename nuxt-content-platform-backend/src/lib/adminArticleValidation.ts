@@ -29,8 +29,13 @@ export const articleUpdateInputSchema = articleWriteInputSchema.extend({
   version: z.number().int().min(1),
 }).strict()
 
+export const articleDeleteInputSchema = z.object({
+  version: z.number().int().min(1),
+}).strict()
+
 export type ArticleWriteInput = z.infer<typeof articleWriteInputSchema>
 export type ArticleUpdateInput = z.infer<typeof articleUpdateInputSchema>
+export type ArticleDeleteInput = z.infer<typeof articleDeleteInputSchema>
 
 function zodMessage(error: z.ZodError): string {
   const issue = error.issues[0]
@@ -72,6 +77,13 @@ export function parseArticleUpdateInput(body: unknown): ArticleUpdateInput {
     throw invalidArgument(zodMessage(parsed.error))
   if (!isValidCoverImage(parsed.data.cover_image))
     throw invalidArgument('封面路径不合法')
+  return parsed.data
+}
+
+export function parseArticleDeleteInput(body: unknown): ArticleDeleteInput {
+  const parsed = articleDeleteInputSchema.safeParse(body)
+  if (!parsed.success)
+    throw invalidArgument(zodMessage(parsed.error))
   return parsed.data
 }
 
