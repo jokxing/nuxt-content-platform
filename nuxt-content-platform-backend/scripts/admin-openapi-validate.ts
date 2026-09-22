@@ -42,4 +42,4 @@ for (const pathItem of Object.values(api.paths || {})) {
 }
 assert.equal(operationCount, 14, `expected 14 admin operations, got ${operationCount}`)
 
-console.log(`admin-openapi:validate OK — ${openapiPath} (${allPaths.length} paths, ${operationCount} operations; auth+articles+media design ready)`)
+console.log(`admin-openapi:validate OK — ${openapiPath} (${allPaths.length} paths, ${operationCount} operations; auth+articles+media ready)`)

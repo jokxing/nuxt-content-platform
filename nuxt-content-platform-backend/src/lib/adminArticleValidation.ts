@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { isCategorySlug } from './domainConstants.js'
 import { invalidArgument } from './errors.js'
+import { getMediaConfig } from '../config/mediaConfig.js'
 import { CONTENT_LIMIT, isValidCoverImage } from './htmlSanitize.js'
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -66,7 +67,8 @@ export function parseArticleWriteInput(body: unknown): ArticleWriteInput {
   const parsed = articleWriteInputSchema.safeParse(body)
   if (!parsed.success)
     throw invalidArgument(zodMessage(parsed.error))
-  if (!isValidCoverImage(parsed.data.cover_image))
+  const mediaBase = getMediaConfig().publicBaseUrl
+  if (!isValidCoverImage(parsed.data.cover_image, mediaBase))
     throw invalidArgument('封面路径不合法')
   return parsed.data
 }
@@ -75,7 +77,8 @@ export function parseArticleUpdateInput(body: unknown): ArticleUpdateInput {
   const parsed = articleUpdateInputSchema.safeParse(body)
   if (!parsed.success)
     throw invalidArgument(zodMessage(parsed.error))
-  if (!isValidCoverImage(parsed.data.cover_image))
+  const mediaBase = getMediaConfig().publicBaseUrl
+  if (!isValidCoverImage(parsed.data.cover_image, mediaBase))
     throw invalidArgument('封面路径不合法')
   return parsed.data
 }

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import type { FormInst, FormRules, SelectOption } from 'naive-ui'
+import type { FormInst, FormRules, SelectOption, UploadCustomRequestOptions } from 'naive-ui'
 import {
   createAdminArticle,
   getAdminArticle,
   listAdminCategories,
   updateAdminArticle,
 } from '~/api/adminArticles'
+import { uploadCoverImage } from '~/api/adminMedia'
 import { AdminApiError } from '~/api/adminClient'
 import type {
   ArticleFormDraft,
@@ -28,6 +29,10 @@ const emit = defineEmits<{
 
 const auth = useAdminAuth()
 const message = useMessage()
+const runtimeConfig = useRuntimeConfig()
+const mediaPublicBaseUrl = computed(() =>
+  String(runtimeConfig.public.mediaPublicBaseUrl || '').replace(/\/+$/, ''),
+)
 
 const LANG_TABS: { key: ArticleLocale, label: string }[] = [
   { key: 'zh-CN', label: '简体中文' },
@@ -48,6 +53,9 @@ const formRef = ref<FormInst | null>(null)
 const saving = ref(false)
 const loadingDetail = ref(false)
 const loadingCategories = ref(false)
+const uploadingCover = ref(false)
+const uploadError = ref('')
+const coverUploadedUnsaved = ref(false)
 const categoryError = ref('')
 const detailError = ref('')
 const formError = ref('')
@@ -73,7 +81,7 @@ const coverBroken = ref(false)
 
 const coverPreview = computed(() => {
   const value = draft.value.coverUrl.trim()
-  return isValidCoverImage(value) ? value : null
+  return isValidCoverImage(value, mediaPublicBaseUrl.value) ? value : null
 })
 
 watch(coverPreview, () => {
@@ -124,13 +132,13 @@ const rules: FormRules = {
   coverUrl: [
     {
       required: true,
-      message: '请输入封面路径',
+      message: '请输入封面路径或上传图片',
       trigger: ['blur', 'input'],
     },
     {
       validator: (_rule, value: string) => {
-        if (!isValidCoverImage(value || ''))
-          return new Error('封面仅支持 /logo.svg 或 /images/ 下相对路径')
+        if (!isValidCoverImage(value || '', mediaPublicBaseUrl.value))
+          return new Error('封面仅支持 /logo.svg、/images/ 相对路径或可信媒体 URL')
         return true
       },
       trigger: ['blur', 'input'],
@@ -209,6 +217,9 @@ function resetState() {
   categoryError.value = ''
   detailError.value = ''
   formError.value = ''
+  uploadError.value = ''
+  coverUploadedUnsaved.value = false
+  uploadingCover.value = false
   versionConflict.value = false
   currentStatus.value = null
   loadingDetail.value = false
@@ -241,6 +252,46 @@ async function retryDetail() {
   if (articleId.value == null)
     return
   await loadArticleDetail(articleId.value)
+}
+
+async function onUploadCover({ file, onFinish, onError }: UploadCustomRequestOptions) {
+  const raw = file.file
+  if (!(raw instanceof File)) {
+    onError()
+    return
+  }
+  if (raw.size > 5 * 1024 * 1024) {
+    uploadError.value = '图片超过 5 MiB 上限'
+    onError()
+    return
+  }
+
+  uploadingCover.value = true
+  uploadError.value = ''
+  try {
+    const asset = await auth.withCsrfRetry(csrf => uploadCoverImage(raw, csrf))
+    draft.value.coverUrl = asset.url
+    coverUploadedUnsaved.value = true
+    coverBroken.value = false
+    message.success('图片已上传，文章仍未保存')
+    onFinish()
+  }
+  catch (error: unknown) {
+    uploadError.value = error instanceof AdminApiError
+      ? error.message
+      : '上传失败，请稍后重试'
+    onError()
+  }
+  finally {
+    uploadingCover.value = false
+  }
+}
+
+function clearUploadedCover() {
+  draft.value.coverUrl = '/logo.svg'
+  coverUploadedUnsaved.value = false
+  coverBroken.value = false
+  uploadError.value = ''
 }
 
 async function reloadCurrent() {
@@ -563,25 +614,85 @@ defineExpose({
           </n-form-item>
 
           <n-form-item
-            label="封面路径"
+            label="封面"
             path="coverUrl"
           >
-            <n-input
-              v-model:value="draft.coverUrl"
-              placeholder="/logo.svg 或 /images/..."
-              maxlength="500"
-            />
+            <div class="cover_field">
+              <div class="cover_overview">
+                <div class="cover_preview">
+                  <img
+                    v-if="coverPreview && !coverBroken"
+                    :src="coverPreview"
+                    alt="封面预览"
+                    @error="coverBroken = true"
+                  >
+                  <span v-else>暂无预览</span>
+                </div>
+                <div class="cover_actions">
+                  <div class="cover_action_buttons">
+                    <n-upload
+                      :max="1"
+                      accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                      :custom-request="onUploadCover"
+                      :show-file-list="false"
+                      :disabled="formBlocked || uploadingCover"
+                    >
+                      <n-button
+                        size="small"
+                        type="primary"
+                        secondary
+                        :loading="uploadingCover"
+                        :disabled="formBlocked"
+                      >
+                        {{ uploadingCover ? '正在上传' : '选择图片' }}
+                      </n-button>
+                    </n-upload>
+                    <n-button
+                      v-if="draft.coverUrl !== '/logo.svg'"
+                      size="small"
+                      quaternary
+                      :disabled="formBlocked || uploadingCover"
+                      @click="clearUploadedCover"
+                    >
+                      恢复默认封面
+                    </n-button>
+                  </div>
+                  <p class="cover_hint">
+                    支持 JPEG、PNG、WebP，最大 5 MiB；上传后统一转为 WebP。
+                  </p>
+                </div>
+              </div>
+              <div class="cover_url_field">
+                <span class="cover_url_label">封面地址</span>
+                <n-input
+                  v-model:value="draft.coverUrl"
+                  placeholder="/logo.svg、/images/... 或可信媒体 URL"
+                  maxlength="500"
+                  :disabled="formBlocked || uploadingCover"
+                >
+                  <template #suffix>
+                    <span class="cover_url_suffix">可手动填写</span>
+                  </template>
+                </n-input>
+              </div>
+              <n-alert
+                v-if="uploadError"
+                type="error"
+                :bordered="false"
+                class="cover_upload_error"
+              >
+                {{ uploadError }}
+              </n-alert>
+              <n-alert
+                v-else-if="coverUploadedUnsaved"
+                type="info"
+                :bordered="false"
+                class="cover_upload_error"
+              >
+                图片已上传，文章仍未保存
+              </n-alert>
+            </div>
           </n-form-item>
-          <div
-            v-if="coverPreview && !coverBroken"
-            class="cover_preview"
-          >
-            <img
-              :src="coverPreview"
-              alt="封面预览"
-              @error="coverBroken = true"
-            >
-          </div>
 
           <n-tabs
             v-model:value="activeLang"
@@ -690,20 +801,95 @@ defineExpose({
 }
 
 .cover_preview {
-  margin: -8px 0 16px;
-  max-width: 160px;
-  max-height: 90px;
+  display: flex;
+  flex: 0 0 144px;
+  align-items: center;
+  justify-content: center;
+  width: 144px;
+  height: 90px;
   overflow: hidden;
   border: 1px solid var(--n-border-color);
-  border-radius: 4px;
-  background: #fafafa;
+  border-radius: 6px;
+  background: var(--admin-bg);
+  color: var(--admin-text-muted);
+  font-size: 12px;
 
   img {
     display: block;
     width: 100%;
-    height: auto;
-    max-height: 90px;
-    object-fit: contain;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.cover_field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.cover_overview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border: 1px solid var(--n-border-color);
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.cover_actions {
+  min-width: 0;
+}
+
+.cover_action_buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cover_hint {
+  margin: 8px 0 0;
+  color: var(--admin-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.cover_url_field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cover_url_label {
+  color: var(--admin-text);
+  font-size: 13px;
+}
+
+.cover_url_suffix {
+  color: var(--admin-text-muted);
+  font-size: 12px;
+}
+
+.cover_upload_error {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .cover_overview {
+    align-items: flex-start;
+  }
+
+  .cover_preview {
+    flex-basis: 112px;
+    width: 112px;
+    height: 72px;
+  }
+
+  .cover_url_suffix {
+    display: none;
   }
 }
 </style>

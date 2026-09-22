@@ -3,7 +3,7 @@
   "info": {
     "title": "ContentPulse 资讯管理 API",
     "version": "0.1.0",
-    "description": "管理 API 契约。认证、文章 CRUD/删除已实现；POST /api/admin/media/images 为 A5.2 定稿设计、A5.3 实现；publish/unpublish 与 deployments 仍待 A6/A7。浏览器应经同源 Nuxt Nitro BFF 访问，使用 HttpOnly Cookie 会话。封面上传设计见 docs/admin/MEDIA_UPLOAD_DESIGN.md。"
+    "description": "管理 API 契约。认证、文章 CRUD/删除、封面上传（POST /api/admin/media/images）已实现；publish/unpublish 与 deployments 仍待 A6/A7。浏览器应经同源 Nuxt Nitro BFF 访问，使用 HttpOnly Cookie 会话。封面上传设计见 docs/admin/MEDIA_UPLOAD_DESIGN.md。"
   },
   "servers": [
     {

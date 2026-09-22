@@ -2,6 +2,7 @@ import express from 'express'
 import { initAuthConfig } from './config/authConfig.js'
 import type { Env } from './config/env.js'
 import { shouldMountDebugRoutes } from './config/env.js'
+import { initMediaConfig } from './config/mediaConfig.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import { requestIdMiddleware } from './middleware/requestId.js'
 import { createApiRouter } from './routes/index.js'
@@ -9,6 +10,7 @@ import { createDebugErrorRouter } from './routes/debugError.js'
 
 export function createApp(env: Env) {
   initAuthConfig(env)
+  initMediaConfig(env)
   const app = express()
 
   app.disable('x-powered-by')

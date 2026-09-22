@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client'
+import { getMediaConfig } from '../config/mediaConfig.js'
 import { prisma } from '../db/prisma.js'
 import type { CategoryFilter } from '../lib/categoryQuery.js'
 import { articleNotFound, dataIntegrityError } from '../lib/errors.js'
@@ -52,7 +53,7 @@ function toDto(row: ArticleRow, locale: Locale): ArticleDto | null {
     content: sanitizeArticleHtml(translation.content),
     publish_date: toUnixMillis(row.publishedAt),
     author: row.author,
-    cover_image: normalizeCoverImage(row.coverImage),
+    cover_image: normalizeCoverImage(row.coverImage, getMediaConfig().publicBaseUrl),
     status: 1,
     category: categoryName,
     category_slug: row.category.slug,

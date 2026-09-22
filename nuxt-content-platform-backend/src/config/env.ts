@@ -53,6 +53,17 @@ const envSchema = z
     ADMIN_BOOTSTRAP_USERNAME: z.string().optional(),
     ADMIN_BOOTSTRAP_PASSWORD: z.string().optional(),
     ADMIN_BOOTSTRAP_DISPLAY_NAME: z.string().optional(),
+    /** 媒体公开基址（无尾斜杠），本地如 http://127.0.0.1:4000/media */
+    MEDIA_PUBLIC_BASE_URL: z.string().optional(),
+    /** local | r2；缺省 local */
+    MEDIA_STORAGE_DRIVER: z.enum(['local', 'r2']).optional(),
+    /** 本地磁盘根目录；缺省 .data/media */
+    MEDIA_LOCAL_ROOT: z.string().optional(),
+    R2_ACCOUNT_ID: z.string().optional(),
+    R2_ACCESS_KEY_ID: z.string().optional(),
+    R2_SECRET_ACCESS_KEY: z.string().optional(),
+    R2_BUCKET: z.string().optional(),
+    R2_ENDPOINT: z.string().optional(),
   })
   .superRefine((value, ctx) => {
     if (value.DATABASE_URL && value.SHADOW_DATABASE_URL && value.DATABASE_URL === value.SHADOW_DATABASE_URL) {
@@ -93,6 +104,14 @@ function readProcessEnv(): Record<string, string | undefined> {
     ADMIN_BOOTSTRAP_USERNAME: process.env.ADMIN_BOOTSTRAP_USERNAME,
     ADMIN_BOOTSTRAP_PASSWORD: process.env.ADMIN_BOOTSTRAP_PASSWORD,
     ADMIN_BOOTSTRAP_DISPLAY_NAME: process.env.ADMIN_BOOTSTRAP_DISPLAY_NAME,
+    MEDIA_PUBLIC_BASE_URL: process.env.MEDIA_PUBLIC_BASE_URL,
+    MEDIA_STORAGE_DRIVER: process.env.MEDIA_STORAGE_DRIVER,
+    MEDIA_LOCAL_ROOT: process.env.MEDIA_LOCAL_ROOT,
+    R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID,
+    R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID,
+    R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY,
+    R2_BUCKET: process.env.R2_BUCKET,
+    R2_ENDPOINT: process.env.R2_ENDPOINT,
   }
 }
 

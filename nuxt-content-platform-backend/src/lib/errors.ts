@@ -13,6 +13,7 @@ export const BusinessCode = {
   VERSION_CONFLICT: 40900,
   ARTICLE_STATE_CONFLICT: 40901,
   UNIQUE_CONFLICT: 40902,
+  PAYLOAD_TOO_LARGE: 41300,
   PUBLISH_VALIDATION_FAILED: 42200,
   LOGIN_RATE_LIMITED: 42900,
   INTERNAL_ERROR: 50000,
@@ -96,6 +97,10 @@ export function articleStateConflict(message = '当前状态不允许该操作')
 
 export function uniqueConflict(message = '资源已存在'): AppError {
   return new AppError(409, BusinessCode.UNIQUE_CONFLICT, message)
+}
+
+export function payloadTooLarge(message = '图片超过 5 MiB 上限'): AppError {
+  return new AppError(413, BusinessCode.PAYLOAD_TOO_LARGE, message)
 }
 
 export function internalError(message = '内部服务错误', cause?: unknown): AppError {

@@ -14,6 +14,10 @@ type AdminRouteRule = {
   /** 相对 /api/admin 的路径模式，如 auth/login、articles/:id */
   pattern: string
   queryKeys: readonly string[]
+  /** 请求体上限（字节）；上传路由约 6 MiB */
+  maxBodyBytes?: number
+  /** 上游超时毫秒；上传默认 60s */
+  timeoutMs?: number
 }
 
 /**
@@ -30,6 +34,7 @@ const ADMIN_ROUTE_RULES: readonly AdminRouteRule[] = [
   { method: 'GET', pattern: 'articles/:id', queryKeys: [] },
   { method: 'PUT', pattern: 'articles/:id', queryKeys: [] },
   { method: 'DELETE', pattern: 'articles/:id', queryKeys: [] },
+  { method: 'POST', pattern: 'media/images', queryKeys: [], maxBodyBytes: 6 * 1024 * 1024, timeoutMs: 60_000 },
   { method: 'POST', pattern: 'articles/:id/publish', queryKeys: [] },
   { method: 'POST', pattern: 'articles/:id/unpublish', queryKeys: [] },
   { method: 'GET', pattern: 'deployments', queryKeys: ['status', 'reason', 'page', 'page_size'] },
@@ -180,7 +185,25 @@ export async function proxyAdminApi(event: H3Event): Promise<unknown> {
   const contentType = getHeader(event, 'content-type')
   let body: Buffer | undefined
   if (method !== 'GET' && method !== 'HEAD') {
+    const contentLengthHeader = getHeader(event, 'content-length')
+    const contentLength = contentLengthHeader ? Number(contentLengthHeader) : 0
+    if (
+      rule.maxBodyBytes != null
+      && Number.isFinite(contentLength)
+      && contentLength > rule.maxBodyBytes
+    ) {
+      throw createError({
+        statusCode: 413,
+        statusMessage: '图片超过上传上限',
+      })
+    }
     body = await readRawBody(event, false) as Buffer | undefined
+    if (rule.maxBodyBytes != null && body && body.length > rule.maxBodyBytes) {
+      throw createError({
+        statusCode: 413,
+        statusMessage: '图片超过上传上限',
+      })
+    }
     if (contentType)
       headers['content-type'] = contentType
     else if (body && body.length > 0)
@@ -192,7 +215,7 @@ export async function proxyAdminApi(event: H3Event): Promise<unknown> {
       method,
       headers,
       body,
-      timeout: 15000,
+      timeout: rule.timeoutMs ?? 15000,
       retry: 0,
       ignoreResponseError: true,
     })

@@ -1,6 +1,6 @@
 # 资讯管理接口与认证契约
 
-日期：2026-09-22。阶段：A5.1 删除已实现；A5.2 封面上传为**已定稿设计、未实现**（详见 [MEDIA_UPLOAD_DESIGN.md](./MEDIA_UPLOAD_DESIGN.md)）；发布 / 部署仍为设计。机器可读契约见 [admin-openapi.json](./admin-openapi.json)。公开查询接口继续以 [BACKEND_CONTRACT.md](../backend/BACKEND_CONTRACT.md) 为准。
+日期：2026-09-22。阶段：A5.1 删除已实现；A5.3 封面上传已实现（设计见 [MEDIA_UPLOAD_DESIGN.md](./MEDIA_UPLOAD_DESIGN.md)）；发布 / 部署仍为设计。机器可读契约见 [admin-openapi.json](./admin-openapi.json)。公开查询接口继续以 [BACKEND_CONTRACT.md](../backend/BACKEND_CONTRACT.md) 为准。
 
 ## 1. 范围与边界
 
@@ -211,9 +211,10 @@ AuditLog 记录 actor、action、entityType/entityId、文章版本、requestId�
 - **A5 已实现**：管理端 `/articles` 列表（筛选/分页）、共用新建/编辑弹窗、三语 textarea、封面预览、未保存确认、版本冲突提示；无假发布按钮。
 - **A5.0 已实现**：分类/详情可重试错误态；登录与保存失败以内联 alert 为主。
 - **A5.1 / B9.3.1 已实现**：`DELETE /api/admin/articles/{id}` 受限硬删除（仅 DRAFT/ARCHIVED）；管理列表删除确认；BFF/客户端白名单。
-- **A5.2 / B9.3.2 已定稿设计**：`POST /api/admin/media/images`、StorageAdapter、MediaAsset、错误码与验收用例见契约与 [MEDIA_UPLOAD_DESIGN.md](./MEDIA_UPLOAD_DESIGN.md)；**尚未写实现代码**。
-- **尚未实现**：封面上传实现（A5.3）、发布/下线与 BuildEvent（A6）、外部构建（A7）。禁止用 Mock 冒充这些能力。
+- **A5.2 / B9.3.2 已定稿设计**：`POST /api/admin/media/images`、StorageAdapter、MediaAsset、错误码与验收用例见契约与 [MEDIA_UPLOAD_DESIGN.md](./MEDIA_UPLOAD_DESIGN.md)。
+- **A5.3 / B9.3.3 已实现**：MediaAsset 迁移；sharp 校验/重编码 WebP；本地/R2 StorageAdapter；`POST /api/admin/media/images`；本地 `GET /media/*`；BFF multipart 白名单与 6MiB/60s；`uploadCoverImage` + ArticleFormModal Upload；cover 可信 URL 校验。无真实 R2 凭据时仅验证本地适配器。
+- **尚未实现**：发布/下线与 BuildEvent（A6）、外部构建（A7）。禁止用 Mock 冒充这些能力。
 
 ## 10. 明确未实现（相对完整后台）
 
-本阶段没有实现媒体上传代码、发布事务、BuildEvent outbox，也没有调用 GitHub/Cloudflare/R2。删除也不写 AuditLog（待 A6）。A5.3 按本契约实现上传；A6/B9.4 实现发布事务与 outbox，并为删除补审计；A7/B9.5 才处理外部构建。
+本阶段没有实现发布事务、BuildEvent outbox，也没有调用 GitHub/Cloudflare 生产构建 Hook。删除也不写 AuditLog（待 A6）。R2 生产适配器代码已具备，但无真实凭据时仅验证本地适配器。A6/B9.4 实现发布事务与 outbox，并为删除补审计；A7/B9.5 才处理外部构建。

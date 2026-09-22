@@ -76,20 +76,62 @@ export function sanitizeArticleHtml(input: string): string {
 }
 
 /** cover_image：仅 /logo.svg 或 /images/ 下无 .. 的相对路径。 */
-export function isValidCoverImage(value: string): boolean {
+export function isValidCoverImage(value: string, mediaPublicBaseUrl?: string | null): boolean {
+  if (!value || value.length > 500)
+    return false
   if (value === '/logo.svg')
     return true
-  return (
+  if (
     value.startsWith('/images/')
     && !value.includes('..')
     && !value.includes('\\')
     && !value.includes('//')
-    && value.length <= 500
-  )
+  ) {
+    return true
+  }
+  if (mediaPublicBaseUrl)
+    return isTrustedMediaAssetUrl(value, mediaPublicBaseUrl)
+  return false
 }
 
-export function normalizeCoverImage(value: string): string {
-  if (isValidCoverImage(value))
+/**
+ * 用 URL 解析比较 protocol/origin/path 边界，避免 startsWith 被 evil 子域绕过。
+ * 允许路径形如 {basePath}/covers/{yyyy}/{mm}/{id}.webp
+ */
+export function isTrustedMediaAssetUrl(value: string, mediaPublicBaseUrl: string): boolean {
+  if (!value || !mediaPublicBaseUrl || value.length > 500)
+    return false
+  if (value.includes('..') || value.includes('\\'))
+    return false
+
+  let candidate: URL
+  let base: URL
+  try {
+    candidate = new URL(value)
+    base = new URL(mediaPublicBaseUrl)
+  }
+  catch {
+    return false
+  }
+
+  if (candidate.username || candidate.password)
+    return false
+  if (candidate.protocol !== base.protocol)
+    return false
+  if (candidate.origin !== base.origin)
+    return false
+
+  const basePath = base.pathname.replace(/\/+$/, '') || ''
+  const path = candidate.pathname
+  const prefix = basePath === '' ? '/covers/' : `${basePath}/covers/`
+  if (!path.startsWith(prefix))
+    return false
+  const rest = path.slice(prefix.length)
+  return /^[0-9]{4}\/[0-9]{2}\/[A-Za-z0-9]+\.webp$/.test(rest)
+}
+
+export function normalizeCoverImage(value: string, mediaPublicBaseUrl?: string | null): string {
+  if (isValidCoverImage(value, mediaPublicBaseUrl))
     return value
   return '/logo.svg'
 }

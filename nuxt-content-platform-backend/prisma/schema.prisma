@@ -121,6 +121,7 @@ model AdminUser {
   createdAt    DateTime       @default(now()) @map("created_at") @db.DateTime(3)
   updatedAt    DateTime       @updatedAt @map("updated_at") @db.DateTime(3)
   sessions     AdminSession[]
+  mediaAssets  MediaAsset[]
 
   @@map("admin_users")
 }
@@ -143,4 +144,23 @@ model AdminSession {
   @@index([absoluteExpiresAt], map: "admin_sessions_absolute_expires_at_idx")
   @@index([revokedAt], map: "admin_sessions_revoked_at_idx")
   @@map("admin_sessions")
+}
+
+/// 上传封面元数据；与 Article.cover_image 无外键，靠 url 扫描引用。
+model MediaAsset {
+  id          Int       @id @default(autoincrement())
+  key         String    @unique @db.VarChar(255)
+  url         String    @db.VarChar(500)
+  mimeType    String    @map("mime_type") @db.VarChar(64)
+  width       Int
+  height      Int
+  sizeBytes   Int       @map("size_bytes")
+  adminUserId Int?      @map("admin_user_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  orphanedAt  DateTime? @map("orphaned_at") @db.DateTime(3)
+  adminUser   AdminUser? @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt], map: "media_assets_created_at_idx")
+  @@index([adminUserId], map: "media_assets_admin_user_id_idx")
+  @@map("media_assets")
 }

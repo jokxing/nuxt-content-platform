@@ -15,6 +15,7 @@ export const ADMIN_API_WHITELIST = [
   'POST /api/admin/articles',
   'PUT /api/admin/articles/:id',
   'DELETE /api/admin/articles/:id',
+  'POST /api/admin/media/images',
   'POST /api/admin/articles/:id/publish',
   'POST /api/admin/articles/:id/unpublish',
   'GET /api/admin/deployments',
@@ -117,7 +118,8 @@ export async function adminApiRequest<T>(
   }
   if (options.csrfToken)
     headers['x-csrf-token'] = options.csrfToken
-  if (options.body !== undefined)
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
+  if (options.body !== undefined && !isFormData)
     headers['content-type'] = 'application/json'
 
   // SSR 时转发浏览器 Cookie，避免跨请求串会话；客户端靠 credentials。
@@ -136,7 +138,7 @@ export async function adminApiRequest<T>(
     }>(url, {
       method,
       headers,
-      body: options.body as Record<string, unknown> | undefined,
+      body: options.body as BodyInit | Record<string, unknown> | undefined,
       credentials: 'include',
     })
 

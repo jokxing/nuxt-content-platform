@@ -160,12 +160,12 @@ MediaAsset
 9. 存储写入失败 → 不产生 MediaAsset 行，临时对象已清理。
 10. 浏览器 Network 与前端包中无 R2 密钥。
 
-## 9. A5.3 实现清单（本阶段不执行）
+## 9. A5.3 实现清单
 
-- [ ] Prisma MediaAsset 迁移
-- [ ] sharp 解码重编码 + StorageAdapter 本地/R2
-- [ ] `POST /api/admin/media/images` + 公开 `GET /media/*`（本地）
-- [ ] 放宽 `isValidCoverImage` / 管理端 types
-- [ ] BFF 白名单、6MiB、60s
-- [ ] `uploadCoverImage` 客户端 + ArticleFormModal Upload UI
-- [ ] 集成测试与文档 STATUS
+- [x] Prisma MediaAsset 迁移
+- [x] sharp 解码重编码 + StorageAdapter 本地/R2
+- [x] `POST /api/admin/media/images` + 公开 `GET /media/*`（本地）
+- [x] 放宽 `isValidCoverImage` / 管理端 types
+- [x] BFF 白名单、6MiB、60s
+- [x] `uploadCoverImage` 客户端 + ArticleFormModal Upload UI
+- [x] 集成测试与文档 STATUS

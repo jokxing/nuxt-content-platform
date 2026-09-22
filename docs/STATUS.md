@@ -1381,3 +1381,34 @@ Git 状态：未 commit/push
 - 原因边界：`GET /api/admin/auth/session` 会轮换 CSRF；另一标签页、SSR 会话恢复或同名旧 Cookie 可能让已打开页面持有旧 token。读接口只校验会话，因而表现为列表/详情正常、所有写操作 40301。
 - 管理端 `useAdminAuth` 新增 `withCsrfRetry`：写请求首次遇到 40301 时强制恢复一次当前会话，并用最新 CSRF 仅重试一次；403 在数据库写入前发生，因此不会造成重复新增。文章新增、编辑、删除均接入，后续上传/发布可复用。
 - **验证**：管理端 Nuxt typecheck、ESLint、生产构建通过。构建仅有既有 Nuxt 依赖 DEP0155 警告。仍需浏览器重新测试新增与编辑；管理端开发服务器通常可热更新，无需再次重启后端。
+
+## 2026-09-22 — A5.3 / B9.3.3 复盘与上传区视觉收尾
+
+- A5.3 主链路复盘通过：上传经管理端同源 BFF 固定白名单；BFF 限制约 6 MiB/60 秒；后端校验登录、Origin、CSRF，按魔数识别 JPEG/PNG/WebP，限制 5 MiB/像素量/最长边并重编码 WebP；随机不可覆盖 key；本地磁盘与 R2 适配；元数据入库失败时补偿删除对象；公开本地路由限制 `covers/` 并拒绝路径穿越。
+- 管理端封面区域重新布局为「固定比例预览 + 集中操作 + 封面地址」：上传和恢复默认封面并排，格式提示归入操作区，预览不再脱离字段；无有效预览时显示占位；小屏缩小预览并隐藏次要后缀。
+- 将后端代码/测试中的本地媒体兜底地址抽为 `DEFAULT_MEDIA_PUBLIC_BASE_URL`，管理端 Nuxt 配置也使用命名常量；环境示例和 OpenAPI 中作为配置示例的地址保留明文。
+- **验证**：后端单元测试 33 项、集成测试 61 项、主/seed TypeScript、ESLint、管理 OpenAPI 校验全部通过；管理端 Nuxt typecheck、ESLint、生产构建通过。公开站 ESLint 通过；公开站 Nuxt typecheck 被既有内容快照来源保护拦截（要求先 `prepare:content`），未为本阶段改写构建快照。
+- **已知边界**：上传后未保存文章会成为待清理孤儿，按 A5.2 设计留给后续定时清理；未配置真实 R2 凭据，因此本轮验证本地存储适配器，R2 为静态审查。
+- **下一步**：浏览器复查桌面/窄屏封面区与上传保存闭环；随后进入 A6 / B9.4 发布、下线与构建事件。
+
+## 2026-09-22 — A5.3 / B9.3.3 封面上传实现与管理端联调
+
+- 按 A5.2 契约实现：`MediaAsset` 迁移；`POST /api/admin/media/images`（multipart `file`，HTTP 201）；sharp 魔数校验 + 统一重编码 WebP；服务端随机 `covers/yyyy/mm/{uuid}.webp` key；禁 SVG / 路径穿越 / 用户指定 key。
+- `StorageAdapter`：本地写入 `nuxt-content-platform-backend/.data/media/`（根 `.gitignore` 已忽略 `.data/`）+ 受控 `GET /media/*`；生产 R2 适配器读私有环境变量。DB 写入失败会补偿删除本次对象。
+- `cover_image` 可信 URL：URL 解析比较 protocol/origin/path 前缀，保留 `/logo.svg`、`/images/` 与手动可信媒体 URL 编辑。
+- 管理端：BFF 白名单 `POST media/images`（6 MiB / 60s）、`uploadCoverImage`（credentials + CSRF + `withCsrfRetry`）、`ArticleFormModal` Naive Upload（预览/进度/失败重试/移除；成功写入返回 URL 并提示「图片已上传，文章仍未保存」）。
+- **验证**：backend `typecheck`/`lint`；单元 33 + 集成 61（含 media 6 项）；`openapi:validate` + `openapi:validate:admin`；admin `typecheck`/`lint`/`build`；web 真实模式 `NUXT_CONTENT_API_USE_REAL=true` 下 `prepare:content`（articles=5）+ `typecheck` + `build` 通过。无真实 R2 凭据，仅验证本地适配器。管理端无独立前端单测框架；上传成功/失败/重试/预览由 UI 实现覆盖。
+- **刻意未做**：A6 发布/下线、孤儿定时清理任务、真实 R2 bucket。未 commit/push。
+- **下一步：A6 / B9.4 发布、下线与公开预览闭环**。
+
+```text
+日期时间：2026-09-22
+阶段及目标：A5.3 / B9.3.3 封面上传实现与管理端联调
+修改文件与原因：MediaAsset 迁移、imagePipeline/StorageAdapter/上传路由、BFF multipart、uploadCoverImage、ArticleFormModal Upload、契约/OpenAPI/STATUS
+执行的验证命令、工作目录、结果：backend test+openapi+typecheck+lint；admin typecheck/lint/build；web 真实模式 prepare+typecheck+build 通过
+未验证内容及原因：无真实 R2 凭据未测生产适配器；浏览器手工上传联调待用户本地确认
+当前阻碍/已知问题：无
+新增设计决策：沿用 A5.2；Nitro 体上限经 hook + NITRO_MAX_REQUEST_BODY_SIZE + BFF maxBodyBytes 三重约束
+Git 状态：未 commit/push
+下一步最小可执行任务：A6 / B9.4 发布、下线与公开预览闭环
+```

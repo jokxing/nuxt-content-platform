@@ -3,6 +3,7 @@ import type { AddressInfo } from 'node:net'
 import type { Express } from 'express'
 import { createApp } from '../app.js'
 import { loadEnv } from '../config/env.js'
+import { DEFAULT_MEDIA_PUBLIC_BASE_URL } from '../config/mediaConfig.js'
 import { connectDatabase, disconnectDatabase } from '../db/prisma.js'
 
 export type TestServer = {
@@ -20,6 +21,8 @@ export async function startTestServer(): Promise<TestServer> {
     ADMIN_ALLOWED_ORIGINS: process.env.ADMIN_ALLOWED_ORIGINS || 'http://localhost:3670',
     ADMIN_ALLOW_MISSING_ORIGIN: process.env.ADMIN_ALLOW_MISSING_ORIGIN || 'false',
     ADMIN_COOKIE_SECURE: process.env.ADMIN_COOKIE_SECURE || 'false',
+    MEDIA_PUBLIC_BASE_URL: process.env.MEDIA_PUBLIC_BASE_URL || DEFAULT_MEDIA_PUBLIC_BASE_URL,
+    MEDIA_STORAGE_DRIVER: process.env.MEDIA_STORAGE_DRIVER || 'local',
   })
   await connectDatabase()
   const app: Express = createApp(env)
@@ -46,16 +49,29 @@ export async function startTestServer(): Promise<TestServer> {
 
 export async function apiGet(baseUrl: string, path: string, init?: {
   headers?: Record<string, string>
+  expectJson?: boolean
 }): Promise<{
   status: number
   body: JsonObject
   text: string
   headers: Headers
+  rawBody: Buffer | null
 }> {
   const response = await fetch(`${baseUrl}${path}`, init?.headers
     ? { headers: init.headers }
     : undefined)
-  const text = await response.text()
+  const buf = Buffer.from(await response.arrayBuffer())
+  const text = buf.toString('utf8')
+  const expectJson = init?.expectJson !== false
+  if (!expectJson) {
+    return {
+      status: response.status,
+      body: {},
+      text,
+      headers: response.headers,
+      rawBody: buf,
+    }
+  }
   const parsed: unknown = text ? JSON.parse(text) : null
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw new Error(`expected JSON object from ${path}`)
@@ -65,6 +81,7 @@ export async function apiGet(baseUrl: string, path: string, init?: {
     body: parsed as JsonObject,
     text,
     headers: response.headers,
+    rawBody: null,
   }
 }
 
@@ -90,8 +107,13 @@ export async function apiSend(
     headers,
   }
   if (options.body !== undefined) {
-    headers['content-type'] = headers['content-type'] || 'application/json'
-    init.body = JSON.stringify(options.body)
+    if (Buffer.isBuffer(options.body)) {
+      init.body = options.body
+    }
+    else {
+      headers['content-type'] = headers['content-type'] || 'application/json'
+      init.body = JSON.stringify(options.body)
+    }
   }
   const response = await fetch(`${baseUrl}${path}`, init)
   const text = await response.text()

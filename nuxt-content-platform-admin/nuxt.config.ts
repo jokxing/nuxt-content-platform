@@ -1,5 +1,7 @@
 import process from 'node:process'
 
+const DEFAULT_MEDIA_PUBLIC_BASE_URL = 'http://127.0.0.1:4000/media'
+
 export default defineNuxtConfig({
   modules: [
     '@bg-dev/nuxt-naiveui',
@@ -16,6 +18,15 @@ export default defineNuxtConfig({
     adminApiBaseUrl: process.env.NUXT_ADMIN_API_BASE_URL || '',
     public: {
       publicSiteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3666',
+      /** 可信媒体基址（无尾斜杠），用于封面 URL 校验；不含密钥。 */
+      mediaPublicBaseUrl: process.env.NUXT_PUBLIC_MEDIA_PUBLIC_BASE_URL || DEFAULT_MEDIA_PUBLIC_BASE_URL,
+    },
+  },
+
+  hooks: {
+    // Nitro 类型尚未暴露该字段；通过 hook 设置，略高于业务 5 MiB
+    'nitro:config'(nitroConfig) {
+      ;(nitroConfig as { maxRequestBodySize?: number }).maxRequestBodySize = 6 * 1024 * 1024
     },
   },
 
