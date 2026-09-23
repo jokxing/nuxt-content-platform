@@ -21,15 +21,17 @@
 
 仓库 Actions variables：
 
+- `DEPLOY_ENABLED`：全部配置并完成首次验证后设为 `true`；未设置时定时任务安全跳过。
 - `PUBLIC_SITE_URL`：公开站正式域名。
 - `CLOUDFLARE_PAGES_PROJECT`：Pages 项目名。
 
 后端私有环境变量：
 
 - `BUILD_GITHUB_OWNER`、`BUILD_GITHUB_REPO`。
-- `BUILD_GITHUB_WORKFLOW=content-deploy.yml`、`BUILD_GITHUB_REF=main`。
+- `BUILD_GITHUB_WORKFLOW=content-deploy.yml`、`BUILD_GITHUB_REF=master`（与当前默认分支一致）。
 - `BUILD_GITHUB_TOKEN`：建议 Fine-grained token，仅目标仓库 `Actions: write`、`Contents: read`。
 - `BUILD_MERGE_WINDOW_SECONDS=120`、`BUILD_WORKER_INTERVAL_SECONDS=30`。
+- 容器平台上的 API 服务设置 `HOST=0.0.0.0`；本地继续使用 `127.0.0.1`。
 
 工作流在 [content-deploy.yml](../../.github/workflows/content-deploy.yml)；UTC `17:00` 对应北京时间次日 `01:00`，也支持 GitHub 页面手动执行和 worker 的 `workflow_dispatch`。
 

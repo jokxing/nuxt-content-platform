@@ -1469,3 +1469,4 @@ Git 状态：未 commit/push
 - 配置与运行说明见 `docs/admin/DEPLOYMENT_PIPELINE.md`。本地没有真实 GitHub/Cloudflare 凭据，本阶段不声称已经完成线上部署。
 - **验证**：后端主/seed TypeScript 与 ESLint通过；单元测试 33/33、集成测试 67/67；管理 OpenAPI 12 paths / 15 operations；管理端 TypeScript、ESLint 与生产构建通过；worker dry-run 成功且未调用外部服务。管理端构建仅出现 Nuxt 4.0.3 依赖既有 DEP0155 警告。
 - **未验证**：没有真实 GitHub Token、Cloudflare Pages 项目和公网后端地址，因此未执行真实 workflow dispatch、Actions 状态轮询或 Pages 部署。
+- 推送后配置保护：工作流增加仓库变量 `DEPLOY_ENABLED == true` 才执行，避免配置完成前的凌晨任务失败；worker 默认 ref 与当前 GitHub 默认分支统一为 `master`。

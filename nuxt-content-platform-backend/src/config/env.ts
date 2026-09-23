@@ -39,6 +39,7 @@ const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().min(1).max(65535).default(4000),
+    HOST: z.string().trim().min(1).default('127.0.0.1'),
     DATABASE_URL: mysqlUrl.optional(),
     SHADOW_DATABASE_URL: mysqlUrl.optional(),
     /** 显式开启 /__debug；production 下禁止为 true。 */
@@ -68,7 +69,7 @@ const envSchema = z
     BUILD_GITHUB_OWNER: z.string().trim().min(1).optional(),
     BUILD_GITHUB_REPO: z.string().trim().min(1).optional(),
     BUILD_GITHUB_WORKFLOW: z.string().trim().min(1).default('content-deploy.yml'),
-    BUILD_GITHUB_REF: z.string().trim().min(1).default('main'),
+    BUILD_GITHUB_REF: z.string().trim().min(1).default('master'),
     BUILD_GITHUB_TOKEN: z.string().trim().min(1).optional(),
     BUILD_MERGE_WINDOW_SECONDS: z.coerce.number().int().min(0).max(180).default(120),
     BUILD_WORKER_INTERVAL_SECONDS: z.coerce.number().int().min(10).max(3600).default(30),
@@ -103,6 +104,7 @@ function readProcessEnv(): Record<string, string | undefined> {
   return {
     NODE_ENV: process.env.NODE_ENV,
     PORT: process.env.PORT,
+    HOST: process.env.HOST,
     DATABASE_URL: process.env.DATABASE_URL,
     SHADOW_DATABASE_URL: process.env.SHADOW_DATABASE_URL,
     ENABLE_DEBUG_ROUTES: process.env.ENABLE_DEBUG_ROUTES,

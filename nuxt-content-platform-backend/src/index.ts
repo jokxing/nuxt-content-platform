@@ -22,9 +22,10 @@ async function main(): Promise<void> {
     logger.warn('database_url_missing')
   }
 
-  const server = app.listen(env.PORT, '127.0.0.1', () => {
+  const server = app.listen(env.PORT, env.HOST, () => {
     logger.info('server_started', {
       port: env.PORT,
+      host: env.HOST,
       nodeEnv: env.NODE_ENV,
       databaseConfigured: Boolean(env.DATABASE_URL),
     })
