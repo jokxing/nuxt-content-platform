@@ -9,8 +9,10 @@ import {
   parseAdminKeyword,
   parseArticleDeleteInput,
   parseArticleUpdateInput,
+  parseArticleVersionCommand,
   parseArticleWriteInput,
 } from '../lib/adminArticleValidation.js'
+import { actorFromRequest } from '../lib/auditActor.js'
 import { assertAllowedOrigin, readCsrfHeader } from '../lib/adminRequest.js'
 import { invalidArgument } from '../lib/errors.js'
 import { parseArticleId, parsePositiveInt } from '../lib/pagination.js'
@@ -21,6 +23,8 @@ import {
   deleteAdminArticle,
   getAdminArticle,
   listAdminArticles,
+  publishAdminArticle,
+  unpublishAdminArticle,
   updateAdminArticle,
 } from '../services/adminArticleService.js'
 import {
@@ -96,14 +100,14 @@ export async function putAdminArticle(req: Request, res: Response): Promise<void
   assertJsonContentType(req)
 
   const token = readCookie(req.get('cookie'), ADMIN_SESSION_COOKIE)
-  await requireAdminWriteSession(token, readCsrfHeader(req))
+  const session = await requireAdminWriteSession(token, readCsrfHeader(req))
 
   const rawId = req.params.id
   if (typeof rawId !== 'string')
     throw invalidArgument('参数不合法')
   const id = parseArticleId(rawId)
   const input = parseArticleUpdateInput(req.body)
-  const data = await updateAdminArticle(id, input)
+  const data = await updateAdminArticle(id, input, actorFromRequest(req, res, session.adminUserId))
   res.status(200).json(okResponse(data))
 }
 
@@ -113,13 +117,47 @@ export async function deleteAdminArticleById(req: Request, res: Response): Promi
   assertJsonContentType(req)
 
   const token = readCookie(req.get('cookie'), ADMIN_SESSION_COOKIE)
-  await requireAdminWriteSession(token, readCsrfHeader(req))
+  const session = await requireAdminWriteSession(token, readCsrfHeader(req))
 
   const rawId = req.params.id
   if (typeof rawId !== 'string')
     throw invalidArgument('参数不合法')
   const id = parseArticleId(rawId)
   const input = parseArticleDeleteInput(req.body)
-  const data = await deleteAdminArticle(id, input.version)
+  const data = await deleteAdminArticle(id, input.version, actorFromRequest(req, res, session.adminUserId))
+  res.status(200).json(okResponse(data))
+}
+
+export async function postAdminArticlePublish(req: Request, res: Response): Promise<void> {
+  assertAllowedQuery(req, [])
+  assertAllowedOrigin(req)
+  assertJsonContentType(req)
+
+  const token = readCookie(req.get('cookie'), ADMIN_SESSION_COOKIE)
+  const session = await requireAdminWriteSession(token, readCsrfHeader(req))
+
+  const rawId = req.params.id
+  if (typeof rawId !== 'string')
+    throw invalidArgument('参数不合法')
+  const id = parseArticleId(rawId)
+  const input = parseArticleVersionCommand(req.body)
+  const data = await publishAdminArticle(id, input.version, actorFromRequest(req, res, session.adminUserId))
+  res.status(200).json(okResponse(data))
+}
+
+export async function postAdminArticleUnpublish(req: Request, res: Response): Promise<void> {
+  assertAllowedQuery(req, [])
+  assertAllowedOrigin(req)
+  assertJsonContentType(req)
+
+  const token = readCookie(req.get('cookie'), ADMIN_SESSION_COOKIE)
+  const session = await requireAdminWriteSession(token, readCsrfHeader(req))
+
+  const rawId = req.params.id
+  if (typeof rawId !== 'string')
+    throw invalidArgument('参数不合法')
+  const id = parseArticleId(rawId)
+  const input = parseArticleVersionCommand(req.body)
+  const data = await unpublishAdminArticle(id, input.version, actorFromRequest(req, res, session.adminUserId))
   res.status(200).json(okResponse(data))
 }

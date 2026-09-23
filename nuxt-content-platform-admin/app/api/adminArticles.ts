@@ -3,6 +3,7 @@ import type {
   AdminArticle,
   AdminArticlePage,
   AdminCategory,
+  ArticleMutationResult,
   ArticleStatus,
   ArticleUpdatePayload,
   ArticleWritePayload,
@@ -70,6 +71,30 @@ export async function deleteAdminArticle(
 ): Promise<{ id: number, deleted: true }> {
   return adminApiRequest<{ id: number, deleted: true }>(`/api/admin/articles/${id}`, {
     method: 'DELETE',
+    body: { version },
+    csrfToken,
+  })
+}
+
+export async function publishAdminArticle(
+  id: number,
+  version: number,
+  csrfToken: string,
+): Promise<ArticleMutationResult> {
+  return adminApiRequest<ArticleMutationResult>(`/api/admin/articles/${id}/publish`, {
+    method: 'POST',
+    body: { version },
+    csrfToken,
+  })
+}
+
+export async function unpublishAdminArticle(
+  id: number,
+  version: number,
+  csrfToken: string,
+): Promise<ArticleMutationResult> {
+  return adminApiRequest<ArticleMutationResult>(`/api/admin/articles/${id}/unpublish`, {
+    method: 'POST',
     body: { version },
     csrfToken,
   })

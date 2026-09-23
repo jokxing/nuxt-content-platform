@@ -64,6 +64,14 @@ const envSchema = z
     R2_SECRET_ACCESS_KEY: z.string().optional(),
     R2_BUCKET: z.string().optional(),
     R2_ENDPOINT: z.string().optional(),
+    /** A7 GitHub Actions 构建 worker；缺少任一必填项时 worker 拒绝启动。 */
+    BUILD_GITHUB_OWNER: z.string().trim().min(1).optional(),
+    BUILD_GITHUB_REPO: z.string().trim().min(1).optional(),
+    BUILD_GITHUB_WORKFLOW: z.string().trim().min(1).default('content-deploy.yml'),
+    BUILD_GITHUB_REF: z.string().trim().min(1).default('main'),
+    BUILD_GITHUB_TOKEN: z.string().trim().min(1).optional(),
+    BUILD_MERGE_WINDOW_SECONDS: z.coerce.number().int().min(0).max(180).default(120),
+    BUILD_WORKER_INTERVAL_SECONDS: z.coerce.number().int().min(10).max(3600).default(30),
   })
   .superRefine((value, ctx) => {
     if (value.DATABASE_URL && value.SHADOW_DATABASE_URL && value.DATABASE_URL === value.SHADOW_DATABASE_URL) {
@@ -112,6 +120,13 @@ function readProcessEnv(): Record<string, string | undefined> {
     R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY,
     R2_BUCKET: process.env.R2_BUCKET,
     R2_ENDPOINT: process.env.R2_ENDPOINT,
+    BUILD_GITHUB_OWNER: process.env.BUILD_GITHUB_OWNER,
+    BUILD_GITHUB_REPO: process.env.BUILD_GITHUB_REPO,
+    BUILD_GITHUB_WORKFLOW: process.env.BUILD_GITHUB_WORKFLOW,
+    BUILD_GITHUB_REF: process.env.BUILD_GITHUB_REF,
+    BUILD_GITHUB_TOKEN: process.env.BUILD_GITHUB_TOKEN,
+    BUILD_MERGE_WINDOW_SECONDS: process.env.BUILD_MERGE_WINDOW_SECONDS,
+    BUILD_WORKER_INTERVAL_SECONDS: process.env.BUILD_WORKER_INTERVAL_SECONDS,
   }
 }
 

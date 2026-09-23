@@ -29,7 +29,7 @@ for (const path of requiredAuthPaths) {
 }
 
 const allPaths = Object.keys(api.paths || {})
-assert.equal(allPaths.length, 11, `expected 11 admin path keys, got ${allPaths.length}`)
+assert.equal(allPaths.length, 12, `expected 12 admin path keys, got ${allPaths.length}`)
 
 let operationCount = 0
 for (const pathItem of Object.values(api.paths || {})) {
@@ -40,6 +40,6 @@ for (const pathItem of Object.values(api.paths || {})) {
       operationCount += 1
   }
 }
-assert.equal(operationCount, 14, `expected 14 admin operations, got ${operationCount}`)
+assert.equal(operationCount, 15, `expected 15 admin operations, got ${operationCount}`)
 
-console.log(`admin-openapi:validate OK — ${openapiPath} (${allPaths.length} paths, ${operationCount} operations; auth+articles+media ready)`)
+console.log(`admin-openapi:validate OK — ${openapiPath} (${allPaths.length} paths, ${operationCount} operations; auth+content+deployments ready)`)

@@ -4,6 +4,8 @@ import {
   createAdminArticle,
   getAdminArticle,
   listAdminCategories,
+  publishAdminArticle,
+  unpublishAdminArticle,
   updateAdminArticle,
 } from '~/api/adminArticles'
 import { uploadCoverImage } from '~/api/adminMedia'
@@ -18,10 +20,12 @@ import type {
 import {
   ARTICLE_STATUS_LABEL,
   articleToFormDraft,
+  buildPublicArticlePreviewUrl,
   cloneArticleFormDraft,
   createEmptyArticleFormDraft,
   isValidCoverImage,
 } from '~/types/admin'
+import { resolvePublicSiteUrl } from '~/constants/site'
 
 const emit = defineEmits<{
   saved: []
@@ -29,9 +33,13 @@ const emit = defineEmits<{
 
 const auth = useAdminAuth()
 const message = useMessage()
+const dialog = useDialog()
 const runtimeConfig = useRuntimeConfig()
 const mediaPublicBaseUrl = computed(() =>
   String(runtimeConfig.public.mediaPublicBaseUrl || '').replace(/\/+$/, ''),
+)
+const publicSiteUrl = computed(() =>
+  resolvePublicSiteUrl(runtimeConfig.public.publicSiteUrl),
 )
 
 const LANG_TABS: { key: ArticleLocale, label: string }[] = [
@@ -61,6 +69,7 @@ const detailError = ref('')
 const formError = ref('')
 const versionConflict = ref(false)
 const currentStatus = ref<ArticleStatus | null>(null)
+const categoryParentRoute = ref('education')
 const categoryOptions = ref<SelectOption[]>([])
 const categoriesLoaded = ref(false)
 const categoryErrorAlertRef = ref<HTMLElement | null>(null)
@@ -90,15 +99,45 @@ watch(coverPreview, () => {
 
 const statusHint = computed(() => {
   if (mode.value === 'create')
-    return '创建后保存为草稿。本阶段不提供发布。'
+    return '创建后保存为草稿。保存后再发布；发布成功只表示内容入库，不等于站点已部署。'
   const statusText = currentStatus.value
     ? ARTICLE_STATUS_LABEL[currentStatus.value]
     : '未知'
-  return `当前状态：${statusText}。仅保存内容与版本；发布/下线尚未接入。`
+  return `当前状态：${statusText}。发布成功会排队构建（自动部署尚未接入）；请勿把「已发布」理解为线上部署成功。`
+})
+
+const previewUrl = computed(() => {
+  if (mode.value !== 'edit' || articleId.value == null)
+    return null
+  if (currentStatus.value !== 'PUBLISHED')
+    return null
+  return buildPublicArticlePreviewUrl(
+    publicSiteUrl.value,
+    categoryParentRoute.value,
+    articleId.value,
+  )
 })
 
 const formBlocked = computed(() =>
   loadingDetail.value || Boolean(detailError.value) || saving.value,
+)
+
+const canPublish = computed(() =>
+  mode.value === 'edit'
+  && articleId.value != null
+  && draft.value.version != null
+  && (currentStatus.value === 'DRAFT' || currentStatus.value === 'ARCHIVED')
+  && !isDirty.value
+  && !formBlocked.value,
+)
+
+const canUnpublish = computed(() =>
+  mode.value === 'edit'
+  && articleId.value != null
+  && draft.value.version != null
+  && currentStatus.value === 'PUBLISHED'
+  && !isDirty.value
+  && !formBlocked.value,
 )
 
 const rules: FormRules = {
@@ -193,6 +232,7 @@ async function loadArticleDetail(id: number) {
     const article = await getAdminArticle(id)
     const next = articleToFormDraft(article)
     currentStatus.value = article.status
+    categoryParentRoute.value = article.category.parent_route || 'education'
     draft.value = next
     baseline.value = cloneArticleFormDraft(next)
   }
@@ -222,6 +262,7 @@ function resetState() {
   uploadingCover.value = false
   versionConflict.value = false
   currentStatus.value = null
+  categoryParentRoute.value = 'education'
   loadingDetail.value = false
   loadingCategories.value = false
   saving.value = false
@@ -445,6 +486,152 @@ async function onSave() {
   }
 }
 
+function focusLocaleFromPublishError(msg: string) {
+  if (msg.includes('简体'))
+    activeLang.value = 'zh-CN'
+  else if (msg.includes('繁体') || msg.includes('繁體'))
+    activeLang.value = 'zh-HK'
+  else if (msg.includes('英文') || msg.toLowerCase().includes('english'))
+    activeLang.value = 'en-US'
+}
+
+function applyMutationResult(result: { article: import('~/types/admin').AdminArticle }) {
+  const next = articleToFormDraft(result.article)
+  currentStatus.value = result.article.status
+  categoryParentRoute.value = result.article.category.parent_route || 'education'
+  draft.value = next
+  baseline.value = cloneArticleFormDraft(next)
+  coverUploadedUnsaved.value = false
+}
+
+async function onPublish() {
+  if (!canPublish.value || articleId.value == null || draft.value.version == null)
+    return
+  if (isDirty.value) {
+    formError.value = '有未保存修改，请先保存后再发布'
+    await nextTick()
+    focusAlert(formErrorAlertRef.value)
+    return
+  }
+
+  dialog.warning({
+    title: '确认发布文章？',
+    content: '发布后公开站接口可见。成功只表示内容已入库并排队构建；自动部署尚未接入，不等于 Cloudflare 已部署。',
+    positiveText: '发布',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      formError.value = ''
+      versionConflict.value = false
+      saving.value = true
+      try {
+        const result = await auth.withCsrfRetry(csrf => publishAdminArticle(
+          articleId.value!,
+          draft.value.version!,
+          csrf,
+        ))
+        applyMutationResult(result)
+        message.success('内容已发布，等待站点部署')
+        emit('saved')
+        return true
+      }
+      catch (error: unknown) {
+        if (error instanceof AdminApiError) {
+          if (error.code === 42200) {
+            focusLocaleFromPublishError(error.message)
+            formError.value = error.message
+          }
+          else if (error.code === 40900) {
+            versionConflict.value = true
+            formError.value = error.message || '文章已被其他操作更新，请重新加载'
+          }
+          else if (
+            error.code === 40901
+            || error.code === 40000
+            || error.code === 40301
+            || error.code === 40410
+          ) {
+            formError.value = error.message
+          }
+          else {
+            formError.value = error.message || '发布失败，请稍后重试'
+          }
+        }
+        else {
+          formError.value = '发布失败，请稍后重试'
+        }
+        await nextTick()
+        focusAlert(formErrorAlertRef.value)
+        return true
+      }
+      finally {
+        saving.value = false
+      }
+    },
+  })
+}
+
+async function onUnpublish() {
+  if (!canUnpublish.value || articleId.value == null || draft.value.version == null)
+    return
+  if (isDirty.value) {
+    formError.value = '有未保存修改，请先保存后再下线'
+    await nextTick()
+    focusAlert(formErrorAlertRef.value)
+    return
+  }
+
+  dialog.warning({
+    title: '确认下线文章？',
+    content: '下线后公开站将不可见；管理端仍可编辑。会排队构建事件，但不代表线上已部署完成。',
+    positiveText: '下线',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      formError.value = ''
+      versionConflict.value = false
+      saving.value = true
+      try {
+        const result = await auth.withCsrfRetry(csrf => unpublishAdminArticle(
+          articleId.value!,
+          draft.value.version!,
+          csrf,
+        ))
+        applyMutationResult(result)
+        message.success('内容已下线，等待站点部署')
+        emit('saved')
+        return true
+      }
+      catch (error: unknown) {
+        if (error instanceof AdminApiError) {
+          if (error.code === 40900) {
+            versionConflict.value = true
+            formError.value = error.message || '文章已被其他操作更新，请重新加载'
+          }
+          else if (
+            error.code === 40901
+            || error.code === 40000
+            || error.code === 40301
+            || error.code === 40410
+          ) {
+            formError.value = error.message
+          }
+          else {
+            formError.value = error.message || '下线失败，请稍后重试'
+          }
+        }
+        else {
+          formError.value = '下线失败，请稍后重试'
+        }
+        await nextTick()
+        focusAlert(formErrorAlertRef.value)
+        return true
+      }
+      finally {
+        saving.value = false
+      }
+    },
+  })
+}
+
 defineExpose({
   openCreate,
   openEdit,
@@ -472,6 +659,23 @@ defineExpose({
         <template v-if="mode === 'edit' && draft.version != null">
           · 当前版本 {{ draft.version }}
         </template>
+        <template v-if="isDirty && mode === 'edit'">
+          · 有未保存修改，发布/下线前请先保存
+        </template>
+      </n-alert>
+
+      <n-alert
+        v-if="previewUrl"
+        type="success"
+        :bordered="false"
+        class="form_banner"
+      >
+        查看资讯页（当前公开站内容；本次修改需等待部署后更新）：
+        <a
+          :href="previewUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >{{ previewUrl }}</a>
       </n-alert>
 
       <div
@@ -729,21 +933,45 @@ defineExpose({
       </n-spin>
     </div>
     <template #footer>
-      <n-space justify="end">
-        <n-button
-          :disabled="saving"
-          @click="requestClose"
-        >
-          取消
-        </n-button>
-        <n-button
-          type="primary"
-          :loading="saving"
-          :disabled="formBlocked"
-          @click="onSave"
-        >
-          保存草稿
-        </n-button>
+      <n-space justify="space-between" style="width: 100%">
+        <n-space>
+          <n-button
+            v-if="mode === 'edit' && (currentStatus === 'DRAFT' || currentStatus === 'ARCHIVED')"
+            type="primary"
+            secondary
+            :disabled="!canPublish"
+            :loading="saving"
+            @click="onPublish"
+          >
+            发布
+          </n-button>
+          <n-button
+            v-if="mode === 'edit' && currentStatus === 'PUBLISHED'"
+            type="warning"
+            secondary
+            :disabled="!canUnpublish"
+            :loading="saving"
+            @click="onUnpublish"
+          >
+            下线
+          </n-button>
+        </n-space>
+        <n-space>
+          <n-button
+            :disabled="saving"
+            @click="requestClose"
+          >
+            取消
+          </n-button>
+          <n-button
+            type="primary"
+            :loading="saving"
+            :disabled="formBlocked"
+            @click="onSave"
+          >
+            {{ mode === 'create' ? '保存草稿' : '保存' }}
+          </n-button>
+        </n-space>
       </n-space>
     </template>
   </n-modal>

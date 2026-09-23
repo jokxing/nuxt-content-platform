@@ -103,6 +103,10 @@ export function payloadTooLarge(message = '图片超过 5 MiB 上限'): AppError
   return new AppError(413, BusinessCode.PAYLOAD_TOO_LARGE, message)
 }
 
+export function publishValidationFailed(message: string): AppError {
+  return new AppError(422, BusinessCode.PUBLISH_VALIDATION_FAILED, message)
+}
+
 export function internalError(message = '内部服务错误', cause?: unknown): AppError {
   return new AppError(500, BusinessCode.INTERNAL_ERROR, message, { expose: false, cause })
 }

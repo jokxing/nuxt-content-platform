@@ -65,6 +65,42 @@ export type AdminArticle = AdminArticleSummary & {
   translations: ArticleTranslations
 }
 
+export type BuildEventBrief = {
+  id: number
+  status: DeploymentStatus
+  reason: 'article_published' | 'article_updated' | 'article_unpublished' | string
+}
+
+export type ArticleMutationResult = {
+  article: AdminArticle
+  build_event: BuildEventBrief
+}
+
+export type Deployment = {
+  id: number
+  event_type: string
+  reason: string
+  status: DeploymentStatus
+  article_id: number | null
+  article_version: number | null
+  attempts: number
+  external_run_id: string | null
+  external_run_url: string | null
+  error_summary: string | null
+  created_at: number
+  started_at: number | null
+  finished_at: number | null
+  updated_at: number
+}
+
+export type DeploymentPage = {
+  items: Deployment[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
 export type AdminArticlePage = {
   items: AdminArticleSummary[]
   total: number
@@ -221,4 +257,15 @@ export function formatAdminMillis(value: number | null | undefined): string {
   catch {
     return '—'
   }
+}
+
+/** 公开站文章预览路径；数据库已发布 ≠ Cloudflare 已部署。 */
+export function buildPublicArticlePreviewUrl(
+  publicSiteUrl: string,
+  parentRoute: string,
+  articleId: number,
+): string {
+  const base = publicSiteUrl.replace(/\/+$/, '')
+  const route = parentRoute || 'education'
+  return `${base}/news/${route}/article/${articleId}`
 }

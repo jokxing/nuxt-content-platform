@@ -1,0 +1,62 @@
+name: 内容构建与部署
+run-name: ${{ inputs.dispatch_key || format('scheduled-{0}', github.run_id) }}
+
+on:
+  schedule:
+    # 北京时间每天 01:00
+    - cron: '0 17 * * *'
+  workflow_dispatch:
+    inputs:
+      dispatch_key:
+        description: 后端构建事件批次键
+        required: false
+        type: string
+      event_ids:
+        description: 合并的 BuildEvent ID（逗号分隔）
+        required: false
+        type: string
+      trigger_reason:
+        description: 触发来源
+        required: false
+        default: manual
+        type: string
+
+concurrency:
+  group: content-site-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: nuxt-content-platform-web
+    env:
+      NUXT_CONTENT_API_USE_REAL: 'true'
+      NUXT_CONTENT_API_BASE_URL: ${{ secrets.CONTENT_API_BASE_URL }}
+      NUXT_PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: nuxt-content-platform-web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm build
+      - run: pnpm audit:seo
+      - name: 部署 Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: nuxt-content-platform-web
+          command: pages deploy .output/public --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main

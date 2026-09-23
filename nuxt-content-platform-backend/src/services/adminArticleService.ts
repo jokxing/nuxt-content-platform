@@ -1,20 +1,33 @@
-import { ArticleStatus, Prisma } from '@prisma/client'
+import { ArticleStatus, BuildEventReason, BuildEventType, Prisma } from '@prisma/client'
 import { prisma } from '../db/prisma.js'
 import type {
   AdminArticleStatus,
   ArticleUpdateInput,
   ArticleWriteInput,
 } from '../lib/adminArticleValidation.js'
+import {
+  enqueueBuildEvent,
+  toBuildEventBrief,
+  writeAuditLog,
+  type AuditActorContext,
+  type BuildEventBriefDto,
+} from '../lib/adminAudit.js'
 import { LOCALES } from '../lib/domainConstants.js'
 import {
   adminArticleNotFound,
   articleStateConflict,
   dataIntegrityError,
   invalidArgument,
+  publishValidationFailed,
   uniqueConflict,
   versionConflict,
 } from '../lib/errors.js'
-import { CONTENT_LIMIT, sanitizeArticleHtml } from '../lib/htmlSanitize.js'
+import { getMediaConfig } from '../config/mediaConfig.js'
+import {
+  CONTENT_LIMIT,
+  isValidCoverImage,
+  sanitizeArticleHtml,
+} from '../lib/htmlSanitize.js'
 import { toUnixMillis } from '../lib/time.js'
 
 export type AdminCategoryBrief = {
@@ -66,6 +79,11 @@ export type AdminArticlePage = {
   total_pages: number
 }
 
+export type ArticleMutationResultDto = {
+  article: AdminArticleDto
+  build_event: BuildEventBriefDto
+}
+
 type ArticleFullRow = Prisma.ArticleGetPayload<{
   include: {
     translations: true
@@ -81,6 +99,12 @@ const articleFullInclude = {
     },
   },
 } as const
+
+const LOCALE_LABEL: Record<(typeof LOCALES)[number], string> = {
+  'zh-CN': '简体中文',
+  'zh-HK': '繁体中文',
+  'en-US': '英文',
+}
 
 function categoryBrief(row: ArticleFullRow): AdminCategoryBrief {
   const name = row.category.translations.find(item => item.locale === 'zh-CN')?.name?.trim()
@@ -179,6 +203,52 @@ function isUniqueSlugError(error: unknown): boolean {
   )
 }
 
+function htmlHasText(html: string): boolean {
+  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim().length > 0
+}
+
+function assertReadyToPublish(row: ArticleFullRow): void {
+  if (!row.author.trim())
+    throw publishValidationFailed('作者不能为空')
+  if (!isValidCoverImage(row.coverImage, getMediaConfig().publicBaseUrl))
+    throw publishValidationFailed('封面路径不合法')
+  if (!row.categoryId)
+    throw publishValidationFailed('分类不存在')
+
+  const byLocale = new Map(row.translations.map(item => [item.locale, item]))
+  for (const locale of LOCALES) {
+    const item = byLocale.get(locale)
+    const label = LOCALE_LABEL[locale]
+    if (!item)
+      throw publishValidationFailed(`${label}翻译缺失`)
+    if (!item.title.trim())
+      throw publishValidationFailed(`${label}标题不能为空`)
+    const cleaned = sanitizeArticleHtml(item.content)
+    if (!htmlHasText(cleaned))
+      throw publishValidationFailed(`${label}正文不能为空`)
+  }
+}
+
+/** 已发布文章保存后仍必须满足公开可见条件，避免状态与公开接口结果不一致。 */
+function assertPublishedUpdateReady(
+  input: ArticleUpdateInput,
+  translations: AdminTranslationsDto,
+): void {
+  if (!input.author.trim())
+    throw publishValidationFailed('作者不能为空')
+  if (!isValidCoverImage(input.cover_image, getMediaConfig().publicBaseUrl))
+    throw publishValidationFailed('封面路径不合法')
+
+  for (const locale of LOCALES) {
+    const item = translations[locale]
+    const label = LOCALE_LABEL[locale]
+    if (!item.title.trim())
+      throw publishValidationFailed(`${label}标题不能为空`)
+    if (!htmlHasText(item.content))
+      throw publishValidationFailed(`${label}正文不能为空`)
+  }
+}
+
 export async function listAdminArticles(options: {
   status?: AdminArticleStatus
   categorySlug?: string
@@ -270,12 +340,21 @@ export async function createAdminArticle(input: ArticleWriteInput): Promise<Admi
 export async function updateAdminArticle(
   id: number,
   input: ArticleUpdateInput,
+  actor?: AuditActorContext,
 ): Promise<AdminArticleDto> {
   await assertCategoryExists(input.category_id)
   const translations = sanitizeTranslations(input.translations)
 
   try {
     return await prisma.$transaction(async (tx) => {
+      const before = await tx.article.findUnique({ where: { id } })
+      if (!before)
+        throw adminArticleNotFound()
+      if (before.version !== input.version)
+        throw versionConflict()
+      if (before.status === ArticleStatus.PUBLISHED)
+        assertPublishedUpdateReady(input, translations)
+
       const result = await tx.article.updateMany({
         where: { id, version: input.version },
         data: {
@@ -310,6 +389,28 @@ export async function updateAdminArticle(
         })
       }
 
+      const nextVersion = input.version + 1
+      if (before.status === ArticleStatus.PUBLISHED && actor) {
+        await enqueueBuildEvent(tx, {
+          eventType: BuildEventType.ARTICLE_UPDATED,
+          reason: BuildEventReason.article_updated,
+          articleId: id,
+          articleVersion: nextVersion,
+        })
+        await writeAuditLog(tx, {
+          actor,
+          action: 'ARTICLE_UPDATED',
+          entityType: 'article',
+          entityId: id,
+          entityVersion: nextVersion,
+          metadata: {
+            status: before.status,
+            slug: input.slug,
+            category_id: input.category_id,
+          },
+        })
+      }
+
       return loadArticle(tx, id)
     })
   }
@@ -322,13 +423,28 @@ export async function updateAdminArticle(
 
 /**
  * 受限硬删除：仅 DRAFT / ARCHIVED。
- * 不写 BuildEvent；A6 接入 AuditLog 时应记录删除动作但不产生部署事件。
+ * 写 AuditLog，不写 BuildEvent。
  */
 export async function deleteAdminArticle(
   id: number,
   version: number,
+  actor?: AuditActorContext,
 ): Promise<AdminArticleDeleteResult> {
   return prisma.$transaction(async (tx) => {
+    const existing = await tx.article.findUnique({ where: { id } })
+    if (!existing)
+      throw adminArticleNotFound()
+    if (existing.version !== version)
+      throw versionConflict()
+    if (existing.status === ArticleStatus.PUBLISHED)
+      throw articleStateConflict('已发布文章请先下线后再删除')
+    if (
+      existing.status !== ArticleStatus.DRAFT
+      && existing.status !== ArticleStatus.ARCHIVED
+    ) {
+      throw articleStateConflict('当前状态不允许该操作')
+    }
+
     const result = await tx.article.deleteMany({
       where: {
         id,
@@ -337,16 +453,148 @@ export async function deleteAdminArticle(
       },
     })
 
-    if (result.count === 1)
-      return { id, deleted: true as const }
+    if (result.count !== 1)
+      throw versionConflict()
 
-    const existing = await tx.article.findUnique({ where: { id } })
+    if (actor) {
+      await writeAuditLog(tx, {
+        actor,
+        action: 'ARTICLE_DELETED',
+        entityType: 'article',
+        entityId: id,
+        entityVersion: version,
+        metadata: {
+          status: existing.status,
+          slug: existing.slug,
+        },
+      })
+    }
+
+    return { id, deleted: true as const }
+  })
+}
+
+export async function publishAdminArticle(
+  id: number,
+  version: number,
+  actor: AuditActorContext,
+): Promise<ArticleMutationResultDto> {
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.article.findUnique({
+      where: { id },
+      include: articleFullInclude,
+    })
     if (!existing)
       throw adminArticleNotFound()
     if (existing.version !== version)
       throw versionConflict()
     if (existing.status === ArticleStatus.PUBLISHED)
-      throw articleStateConflict('已发布文章请先下线后再删除')
-    throw versionConflict()
+      throw articleStateConflict('文章已是发布状态')
+    if (
+      existing.status !== ArticleStatus.DRAFT
+      && existing.status !== ArticleStatus.ARCHIVED
+    ) {
+      throw articleStateConflict('当前状态不允许发布')
+    }
+
+    assertReadyToPublish(existing)
+
+    const now = new Date()
+    const result = await tx.article.updateMany({
+      where: {
+        id,
+        version,
+        status: { in: [ArticleStatus.DRAFT, ArticleStatus.ARCHIVED] },
+      },
+      data: {
+        status: ArticleStatus.PUBLISHED,
+        publishedAt: now,
+        version: { increment: 1 },
+      },
+    })
+    if (result.count !== 1)
+      throw versionConflict()
+
+    const nextVersion = version + 1
+    const buildEvent = await enqueueBuildEvent(tx, {
+      eventType: BuildEventType.ARTICLE_PUBLISHED,
+      reason: BuildEventReason.article_published,
+      articleId: id,
+      articleVersion: nextVersion,
+    })
+    await writeAuditLog(tx, {
+      actor,
+      action: 'ARTICLE_PUBLISHED',
+      entityType: 'article',
+      entityId: id,
+      entityVersion: nextVersion,
+      metadata: {
+        from_status: existing.status,
+        to_status: ArticleStatus.PUBLISHED,
+        slug: existing.slug,
+        category_id: existing.categoryId,
+      },
+    })
+
+    return {
+      article: await loadArticle(tx, id),
+      build_event: toBuildEventBrief(buildEvent),
+    }
+  })
+}
+
+export async function unpublishAdminArticle(
+  id: number,
+  version: number,
+  actor: AuditActorContext,
+): Promise<ArticleMutationResultDto> {
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.article.findUnique({ where: { id } })
+    if (!existing)
+      throw adminArticleNotFound()
+    if (existing.version !== version)
+      throw versionConflict()
+    if (existing.status !== ArticleStatus.PUBLISHED)
+      throw articleStateConflict('仅已发布文章可下线')
+
+    const result = await tx.article.updateMany({
+      where: {
+        id,
+        version,
+        status: ArticleStatus.PUBLISHED,
+      },
+      data: {
+        status: ArticleStatus.ARCHIVED,
+        version: { increment: 1 },
+      },
+    })
+    if (result.count !== 1)
+      throw versionConflict()
+
+    const nextVersion = version + 1
+    const buildEvent = await enqueueBuildEvent(tx, {
+      eventType: BuildEventType.ARTICLE_UNPUBLISHED,
+      reason: BuildEventReason.article_unpublished,
+      articleId: id,
+      articleVersion: nextVersion,
+    })
+    await writeAuditLog(tx, {
+      actor,
+      action: 'ARTICLE_UNPUBLISHED',
+      entityType: 'article',
+      entityId: id,
+      entityVersion: nextVersion,
+      metadata: {
+        from_status: ArticleStatus.PUBLISHED,
+        to_status: ArticleStatus.ARCHIVED,
+        slug: existing.slug,
+        category_id: existing.categoryId,
+      },
+    })
+
+    return {
+      article: await loadArticle(tx, id),
+      build_event: toBuildEventBrief(buildEvent),
+    }
   })
 }

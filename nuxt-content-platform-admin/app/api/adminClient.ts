@@ -20,6 +20,7 @@ export const ADMIN_API_WHITELIST = [
   'POST /api/admin/articles/:id/unpublish',
   'GET /api/admin/deployments',
   'GET /api/admin/deployments/:id',
+  'POST /api/admin/deployments/:id/retry',
 ] as const
 
 export type AdminApiPath = typeof ADMIN_API_WHITELIST[number]

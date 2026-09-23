@@ -1,6 +1,6 @@
 # 资讯管理接口与认证契约
 
-日期：2026-09-22。阶段：A5.1 删除已实现；A5.3 封面上传已实现（设计见 [MEDIA_UPLOAD_DESIGN.md](./MEDIA_UPLOAD_DESIGN.md)）；发布 / 部署仍为设计。机器可读契约见 [admin-openapi.json](./admin-openapi.json)。公开查询接口继续以 [BACKEND_CONTRACT.md](../backend/BACKEND_CONTRACT.md) 为准。
+日期：2026-09-22。阶段：A5.3 封面上传与 A6 发布/下线已实现（封面设计见 [MEDIA_UPLOAD_DESIGN.md](./MEDIA_UPLOAD_DESIGN.md)）；部署列表与外部构建仍为 A7。机器可读契约见 [admin-openapi.json](./admin-openapi.json)。公开查询接口继续以 [BACKEND_CONTRACT.md](../backend/BACKEND_CONTRACT.md) 为准。
 
 ## 1. 范围与边界
 
@@ -19,7 +19,7 @@
 - 所有业务时间均为 13 位 Unix 毫秒。数据库继续用 UTC `DateTime(3)`。
 - ID 是 1～2147483647 的十进制正整数。分页默认 `page=1&page_size=10`，`page_size` 最大 50。
 - 写接口必须带 `X-CSRF-Token`；修改、删除、发布和下线请求必须带当前 `version`。
-- 同一 HTTP 方法和资源的重复安全命令应幂等；不以全部返回 HTTP 200 掩盖失败。
+- 发布/下线命令保证副作用幂等：重复请求不得重复修改版本、写审计或创建构建事件；命令不保证重复返回成功，服务端按请求中的旧版本返回 `40900`，按当前版本对不适用状态返回 `40901`。
 
 ### 2.1 管理业务码
 
@@ -103,8 +103,8 @@ DRAFT --发布--> PUBLISHED --下线--> ARCHIVED
 ```
 
 - 创建固定为 `DRAFT`，不能由客户端指定状态。
-- 修改 `DRAFT/ARCHIVED` 只保存内容，不触发构建；修改 `PUBLISHED` 保持发布状态并产生内容变更事件。
-- 发布 `DRAFT/ARCHIVED`：校验完整性，设置 `publishedAt=now`，状态改为 `PUBLISHED`；重复发布已经发布且版本一致的内容视为状态冲突，不伪造一次新部署。
+- 修改 `DRAFT/ARCHIVED` 只保存内容，不触发构建；修改 `PUBLISHED` 必须继续满足发布完整性校验，成功后保持发布状态并产生内容变更事件，校验失败返回 `42200` 且不写文章、审计或构建事件。
+- 发布 `DRAFT/ARCHIVED`：校验完整性，设置 `publishedAt=now`，状态改为 `PUBLISHED`。完全重放首次请求（携带旧版本）返回 `40900`；使用当前版本再次发布已经发布的文章返回 `40901`；两者都不递增版本、不重复写审计或构建事件。
 - 下线 `PUBLISHED`：状态改为 `ARCHIVED`；已下线或草稿执行下线返回 `40901`。
 - 受限硬删除：仅允许删除 `DRAFT` 或 `ARCHIVED`。请求体为 `{ version }`；`ArticleTranslation` 随外键级联删除。`PUBLISHED` 返回 `40901` 并提示先下线，避免公开站仍可见而数据库记录已消失。不接受批量 ID，不提供 query 绕过，不新增公开删除接口。
 - `ARCHIVED` 是已下线内容，可编辑或删除；不等同于可编辑草稿以外的第三种业务态。
@@ -150,7 +150,7 @@ DRAFT --发布--> PUBLISHED --下线--> ARCHIVED
 
 | 操作 | 事件类型 | reason |
 | --- | --- | --- |
-| 首次发布或重新发布 | `ARTICLE_PUBLISHED` | `article_published` |
+| 草稿首次发布或已下线文章再次发布 | `ARTICLE_PUBLISHED` | `article_published` |
 | 修改已发布文章 | `ARTICLE_UPDATED` | `article_updated` |
 | 下线已发布文章 | `ARTICLE_UNPUBLISHED` | `article_unpublished` |
 
@@ -194,7 +194,7 @@ AuditLog 记录 actor、action、entityType/entityId、文章版本、requestId�
 6. 创建草稿允许空翻译内容但固定包含三语键，不产生 BuildEvent。
 7. 两个客户端读取同一 version 后，先保存者成功并递增版本，后保存者得到 `40900`，数据库不被覆盖。
 8. 三语缺失、危险 HTML、非法分类或封面不能发布；失败时文章、审计和事件均不产生半提交。
-9. 首次发布、发布态修改、下线分别写唯一事件；草稿修改不写事件。重试不产生重复幂等键。
+9. 首次发布、发布态修改、下线分别写唯一事件；草稿修改不写事件。完全重放发布请求返回 `40900`，以当前版本重复发布返回 `40901`，两种情况均不产生重复事件或审计记录。
 10. 发布后公开接口可见；下线后公开列表、详情、内容目录均不可见；管理详情仍可见。
 11. 文章事务成功后外部部署失败，文章状态保持，BuildEvent 为 FAILED 且错误摘要不泄密。
 12. 部署列表只返回真实事件；不存在事件时为空列表，不能制造成功记录。
@@ -213,8 +213,9 @@ AuditLog 记录 actor、action、entityType/entityId、文章版本、requestId�
 - **A5.1 / B9.3.1 已实现**：`DELETE /api/admin/articles/{id}` 受限硬删除（仅 DRAFT/ARCHIVED）；管理列表删除确认；BFF/客户端白名单。
 - **A5.2 / B9.3.2 已定稿设计**：`POST /api/admin/media/images`、StorageAdapter、MediaAsset、错误码与验收用例见契约与 [MEDIA_UPLOAD_DESIGN.md](./MEDIA_UPLOAD_DESIGN.md)。
 - **A5.3 / B9.3.3 已实现**：MediaAsset 迁移；sharp 校验/重编码 WebP；本地/R2 StorageAdapter；`POST /api/admin/media/images`；本地 `GET /media/*`；BFF multipart 白名单与 6MiB/60s；`uploadCoverImage` + ArticleFormModal Upload；cover 可信 URL 校验。无真实 R2 凭据时仅验证本地适配器。
-- **尚未实现**：发布/下线与 BuildEvent（A6）、外部构建（A7）。禁止用 Mock 冒充这些能力。
+- **A6 / B9.4 已实现**：AuditLog/BuildEvent 迁移；POST .../publish 与 .../unpublish；发布校验 42200；同事务写审计与 QUEUED outbox；修改已发布文章写 ARTICLE_UPDATED；删除补 ARTICLE_DELETED 审计且不写 BuildEvent。管理端发布/下线确认、预览链接与「等待站点部署」文案。不调用 GitHub/Cloudflare。
+- **A7 / B9.5 已实现代码闭环**：部署列表/详情、失败重试、120 秒事件合并 worker、GitHub Actions 状态回写、每日 01:00/手动/内容事件工作流与 Cloudflare Pages 部署步骤。无真实凭据时只验证本地状态机和 dry-run，不把它称为已线上部署。
 
 ## 10. 明确未实现（相对完整后台）
 
-本阶段没有实现发布事务、BuildEvent outbox，也没有调用 GitHub/Cloudflare 生产构建 Hook。删除也不写 AuditLog（待 A6）。R2 生产适配器代码已具备，但无真实凭据时仅验证本地适配器。A6/B9.4 实现发布事务与 outbox，并为删除补审计；A7/B9.5 才处理外部构建。
+管理后台未实现复杂 RBAC、媒体孤儿自动清理和部署历史高级检索。R2 与 GitHub/Cloudflare 生产适配代码已具备；无真实凭据时仅验证本地适配器、部署状态机与 dry-run。

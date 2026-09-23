@@ -1,4 +1,5 @@
 import process from 'node:process'
+import { DEFAULT_PUBLIC_SITE_URL } from './app/constants/site'
 
 const DEFAULT_MEDIA_PUBLIC_BASE_URL = 'http://127.0.0.1:4000/media'
 
@@ -17,7 +18,7 @@ export default defineNuxtConfig({
     // 私有：仅 Nitro BFF 使用，不进入 public，不暴露给浏览器。
     adminApiBaseUrl: process.env.NUXT_ADMIN_API_BASE_URL || '',
     public: {
-      publicSiteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3666',
+      publicSiteUrl: process.env.NUXT_PUBLIC_SITE_URL || DEFAULT_PUBLIC_SITE_URL,
       /** 可信媒体基址（无尾斜杠），用于封面 URL 校验；不含密钥。 */
       mediaPublicBaseUrl: process.env.NUXT_PUBLIC_MEDIA_PUBLIC_BASE_URL || DEFAULT_MEDIA_PUBLIC_BASE_URL,
     },

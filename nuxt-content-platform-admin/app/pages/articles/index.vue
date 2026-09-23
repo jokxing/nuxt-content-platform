@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import type { DataTableColumns, SelectOption } from 'naive-ui'
 import { NButton, NSpace, NTag, NTooltip } from 'naive-ui'
-import { deleteAdminArticle, listAdminArticles, listAdminCategories } from '~/api/adminArticles'
+import {
+  deleteAdminArticle,
+  listAdminArticles,
+  listAdminCategories,
+  publishAdminArticle,
+  unpublishAdminArticle,
+} from '~/api/adminArticles'
 import { AdminApiError } from '~/api/adminClient'
 import type {
   AdminArticleSummary,
@@ -10,8 +16,10 @@ import type {
 } from '~/types/admin'
 import {
   ARTICLE_STATUS_LABEL,
+  buildPublicArticlePreviewUrl,
   formatAdminMillis,
 } from '~/types/admin'
+import { resolvePublicSiteUrl } from '~/constants/site'
 
 useHead({
   title: '文章列表 - 讯览资讯管理',
@@ -21,13 +29,17 @@ const formModal = ref<ArticleFormModalExpose | null>(null)
 const auth = useAdminAuth()
 const message = useMessage()
 const dialog = useDialog()
+const runtimeConfig = useRuntimeConfig()
+const publicSiteUrl = computed(() =>
+  resolvePublicSiteUrl(runtimeConfig.public.publicSiteUrl),
+)
 
 const loading = ref(false)
 const loadError = ref('')
-const deleteError = ref('')
+const actionError = ref('')
 const listErrorAlertRef = ref<HTMLElement | null>(null)
 const categoryErrorAlertRef = ref<HTMLElement | null>(null)
-const deleteErrorAlertRef = ref<HTMLElement | null>(null)
+const actionErrorAlertRef = ref<HTMLElement | null>(null)
 const items = ref<AdminArticleSummary[]>([])
 const total = ref(0)
 const page = ref(1)
@@ -106,7 +118,7 @@ const columns = computed<DataTableColumns<AdminArticleSummary>>(() => [
   {
     title: '操作',
     key: 'actions',
-    width: 140,
+    width: 260,
     fixed: 'right',
     render(row) {
       const editBtn = h(NButton, {
@@ -115,6 +127,38 @@ const columns = computed<DataTableColumns<AdminArticleSummary>>(() => [
         size: 'small',
         onClick: () => openEdit(row.id),
       }, { default: () => '编辑' })
+
+      const buttons: ReturnType<typeof h>[] = [editBtn]
+
+      if (row.status === 'DRAFT' || row.status === 'ARCHIVED') {
+        buttons.push(h(NButton, {
+          text: true,
+          type: 'primary',
+          size: 'small',
+          onClick: () => requestPublish(row),
+        }, { default: () => '发布' }))
+      }
+
+      if (row.status === 'PUBLISHED') {
+        buttons.push(h(NButton, {
+          text: true,
+          type: 'warning',
+          size: 'small',
+          onClick: () => requestUnpublish(row),
+        }, { default: () => '下线' }))
+        buttons.push(h(NButton, {
+          text: true,
+          size: 'small',
+          tag: 'a',
+          href: buildPublicArticlePreviewUrl(
+            publicSiteUrl.value,
+            row.category.parent_route || 'education',
+            row.id,
+          ),
+          target: '_blank',
+          rel: 'noopener noreferrer',
+        }, { default: () => '查看资讯页' }))
+      }
 
       const deleteBtn = row.status === 'PUBLISHED'
         ? h(NTooltip, null, {
@@ -135,8 +179,10 @@ const columns = computed<DataTableColumns<AdminArticleSummary>>(() => [
             onClick: () => requestDelete(row),
           }, { default: () => '删除' })
 
+      buttons.push(deleteBtn)
+
       return h(NSpace, { size: 8, wrap: false }, {
-        default: () => [editBtn, deleteBtn],
+        default: () => buttons,
       })
     },
   },
@@ -235,11 +281,88 @@ async function refreshAfterDelete() {
   await loadList()
 }
 
+function requestPublish(row: AdminArticleSummary) {
+  actionError.value = ''
+  dialog.warning({
+    title: '确认发布文章？',
+    content: `将发布「${row.title.trim() || row.slug}」。成功只表示内容已入库并排队构建；自动部署尚未接入。`,
+    positiveText: '发布',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      const csrf = auth.csrfToken.value
+      if (!csrf) {
+        actionError.value = '会话已失效，请重新登录后再发布'
+        setTimeout(() => focusAlert(actionErrorAlertRef.value), 0)
+        return true
+      }
+      try {
+        await auth.withCsrfRetry(currentCsrf => publishAdminArticle(
+          row.id,
+          row.version,
+          currentCsrf,
+        ))
+        actionError.value = ''
+        message.success('内容已发布，等待站点部署')
+        await loadList()
+        return true
+      }
+      catch (error: unknown) {
+        if (error instanceof AdminApiError) {
+          actionError.value = error.code === 42200
+            ? `${error.message}。请编辑补全三语后再发布。`
+            : (error.message || '发布失败，请稍后重试')
+        }
+        else {
+          actionError.value = '发布失败，请稍后重试'
+        }
+        setTimeout(() => focusAlert(actionErrorAlertRef.value), 0)
+        return true
+      }
+    },
+  })
+}
+
+function requestUnpublish(row: AdminArticleSummary) {
+  actionError.value = ''
+  dialog.warning({
+    title: '确认下线文章？',
+    content: `将下线「${row.title.trim() || row.slug}」。公开站将不可见；会排队构建，但不等于线上已部署完成。`,
+    positiveText: '下线',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      const csrf = auth.csrfToken.value
+      if (!csrf) {
+        actionError.value = '会话已失效，请重新登录后再下线'
+        setTimeout(() => focusAlert(actionErrorAlertRef.value), 0)
+        return true
+      }
+      try {
+        await auth.withCsrfRetry(currentCsrf => unpublishAdminArticle(
+          row.id,
+          row.version,
+          currentCsrf,
+        ))
+        actionError.value = ''
+        message.success('内容已下线，等待站点部署')
+        await loadList()
+        return true
+      }
+      catch (error: unknown) {
+        actionError.value = error instanceof AdminApiError
+          ? (error.message || '下线失败，请稍后重试')
+          : '下线失败，请稍后重试'
+        setTimeout(() => focusAlert(actionErrorAlertRef.value), 0)
+        return true
+      }
+    },
+  })
+}
+
 function requestDelete(row: AdminArticleSummary) {
   if (row.status === 'PUBLISHED')
     return
 
-  deleteError.value = ''
+  actionError.value = ''
   const label = row.title.trim() || row.slug
 
   dialog.warning({
@@ -251,8 +374,8 @@ function requestDelete(row: AdminArticleSummary) {
     onPositiveClick: async () => {
       const csrf = auth.csrfToken.value
       if (!csrf) {
-        deleteError.value = '会话已失效，请重新登录后再删除'
-        setTimeout(() => focusAlert(deleteErrorAlertRef.value), 0)
+        actionError.value = '会话已失效，请重新登录后再删除'
+        setTimeout(() => focusAlert(actionErrorAlertRef.value), 0)
         return true
       }
 
@@ -262,6 +385,7 @@ function requestDelete(row: AdminArticleSummary) {
           row.version,
           currentCsrf,
         ))
+        actionError.value = ''
         message.success('已删除')
         await refreshAfterDelete()
         return true
@@ -269,7 +393,7 @@ function requestDelete(row: AdminArticleSummary) {
       catch (error: unknown) {
         if (error instanceof AdminApiError) {
           if (error.code === 40900) {
-            deleteError.value = `${error.message}。请刷新列表后重试。`
+            actionError.value = `${error.message}。请刷新列表后重试。`
           }
           else if (
             error.code === 40901
@@ -277,16 +401,16 @@ function requestDelete(row: AdminArticleSummary) {
             || error.code === 40301
             || error.code === 40000
           ) {
-            deleteError.value = error.message
+            actionError.value = error.message
           }
           else {
-            deleteError.value = error.message || '删除失败，请稍后重试'
+            actionError.value = error.message || '删除失败，请稍后重试'
           }
         }
         else {
-          deleteError.value = '删除失败，请稍后重试'
+          actionError.value = '删除失败，请稍后重试'
         }
-        setTimeout(() => focusAlert(deleteErrorAlertRef.value), 0)
+        setTimeout(() => focusAlert(actionErrorAlertRef.value), 0)
         return true
       }
     },
@@ -405,8 +529,8 @@ onMounted(async () => {
     </div>
 
     <div
-      v-if="deleteError"
-      ref="deleteErrorAlertRef"
+      v-if="actionError"
+      ref="actionErrorAlertRef"
       class="list_alert"
       tabindex="-1"
       role="alert"
@@ -416,9 +540,9 @@ onMounted(async () => {
         type="error"
         :bordered="false"
         closable
-        @close="deleteError = ''"
+        @close="actionError = ''"
       >
-        {{ deleteError }}
+        {{ actionError }}
       </n-alert>
     </div>
 

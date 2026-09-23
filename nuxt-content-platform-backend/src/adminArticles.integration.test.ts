@@ -29,8 +29,35 @@ function probeSlug(suffix: string): string {
 }
 
 async function deleteProbes(): Promise<void> {
+  await prisma.buildEvent.deleteMany({ where: { dedupeKey: { startsWith: 'a7-probe-' } } })
+  await prisma.auditLog.deleteMany({
+    where: { entityType: 'build_event', action: 'BUILD_RETRIED' },
+  })
+  const articles = await prisma.article.findMany({
+    where: { slug: { startsWith: SLUG_PREFIX } },
+    select: { id: true },
+  })
+  const ids = articles.map(row => row.id)
+  if (ids.length > 0) {
+    await prisma.buildEvent.deleteMany({ where: { articleId: { in: ids } } })
+    await prisma.auditLog.deleteMany({
+      where: { entityType: 'article', entityId: { in: ids } },
+    })
+  }
   await prisma.article.deleteMany({
     where: { slug: { startsWith: SLUG_PREFIX } },
+  })
+  // 测试库中清理已删文章残留的发布相关 outbox / 审计
+  await prisma.buildEvent.deleteMany({
+    where: {
+      reason: { in: ['article_published', 'article_updated', 'article_unpublished'] },
+    },
+  })
+  await prisma.auditLog.deleteMany({
+    where: {
+      entityType: 'article',
+      action: { in: ['ARTICLE_PUBLISHED', 'ARTICLE_UPDATED', 'ARTICLE_UNPUBLISHED', 'ARTICLE_DELETED'] },
+    },
   })
   await prisma.adminSession.deleteMany({
     where: { adminUser: { username: { startsWith: PROBE_PREFIX } } },
@@ -79,6 +106,14 @@ function emptyTranslations() {
     'zh-CN': { title: '', content: '' },
     'zh-HK': { title: '', content: '' },
     'en-US': { title: '', content: '' },
+  }
+}
+
+function fullTranslations() {
+  return {
+    'zh-CN': { title: '简体标题', content: '<p>简体正文</p>' },
+    'zh-HK': { title: '繁體標題', content: '<p>繁體正文</p>' },
+    'en-US': { title: 'English title', content: '<p>English body</p>' },
   }
 }
 
@@ -679,5 +714,387 @@ describe('A4 admin articles integration', () => {
     assert.equal(deleted.status, 200)
     assertSuccessEnvelope(deleted.body)
     assert.equal(await prisma.article.findUnique({ where: { id } }), null)
+  })
+
+  it('rejects incomplete publish with 42200 and writes nothing', async () => {
+    const slug = probeSlug(`pub-empty-${randomBytes(3).toString('hex')}`)
+    const created = await apiSend(server.baseUrl, '/api/admin/articles', {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: writeBody(slug, catId),
+    })
+    assert.equal(created.status, 201)
+    const article = asObject(created.body.data, 'data')
+    const id = Number(article.id)
+
+    const res = await apiSend(server.baseUrl, `/api/admin/articles/${id}/publish`, {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version: Number(article.version) },
+    })
+    assert.equal(res.status, 422)
+    assertErrorEnvelope(res.body, 42200)
+
+    const still = await prisma.article.findUnique({ where: { id } })
+    assert.ok(still)
+    assert.equal(still.status, 'DRAFT')
+    assert.equal(await prisma.buildEvent.count({ where: { articleId: id } }), 0)
+    assert.equal(await prisma.auditLog.count({
+      where: { entityType: 'article', entityId: id, action: 'ARTICLE_PUBLISHED' },
+    }), 0)
+  })
+
+  it('publishes complete article, queues build event, visible on public API', async () => {
+    const slug = probeSlug(`pub-ok-${randomBytes(3).toString('hex')}`)
+    const created = await apiSend(server.baseUrl, '/api/admin/articles', {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: writeBody(slug, catId, { translations: fullTranslations() }),
+    })
+    assert.equal(created.status, 201)
+    const article = asObject(created.body.data, 'data')
+    const id = Number(article.id)
+    const version = Number(article.version)
+
+    const publicBefore = await apiGet(server.baseUrl, `/api/articles/${id}?lang=zh-CN`)
+    assert.equal(publicBefore.status, 404)
+
+    const published = await apiSend(server.baseUrl, `/api/admin/articles/${id}/publish`, {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version },
+    })
+    assert.equal(published.status, 200)
+    assertSuccessEnvelope(published.body)
+    const data = asObject(published.body.data, 'data')
+    const outArticle = asObject(data.article, 'article')
+    const buildEvent = asObject(data.build_event, 'build_event')
+    assert.equal(outArticle.status, 'PUBLISHED')
+    assert.equal(Number(outArticle.version), version + 1)
+    assertMillis(outArticle.published_at, 'published_at')
+    assert.equal(buildEvent.status, 'QUEUED')
+    assert.equal(buildEvent.reason, 'article_published')
+
+    const events = await prisma.buildEvent.findMany({ where: { articleId: id } })
+    assert.equal(events.length, 1)
+    assert.equal(events[0]!.dedupeKey, `article:${id}:version:${version + 1}:ARTICLE_PUBLISHED`)
+    assert.equal(await prisma.auditLog.count({
+      where: { entityType: 'article', entityId: id, action: 'ARTICLE_PUBLISHED' },
+    }), 1)
+
+    const publicAfter = await apiGet(server.baseUrl, `/api/articles/${id}?lang=zh-CN`)
+    assert.equal(publicAfter.status, 200)
+    assertSuccessEnvelope(publicAfter.body)
+
+    const replay = await apiSend(server.baseUrl, `/api/admin/articles/${id}/publish`, {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version },
+    })
+    assert.equal(replay.status, 409)
+    assertErrorEnvelope(replay.body, 40900)
+
+    const again = await apiSend(server.baseUrl, `/api/admin/articles/${id}/publish`, {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version: version + 1 },
+    })
+    assert.equal(again.status, 409)
+    assertErrorEnvelope(again.body, 40901)
+    assert.equal(await prisma.buildEvent.count({ where: { articleId: id } }), 1)
+    assert.equal(await prisma.auditLog.count({
+      where: { entityType: 'article', entityId: id, action: 'ARTICLE_PUBLISHED' },
+    }), 1)
+  })
+
+  it('unpublishes published article and hides from public API', async () => {
+    const slug = probeSlug(`unpub-${randomBytes(3).toString('hex')}`)
+    const created = await apiSend(server.baseUrl, '/api/admin/articles', {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: writeBody(slug, catId, { translations: fullTranslations() }),
+    })
+    const article = asObject(created.body.data, 'data')
+    const id = Number(article.id)
+    const version = Number(article.version)
+
+    const published = await apiSend(server.baseUrl, `/api/admin/articles/${id}/publish`, {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version },
+    })
+    assert.equal(published.status, 200)
+    const pubData = asObject(published.body.data, 'data')
+    const pubArticle = asObject(pubData.article, 'article')
+
+    const unpublished = await apiSend(server.baseUrl, `/api/admin/articles/${id}/unpublish`, {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version: Number(pubArticle.version) },
+    })
+    assert.equal(unpublished.status, 200)
+    assertSuccessEnvelope(unpublished.body)
+    const data = asObject(unpublished.body.data, 'data')
+    const outArticle = asObject(data.article, 'article')
+    const buildEvent = asObject(data.build_event, 'build_event')
+    assert.equal(outArticle.status, 'ARCHIVED')
+    assert.equal(buildEvent.reason, 'article_unpublished')
+    assert.equal(buildEvent.status, 'QUEUED')
+
+    const publicAfter = await apiGet(server.baseUrl, `/api/articles/${id}?lang=zh-CN`)
+    assert.equal(publicAfter.status, 404)
+
+    const draftUnpub = await apiSend(server.baseUrl, `/api/admin/articles/${id}/unpublish`, {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version: Number(outArticle.version) },
+    })
+    assert.equal(draftUnpub.status, 409)
+    assertErrorEnvelope(draftUnpub.body, 40901)
+  })
+
+  it('updating published article queues ARTICLE_UPDATED; delete writes audit only', async () => {
+    const slug = probeSlug(`upd-pub-${randomBytes(3).toString('hex')}`)
+    const created = await apiSend(server.baseUrl, '/api/admin/articles', {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: writeBody(slug, catId, { translations: fullTranslations() }),
+    })
+    const article = asObject(created.body.data, 'data')
+    const id = Number(article.id)
+
+    const published = await apiSend(server.baseUrl, `/api/admin/articles/${id}/publish`, {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version: Number(article.version) },
+    })
+    const pubArticle = asObject(asObject(published.body.data, 'data').article, 'article')
+    const pubVersion = Number(pubArticle.version)
+
+    const updated = await apiSend(server.baseUrl, `/api/admin/articles/${id}`, {
+      method: 'PUT',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: writeBody(slug, catId, {
+        version: pubVersion,
+        translations: {
+          ...fullTranslations(),
+          'zh-CN': { title: '更新后标题', content: '<p>更新后正文</p>' },
+        },
+      }),
+    })
+    assert.equal(updated.status, 200)
+    assert.equal(await prisma.buildEvent.count({
+      where: { articleId: id, eventType: 'ARTICLE_UPDATED' },
+    }), 1)
+
+    const unpublished = await apiSend(server.baseUrl, `/api/admin/articles/${id}/unpublish`, {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version: Number(asObject(updated.body.data, 'data').version) },
+    })
+    assert.equal(unpublished.status, 200)
+    const archived = asObject(asObject(unpublished.body.data, 'data').article, 'article')
+
+    const deleted = await apiSend(server.baseUrl, `/api/admin/articles/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version: Number(archived.version) },
+    })
+    assert.equal(deleted.status, 200)
+    assert.equal(await prisma.auditLog.count({
+      where: { entityType: 'article', entityId: id, action: 'ARTICLE_DELETED' },
+    }), 1)
+    // 删除不新增 BuildEvent（已有 publish/update/unpublish 事件仍可能残留）
+    assert.equal(await prisma.buildEvent.count({
+      where: { articleId: id, eventType: 'ARTICLE_UPDATED' },
+    }), 1)
+  })
+
+  it('rejects incomplete update of published article without partial writes', async () => {
+    const slug = probeSlug(`upd-pub-empty-${randomBytes(3).toString('hex')}`)
+    const created = await apiSend(server.baseUrl, '/api/admin/articles', {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: writeBody(slug, catId, { translations: fullTranslations() }),
+    })
+    const article = asObject(created.body.data, 'data')
+    const id = Number(article.id)
+
+    const published = await apiSend(server.baseUrl, `/api/admin/articles/${id}/publish`, {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: { version: Number(article.version) },
+    })
+    const publishedArticle = asObject(asObject(published.body.data, 'data').article, 'article')
+    const publishedVersion = Number(publishedArticle.version)
+    const eventCountBefore = await prisma.buildEvent.count({ where: { articleId: id } })
+    const auditCountBefore = await prisma.auditLog.count({
+      where: { entityType: 'article', entityId: id },
+    })
+
+    const rejected = await apiSend(server.baseUrl, `/api/admin/articles/${id}`, {
+      method: 'PUT',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+      body: writeBody(slug, catId, {
+        version: publishedVersion,
+        translations: {
+          ...fullTranslations(),
+          'en-US': { title: 'English title', content: '' },
+        },
+      }),
+    })
+    assert.equal(rejected.status, 422)
+    assertErrorEnvelope(rejected.body, 42200)
+
+    const unchanged = await prisma.article.findUnique({
+      where: { id },
+      include: { translations: true },
+    })
+    assert.ok(unchanged)
+    assert.equal(unchanged.status, 'PUBLISHED')
+    assert.equal(unchanged.version, publishedVersion)
+    assert.equal(
+      unchanged.translations.find(item => item.locale === 'en-US')?.content,
+      '<p>English body</p>',
+    )
+    assert.equal(await prisma.buildEvent.count({ where: { articleId: id } }), eventCountBefore)
+    assert.equal(await prisma.auditLog.count({
+      where: { entityType: 'article', entityId: id },
+    }), auditCountBefore)
+
+    const publicAfter = await apiGet(server.baseUrl, `/api/articles/${id}?lang=en-US`)
+    assert.equal(publicAfter.status, 200)
+    assertSuccessEnvelope(publicAfter.body)
+  })
+
+  it('lists real deployment events and requeues only failed event', async () => {
+    const failed = await prisma.buildEvent.create({
+      data: {
+        eventType: 'ARTICLE_UPDATED',
+        reason: 'manual',
+        status: 'FAILED',
+        dedupeKey: `a7-probe-${randomBytes(6).toString('hex')}`,
+        attempts: 1,
+        errorSummary: 'github_actions_failure',
+        finishedAt: new Date(),
+      },
+    })
+
+    const unauthenticated = await apiGet(server.baseUrl, '/api/admin/deployments')
+    assert.equal(unauthenticated.status, 401)
+    assertErrorEnvelope(unauthenticated.body, 40100)
+
+    const listed = await apiGet(
+      server.baseUrl,
+      '/api/admin/deployments?status=FAILED&reason=manual&page=1&page_size=20',
+      { headers: { Cookie: auth.cookie } },
+    )
+    assert.equal(listed.status, 200)
+    assertSuccessEnvelope(listed.body)
+    const listData = asObject(listed.body.data, 'data')
+    const listItems = asArray(listData.items, 'items').map(item => asObject(item, 'item'))
+    assert.ok(listItems.some(item => item.id === failed.id && item.status === 'FAILED'))
+
+    const retried = await apiSend(server.baseUrl, `/api/admin/deployments/${failed.id}/retry`, {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+    })
+    assert.equal(retried.status, 200)
+    assertSuccessEnvelope(retried.body)
+    const retryData = asObject(retried.body.data, 'data')
+    assert.equal(retryData.status, 'QUEUED')
+    assert.equal(retryData.attempts, 1)
+    assert.equal(retryData.error_summary, null)
+    assert.equal(await prisma.buildEvent.count({ where: { id: failed.id } }), 1)
+    assert.equal(await prisma.auditLog.count({
+      where: { entityType: 'build_event', entityId: failed.id, action: 'BUILD_RETRIED' },
+    }), 1)
+
+    const repeated = await apiSend(server.baseUrl, `/api/admin/deployments/${failed.id}/retry`, {
+      method: 'POST',
+      headers: {
+        Origin: ORIGIN,
+        Cookie: auth.cookie,
+        'X-CSRF-Token': auth.csrf,
+      },
+    })
+    assert.equal(repeated.status, 409)
+    assertErrorEnvelope(repeated.body, 40901)
   })
 })

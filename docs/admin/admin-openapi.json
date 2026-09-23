@@ -3,7 +3,7 @@
   "info": {
     "title": "ContentPulse 资讯管理 API",
     "version": "0.1.0",
-    "description": "管理 API 契约。认证、文章 CRUD/删除、封面上传（POST /api/admin/media/images）已实现；publish/unpublish 与 deployments 仍待 A6/A7。浏览器应经同源 Nuxt Nitro BFF 访问，使用 HttpOnly Cookie 会话。封面上传设计见 docs/admin/MEDIA_UPLOAD_DESIGN.md。"
+    "description": "管理 API 契约。认证、文章管理、封面上传、发布/下线、部署状态查询与失败重试已实现。浏览器经同源 Nuxt Nitro BFF 访问，使用 HttpOnly Cookie 会话；GitHub Token 仅由独立构建 worker 使用。"
   },
   "servers": [
     {
@@ -128,7 +128,9 @@
           "401": { "$ref": "#/components/responses/AuthRequired" },
           "500": { "$ref": "#/components/responses/InternalError" }
         }
-      },
+      }
+    },
+    "/api/admin/deployments/{id}/retry": {
       "post": {
         "operationId": "createAdminArticle",
         "summary": "创建文章草稿",
@@ -174,7 +176,7 @@
       "put": {
         "operationId": "updateAdminArticle",
         "summary": "按 version 修改文章",
-        "description": "修改已发布文章会写 ARTICLE_UPDATED 构建事件；草稿或已下线文章修改不触发构建。",
+        "description": "修改已发布文章必须继续满足发布完整性校验，成功后写 ARTICLE_UPDATED 构建事件；草稿或已下线文章修改不触发构建。",
         "tags": ["管理文章"],
         "parameters": [
           { "$ref": "#/components/parameters/CsrfHeader" },
@@ -194,13 +196,14 @@
           "403": { "$ref": "#/components/responses/CsrfInvalid" },
           "404": { "$ref": "#/components/responses/AdminArticleNotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
+          "422": { "$ref": "#/components/responses/PublishValidationFailed" },
           "500": { "$ref": "#/components/responses/InternalError" }
         }
       },
       "delete": {
         "operationId": "deleteAdminArticle",
         "summary": "受限硬删除文章",
-        "description": "仅允许删除 DRAFT 或 ARCHIVED。请求体为 VersionCommand。PUBLISHED 返回 40901 并提示先下线。翻译随外键级联删除。不产生 BuildEvent；A6 接入 AuditLog 时应记录删除但不写部署事件。",
+        "description": "仅允许删除 DRAFT 或 ARCHIVED。请求体为 VersionCommand。PUBLISHED 返回 40901 并提示先下线。翻译随外键级联删除。不产生 BuildEvent；删除写 AuditLog（ARTICLE_DELETED）。",
         "tags": ["管理文章"],
         "parameters": [
           { "$ref": "#/components/parameters/CsrfHeader" },
@@ -227,7 +230,8 @@
     "/api/admin/articles/{id}/publish": {
       "post": {
         "operationId": "publishAdminArticle",
-        "summary": "发布或重新发布文章",
+        "summary": "发布文章",
+        "description": "仅 DRAFT/ARCHIVED 可发布。命令保证副作用幂等：完全重放携带旧 version 的请求返回 40900；对已发布文章携带当前 version 再次发布返回 40901；两者均不重复递增版本、写审计或创建构建事件。",
         "tags": ["管理文章"],
         "parameters": [
           { "$ref": "#/components/parameters/ArticleIdPath" },
@@ -378,6 +382,29 @@
           "400": { "$ref": "#/components/responses/InvalidArgument" },
           "401": { "$ref": "#/components/responses/AuthRequired" },
           "404": { "$ref": "#/components/responses/RouteNotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      },
+      "post": {
+        "operationId": "retryAdminDeployment",
+        "summary": "重新排队失败的构建事件",
+        "description": "仅 FAILED 可重试；复用原记录和 dedupeKey，不创建重复事件。",
+        "tags": ["部署状态"],
+        "parameters": [
+          { "$ref": "#/components/parameters/DeploymentIdPath" },
+          { "$ref": "#/components/parameters/CsrfHeader" },
+          { "$ref": "#/components/parameters/OriginHeader" }
+        ],
+        "responses": {
+          "200": {
+            "description": "已重新置为 QUEUED",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeploymentResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/InvalidArgument" },
+          "401": { "$ref": "#/components/responses/AuthRequired" },
+          "403": { "$ref": "#/components/responses/CsrfInvalid" },
+          "404": { "$ref": "#/components/responses/RouteNotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
           "500": { "$ref": "#/components/responses/InternalError" }
         }
       }
@@ -637,9 +664,10 @@
       },
       "DeploymentSummary": {
         "type": "object",
-        "required": ["id", "status", "reason", "article_id", "article_version", "attempts", "created_at", "started_at", "finished_at"],
+        "required": ["id", "event_type", "status", "reason", "article_id", "article_version", "attempts", "created_at", "started_at", "finished_at", "updated_at"],
         "properties": {
           "id": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+          "event_type": { "type": "string" },
           "status": { "$ref": "#/components/schemas/DeploymentStatus" },
           "reason": { "$ref": "#/components/schemas/DeploymentReason" },
           "article_id": { "type": "integer", "nullable": true },
@@ -647,7 +675,8 @@
           "attempts": { "type": "integer", "minimum": 0 },
           "created_at": { "type": "integer", "format": "int64" },
           "started_at": { "type": "integer", "format": "int64", "nullable": true },
-          "finished_at": { "type": "integer", "format": "int64", "nullable": true }
+          "finished_at": { "type": "integer", "format": "int64", "nullable": true },
+          "updated_at": { "type": "integer", "format": "int64" }
         }
       },
       "DeploymentDetail": {
@@ -671,7 +700,7 @@
           "total": { "type": "integer", "minimum": 0 },
           "page": { "type": "integer", "minimum": 1 },
           "page_size": { "type": "integer", "minimum": 1, "maximum": 50 },
-          "total_pages": { "type": "integer", "minimum": 1 }
+          "total_pages": { "type": "integer", "minimum": 0 }
         }
       },
       "AdminArticlePage": {
@@ -690,7 +719,7 @@
           {
             "type": "object",
             "required": ["items"],
-            "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/DeploymentSummary" } } }
+            "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/DeploymentDetail" } } }
           }
         ]
       },

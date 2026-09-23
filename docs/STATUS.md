@@ -1412,3 +1412,60 @@ Git 状态：未 commit/push
 Git 状态：未 commit/push
 下一步最小可执行任务：A6 / B9.4 发布、下线与公开预览闭环
 ```
+
+## 2026-09-22 — A6 / B9.4 发布、下线与公开预览闭环
+
+- 追加迁移 `AuditLog`、`BuildEvent`（QUEUED outbox）。
+- 实现 `POST` publish/unpublish：42200 完整性校验；40901 状态冲突；40900 版本冲突；同事务写审计与 BuildEvent；不调用 GitHub/Cloudflare。
+- 修改已发布文章写 `ARTICLE_UPDATED`；删除补 `ARTICLE_DELETED` 且不写 BuildEvent。
+- 管理端发布/下线确认、预览链接、等待站点部署文案。
+- **验证**：backend typecheck/lint；单元 33 + 集成 65；`openapi:validate:admin`；admin typecheck/lint/build 通过。
+- **刻意未做**：A7。未 commit/push。
+- **下一步：A7 / B9.5**。
+
+```text
+日期时间：2026-09-22
+阶段及目标：A6 / B9.4 发布、下线与公开预览闭环
+修改文件与原因：AuditLog/BuildEvent、publish/unpublish、管理端发布 UI、契约/STATUS
+执行的验证命令、工作目录、结果：backend test+typecheck+lint+openapi；admin typecheck/lint/build 通过
+未验证内容及原因：浏览器手工联调待确认；未接外部构建
+当前阻碍/已知问题：无
+新增设计决策：发布不等于部署；BuildEvent 仅排队
+Git 状态：未 commit/push
+下一步最小可执行任务：A7 / B9.5 GitHub Actions 构建触发与部署状态
+```
+
+## 2026-09-22 — A6 / B9.4 P1：已发布文章完整性保护
+
+- 修复已发布文章可被保存为空翻译、随后从公开接口消失但状态仍为 `PUBLISHED` 的一致性问题。
+- 更新已发布文章前，对作者、可信封面以及三种语言的标题和清理后正文执行发布完整性校验；不满足时返回 `42200`，事务内不修改文章、翻译、审计日志或构建事件。
+- 管理契约与 OpenAPI 已同步 `PUT /api/admin/articles/{id}` 的约束和 422 响应。
+- 新增集成回归：验证拒绝不完整更新、文章版本与英文正文保持不变、事件数量不变，公开详情仍可访问。
+- **验证**：`adminArticles.integration.test.ts` 22/22 通过；后端类型、ESLint、管理 OpenAPI 与差异检查见本阶段最终验证。
+- **范围**：本次只处理复盘清单中的 P1；P2/P3 建议仍留待后续任务。
+
+## 2026-09-22 — A6 / B9.4 P2：发布重放语义与列表操作错误状态
+
+- 统一发布命令语义为“副作用幂等”：完全重放首次发布请求时，旧 `version` 返回 `40900`；对已发布文章携带当前 `version` 再次发布返回 `40901`。两种情况都不递增版本、不重复写 `AuditLog` 或 `BuildEvent`。
+- OpenAPI 将“发布或重新发布文章”改为“发布文章”；契约用“已下线文章再次发布”区分合法再次发布和同状态重复发布。
+- 集成测试同时覆盖两种重复请求，并断言发布事件和发布审计始终各一条。
+- 管理端文章列表将被发布、下线、删除共同复用的 `deleteError` / `deleteErrorAlertRef` 更名为 `actionError` / `actionErrorAlertRef`；每项操作开始和成功后清除旧错误，避免错误状态名称与来源不符。
+- **验证**：文章管理集成测试 22/22、管理 OpenAPI 校验、管理端 Vue TypeScript 与目标页面 ESLint 均通过。
+- **范围**：未改变发布/下线接口业务行为，未处理其余 P2/P3 建议。
+
+## 2026-09-23 — A6 / B9.4 P3：公开入口名称澄清
+
+- 管理端文章列表的“预览”改为“查看资讯页”；编辑弹窗的“公开预览”改为“查看资讯页”。
+- 提示明确该链接展示当前公开站内容，本次发布或修改仍需等待部署后才会更新，避免把数据库发布误解为线上部署成功。
+- 只调整界面名称和说明，链接生成与打开行为不变；部署成功后展示真实线上入口留给 A7。
+
+## 2026-09-23 — A7 / B9.5 构建触发、部署状态与失败重试
+
+- 后端新增部署列表、详情和失败重试接口；重试仅允许 `FAILED`，复用原 `BuildEvent` 与幂等键并写 `BUILD_RETRIED` 审计。
+- 新增独立构建 worker：默认等待 120 秒合并连续内容事件，领取主事件后调用 GitHub `workflow_dispatch`；其余事件标记 `SKIPPED` 并指向主事件。worker 后续轮询 Actions，把真实运行 ID、可信运行链接和 `SUCCEEDED/FAILED` 写回数据库。
+- GitHub Token 只存在后端 worker 环境变量，浏览器与 Nitro BFF 不接触部署密钥；错误摘要会裁剪并移除 URL。
+- 管理端 `/deployments` 已从占位页改为真实列表，显示状态、原因、文章版本、次数、时间、错误摘要和 GitHub 运行入口；失败记录支持 CSRF 保护的重新排队。
+- 新增 `.github/workflows/content-deploy.yml`：北京时间每天 01:00、手动和 worker 触发；依次执行真实内容模式 typecheck、Nuxt build、SSR/SEO/sitemap 审计，全部成功后部署 Cloudflare Pages，失败时不会覆盖旧站。
+- 配置与运行说明见 `docs/admin/DEPLOYMENT_PIPELINE.md`。本地没有真实 GitHub/Cloudflare 凭据，本阶段不声称已经完成线上部署。
+- **验证**：后端主/seed TypeScript 与 ESLint通过；单元测试 33/33、集成测试 67/67；管理 OpenAPI 12 paths / 15 operations；管理端 TypeScript、ESLint 与生产构建通过；worker dry-run 成功且未调用外部服务。管理端构建仅出现 Nuxt 4.0.3 依赖既有 DEP0155 警告。
+- **未验证**：没有真实 GitHub Token、Cloudflare Pages 项目和公网后端地址，因此未执行真实 workflow dispatch、Actions 状态轮询或 Pages 部署。

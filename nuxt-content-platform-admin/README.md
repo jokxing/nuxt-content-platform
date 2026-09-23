@@ -40,19 +40,11 @@ pnpm dev
 | `app/types` | 会话与表单类型 |
 | `app/assets/styles` | 主题变量与全局样式 |
 
-## 当前范围（A3）
+## 当前范围
 
-已完成：登录 / 会话恢复 / 路由守卫 / 退出；浏览器只请求同源 `/api/admin/*`；Cookie `credentials`；csrf 仅内存。
+已完成：登录与会话、文章 CRUD/三语编辑、封面上传、发布/下线、构建事件列表和失败重试。浏览器只请求同源 `/api/admin/*`；Cookie 使用 `credentials`，CSRF 仅保存在内存。
 
-文章列表与构建页仍显示「接口尚未接入」，不能保存假数据。
-
-**未完成（禁止当作已可用）**：
-
-- 文章 CRUD 与三语编辑器（A4、A5）
-- 发布 / 下线 / 公开预览闭环（A6）
-- 自动构建与部署状态（A7）
-
-管理页面不得用 Mock 冒充完整后台。发布成功 ≠ Cloudflare 已部署。
+发布成功只代表数据库提交并排队。构建页只有 `SUCCEEDED` 才显示“部署成功”；真实 GitHub Actions 与 Cloudflare Pages 需按 `docs/admin/DEPLOYMENT_PIPELINE.md` 配置外部环境。
 
 ## 环境变量
 

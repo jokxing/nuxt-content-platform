@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { createAdminArticlesRouter, createAdminCategoriesRouter } from './adminArticles.js'
 import { createAdminAuthRouter } from './adminAuth.js'
+import { createAdminDeploymentsRouter } from './adminDeployments.js'
 import { createAdminMediaRouter } from './adminMedia.js'
 import { createAdvancedStatsRouter } from './advancedStats.js'
 import { createAnalysisRouter } from './analysis.js'
@@ -21,6 +22,7 @@ export function createApiRouter(): Router {
   router.use('/api/admin/auth', createAdminAuthRouter())
   router.use('/api/admin/categories', createAdminCategoriesRouter())
   router.use('/api/admin/articles', createAdminArticlesRouter())
+  router.use('/api/admin/deployments', createAdminDeploymentsRouter())
   router.use('/api/admin/media', createAdminMediaRouter())
   router.use('/api/categories', createCategoriesRouter())
   router.use('/api/articles', createArticlesRouter())
