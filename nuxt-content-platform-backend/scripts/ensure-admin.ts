@@ -2,13 +2,15 @@
  * 仅创建缺失的管理员账号。凭据只从环境变量读取，成功/失败日志不含密码。
  * 用法：在 backend 目录配置 ADMIN_BOOTSTRAP_* 后执行 `pnpm admin:ensure`。
  */
-import { loadEnv, requireDatabaseEnv } from '../src/config/env.js'
+import { loadEnv } from '../src/config/env.js'
 import { connectDatabase, disconnectDatabase } from '../src/db/prisma.js'
 import { ensureAdminUser } from '../src/services/adminAuthService.js'
 
 async function main(): Promise<void> {
-  requireDatabaseEnv()
   const env = loadEnv()
+  if (!env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is required for admin:ensure.')
+  }
   const username = env.ADMIN_BOOTSTRAP_USERNAME?.trim()
   const password = env.ADMIN_BOOTSTRAP_PASSWORD
   const displayName = env.ADMIN_BOOTSTRAP_DISPLAY_NAME?.trim() || '管理员'

@@ -1470,3 +1470,28 @@ Git 状态：未 commit/push
 - **验证**：后端主/seed TypeScript 与 ESLint通过；单元测试 33/33、集成测试 67/67；管理 OpenAPI 12 paths / 15 operations；管理端 TypeScript、ESLint 与生产构建通过；worker dry-run 成功且未调用外部服务。管理端构建仅出现 Nuxt 4.0.3 依赖既有 DEP0155 警告。
 - **未验证**：没有真实 GitHub Token、Cloudflare Pages 项目和公网后端地址，因此未执行真实 workflow dispatch、Actions 状态轮询或 Pages 部署。
 - 推送后配置保护：工作流增加仓库变量 `DEPLOY_ENABLED == true` 才执行，避免配置完成前的凌晨任务失败；worker 默认 ref 与当前 GitHub 默认分支统一为 `master`。
+
+## 2026-10-12 — Railway 恢复部署（进行中）
+
+- 暂停后本地核对：master 最新提交仍为 5debb24，工作区无改动；未发现暂停后的部署代码变化。部分子项目 README 与前端 DEPLOYMENT 属于早期记录，以最新 A7 和本节为准。
+- 创建项目被 Limited Trial 资源数量限制拦截；用户将现有无服务的 blissful-blessing 空项目改名为 nuxt-content-platform，使用 production 环境，未确认升级付费套餐。
+- 用户截图确认 MySQL Online，mysql-volume 已挂载；content-api 连接 jokxing/nuxt-content-platform 的 master，根目录 /nuxt-content-platform-backend，使用 Railpack。
+- API 配置：DATABASE_URL 引用 MySQL.MYSQL_URL，HOST=0.0.0.0，NODE_ENV=production；构建 pnpm build，预部署 pnpm db:migrate:deploy，启动 pnpm start，健康检查 /health。
+- 真实云端证据（用户截图）：部署 f2f75992 Active / Deployment successful；北京时间 22:01:46 输出 All migrations have been successfully applied；22:01:59 输出 server_started，port=8080、host=0.0.0.0、nodeEnv=production、databaseConfigured=true。
+- API 公网地址：https://content-api-production-0102.up.railway.app，目标端口 8080。用户浏览器访问 HTTPS /health 返回 code=0、msg=ok、data.status=ok、data.database=up，公网访问和数据库连通已验证；代理网页工具无法访问该地址，证据来源为用户截图。
+- 未验收：脱敏 seed 导入、管理员、R2、worker、管理端、Pages、真实内容事件发布闭环及北京时间每日 01:00 schedule 运行。配置完成不等于上述验收通过，手动触发不能替代定时验收。
+
+### 22:16 — 云端 seed 执行成功，数据接口待核对
+
+- 用户将预部署命令临时改为 pnpm db:migrate:deploy && pnpm db:seed 并部署；部署 c777c3d6 为 Active，两服务 Online。
+- 用户日志截图：22:16:39 No pending migrations to apply，执行 tsx prisma/seed.ts；22:16:42 The seed command has been executed；22:16:53 database_connected、server_started（8080 / 0.0.0.0 / production）。证明本次迁移无待应用项、seed 进程成功结束及后端重新启动，不代表全部数据数量与接口内容已验收。
+- Prisma package.json#prisma 弃用与版本更新提示不阻止本次部署；未因提示升级依赖。
+- 下一步：通过公开接口核对脱敏文章、分类与期次数据；随后恢复仅迁移的预部署命令。管理员及其他云端闭环仍待完成。
+- 用户浏览器截图确认 HTTPS GET /api/articles 返回 code=0、total=5、page=1、page_size=10、total_pages=1，items 为 ID 101～105 的五篇演示文章，含标题、内容、作者与分类字段。公开文章列表与 seed 文章数量已验收；三语详情、分类总数和期次总数尚未验收。
+- 后续用户浏览器截图确认 HTTPS GET /api/categories 返回 code=0、9 个分类（education / analysis / story 各 3 个）；GET /api/history 返回 code=0、total=120、page=1、page_size=20、total_pages=6，包含期次数据及筛选选项。脱敏 seed 的文章、分类与期次总数和默认语言公开读取已验收；未逐条核对 120 条内容，三语详情尚未验收。
+
+## 2026-10-13 — 管理员初始化准备（尚未执行）
+
+- 用户截图确认已暂存三个 ADMIN_BOOTSTRAP_* 变量，密码隐藏；预部署命令恢复为仅迁移的更改也待应用。管理员账号尚未创建，登录未验收。
+- 实际部署前置问题：ensure-admin.ts 调用 requireDatabaseEnv，额外要求开发影子数据库，而管理员创建只使用业务库。修正为 loadEnv 后显式要求 DATABASE_URL，保留原有创建缺失管理员行为，不新增数据库资源。
+- 本地主、seed TypeScript 检查及 git diff --check 无错误输出；目标脚本默认被 ESLint 忽略，不能将该次 lint 记为目标脚本检查通过。修复尚未推送到 GitHub，也未云端运行。
