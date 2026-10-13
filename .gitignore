@@ -16,6 +16,9 @@ coverage/
 !.env.*.example
 
 # Private keys and certificates
+# Local credentials and private notes
+/.private/
+
 *.pem
 *.key
 *.p12

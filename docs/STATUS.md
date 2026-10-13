@@ -1495,3 +1495,37 @@ Git 状态：未 commit/push
 - 用户截图确认已暂存三个 ADMIN_BOOTSTRAP_* 变量，密码隐藏；预部署命令恢复为仅迁移的更改也待应用。管理员账号尚未创建，登录未验收。
 - 实际部署前置问题：ensure-admin.ts 调用 requireDatabaseEnv，额外要求开发影子数据库，而管理员创建只使用业务库。修正为 loadEnv 后显式要求 DATABASE_URL，保留原有创建缺失管理员行为，不新增数据库资源。
 - 本地主、seed TypeScript 检查及 git diff --check 无错误输出；目标脚本默认被 ESLint 忽略，不能将该次 lint 记为目标脚本检查通过。修复尚未推送到 GitHub，也未云端运行。
+
+### 10:01 — 云端管理员创建通过
+
+- 用户随后确认初始化修复已推送；Railway Source 截图确认 Auto deploy is disabled，关闭后待应用变更数量未增加。保留仓库及 master 分支连接，恢复阶段使用手动部署。
+- 用户应用三个 ADMIN_BOOTSTRAP_* 变量及临时预部署命令 pnpm db:migrate:deploy && pnpm admin:ensure。
+- 用户日志截图确认部署 262ecdaf 为 Active，MySQL/API Online；北京时间 2026-10-13 10:01:39 输出 admin_ensure: created。证明云端管理员创建及初始化前置修复已实际运行通过，登录和管理写操作尚未验收。
+- 下一步撤掉临时管理员初始化命令与 bootstrap 变量，恢复仅迁移配置；保留用户自行保存的登录凭据，不写入仓库或文档。管理端、媒体及自动发布链路仍待部署与验收。
+- 后续用户截图确认预部署命令暂存为 pnpm db:migrate:deploy，三个 ADMIN_BOOTSTRAP_* 变量已移除，剩余 DATABASE_URL / HOST / NODE_ENV，共 4 项变更待应用。指导应用清理后，用户浏览器截图再次确认 HTTPS /health 返回 code=0、status=ok、database=up；本次未提供最新部署 ID/状态截图，不能单凭健康响应证明清理配置已在最新容器中生效。管理员登录与重部署后的账号保留待管理端验收。
+- 按用户要求创建 .private/railway-admin.json（用户名 content_admin，初始密码留空供用户本机填写），根 .gitignore 添加 /.private/；git check-ignore 命中且 git ls-files 无该文件。不读取或记录用户填写的密码。
+- 用户创建 content-admin 空服务，连接 jokxing/nuxt-content-platform 的 master，根目录 /nuxt-content-platform-admin；配置 HOST / NODE_ENV / NUXT_ADMIN_API_BASE_URL（指导值为 http://content-api.railway.internal:8080，截图隐藏实际值），Railpack 构建 pnpm build、启动 node .output/server/index.mjs，无预部署迁移。
+- 用户截图确认 content-admin 首次部署 Active / Deployment successful，Node 24.21.0，US West，1 Replica；MySQL、content-api、content-admin 均 Online，管理端尚为 Unexposed service。只证明构建启动成功，不证明内网代理、公网页面、管理员登录或写操作已通过。下一步确认监听端口、生成管理端域名、配置 API Origin 白名单，再实际验收。
+- 后续明确配置管理端 PORT=8080，用户日志截图确认部署 a0c5bd19 Active、北京时间 10:35:26 Listening on http://0.0.0.0:8080；公网域名为 https://content-admin-production.up.railway.app，目标端口 8080。0.0.0.0 是容器监听地址，非本机访问入口。
+- 用户配置截图确认 ADMIN_ALLOWED_ORIGINS 已在 content-api 中，content-admin 的多余同名变量已移除；实际变量值在 API 截图中隐藏，登录结果作为后续有效配置证据。
+- 用户按公网登录指导操作后截图确认进入管理文章列表，显示“内容管理员”、5 篇预设文章及已发布状态。云端管理员登录、管理端会话建立、BFF 到 API 的认证和文章列表读取已验收；未直接检查 Cookie 属性/网络请求，刷新会话恢复、写操作、媒体上传、worker/Pages/定时闭环尚未验收。
+- 用户明确执行 Ctrl+R 刷新后截图确认仍在文章列表，右上角“内容管理员”、5 篇预设文章重新显示，无需再次登录；刷新后的会话恢复与认证列表读取已验收。管理写操作、真实 R2、worker/Pages 与 schedule 仍待完成。
+- 用户在 Cloudflare 完成 R2 开通，截图显示“购买完成 / 订阅已激活”，基础月费及今日应付显示 $0，并列出 Standard 免费额度与超额单价。只确认订阅开通，不证明实际账单扣款、存储桶创建、凭据配置或媒体上传已验收；不记录付款信息。
+- 用户截图确认 R2 存储桶 contentpulse-media 已创建，默认存储类为标准、公开访问已禁用、存储 0 B、A/B 操作显示 0、对象列表为空。仅确认桶配置创建，真实上传及公开媒体读取尚未验收。
+- 用户确认没有自有域名，启用 R2 公共开发 URL：https://pub-7bbfaf7777d34c9ea677b5c1514c2615.r2.dev。截图确认已启用，存储桶位置 APAC；这是有限流的开发读取地址，不将其表述为正式生产媒体域名。尚未配置上传凭据、执行真实上传或验证对象读取；正式自定义媒体域名保留为维护/验收边界。
+- 用户重新创建并本机保存 R2 凭据，最后令牌列表截图仅一条活动的 contentpulse-media-api，权限对象读和写、仅限 contentpulse-media。此前两条旧令牌删除由用户确认；不记录密钥或令牌值。
+- 用户截图确认 content-api 添加 R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET / R2_ENDPOINT / MEDIA_STORAGE_DRIVER / MEDIA_PUBLIC_BASE_URL 七项变量，实际值隐藏；应用后 Active / Deployment successful。管理端添加 NUXT_PUBLIC_MEDIA_PUBLIC_BASE_URL，应用后同样 Active / Deployment successful。指导两端公开媒体基址为上述 r2.dev 地址，API driver=r2。只确认配置和启动，不代表真实 R2 对象上传、图片读取或文章保存已验收。
+- 首次用户上传某 JPG 提示“不是合法图片”；源码定位为 imagePipeline metadata 读取失败或尺寸无效，发生在存储写入前。未取得该文件，原因未定位，不记录为已修复。
+- 用户随后确认文章 #101“如何阅读数据面板”封面上传、更新成功；明确刷新后重新编辑截图显示封面图片正常、version=2，cover URL 保留为 https://pub-7bbfaf7777d34c9ea677b5c1514c2615.r2.dev/covers/2026/10/b92c1b31ad9c417f8d25398468efa08e.webp。真实上传流程、认证文章更新、媒体地址入库及刷新后预览读取已通过；待核对 R2 桶对象及匿名直接读取。尚未验收重部署后对象读取、公开站更新、BuildEvent 派发/回写或 schedule。管理端公开站链接仍为 localhost:3666，待 Pages 地址配置后更新。
+- 用户 R2 对象列表截图确认 contentpulse-media/covers/2026/10/b92c1b31ad9c417f8d25398468efa08e.webp 实际存在，类型 image/webp、Standard、大小 23.29 KB；显示修改于 2026-10-13 15:31（北京时间，秒未显示）。真实 R2 对象写入已验收。顶部聚合存储统计仍显示 0 B，不能用该值否定列表中的实际对象；匿名读取、重部署持久性和发布链路仍待验证。
+- 用户 Edge InPrivate 截图确认直接访问上述 HTTPS r2.dev 对象 URL，无需登录即可显示数据看板封面，匿名公开读取与浏览器图片解码已验收。媒体链路已通过真实上传、R2 对象存在、文章保存刷新和匿名图片读取；仍保留 r2.dev 限流/非生产边界，不代表自定义媒体域名或备份恢复已验收。
+- 用户通过 Workers 和 Pages → 继续前往 Pages → 拖放文件入口创建 Direct Upload 项目 contentpulse-web；截图显示创建阶段完成、分配 contentpulse-web.pages.dev，上传区为空。未上传产物、未执行 Pages 首次部署，不能记为公开站上线。后续由现有 GitHub Actions 构建/审计并使用 Wrangler 上传；生产分支仍需确认与 master 一致。
+- 用户完成 Pages 部署自定义令牌创建并确认本机保存；创建摘要截图权限仅指定账户 Cloudflare Pages 编辑（账户级，未宣称单项目级令牌权限）。本地忽略 JSON 增加独立 cloudflare_pages 区块，令牌值不记录到文档。
+- GitHub 配置截图确认三个 Repository Secrets 名称 CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID / CONTENT_API_BASE_URL 均存在，实际值隐藏；Variables 截图确认 CLOUDFLARE_PAGES_PROJECT=contentpulse-web、PUBLIC_SITE_URL=https://contentpulse-web.pages.dev。DEPLOY_ENABLED 尚未设置；首次工作流运行、SEO 审计、Pages 实际部署、生产分支、worker/状态回写和 schedule 均未验收。
+
+### GitHub Actions 首次手动运行失败与修复
+
+- 用户截图确认 DEPLOY_ENABLED=true，手动运行 #21 / run ID 38367220767，master 提交 7a65f02，event=workflow_dispatch。标题 scheduled-38367220767 是现有命名兜底，不是 schedule 事件，不计入定时验收。
+- 首次运行 21 秒失败，具体失败步骤 pnpm install --frozen-lockfile：postinstall 的 nuxt prepare 加载配置时找不到 content-directory snapshot。typecheck/build/SEO/Pages 步骤全部跳过，公开站未上线。Node 弃用与 sharp build script 提示未被认定为此次失败原因。
+- 修复公开站 postinstall，先执行 tsx scripts/prepare-content-directory.ts 再 nuxt prepare；本地实际验证又发现 Nuxt 准备清理 .nuxt 导致快照丢失，故将共用快照移至已忽略的 .cache/content-directory-snapshot.json，同步 API_CLIENT 与 ROUTES_AND_SITEMAP 当前说明。保留真实内容来源匹配和获取失败中止保护，不提交内容快照。
+- 本地使用 Railway 公网只读 API、真实内容模式：修复后 pnpm run postinstall 获取 5 篇文章并生成 Nuxt 类型成功；后续 pnpm typecheck 退出码 0。此证据不代表 Linux Runner 安装、Nuxt 生产构建、SEO 或 Pages 部署已通过，仍需推送修复后重新触发云端运行。

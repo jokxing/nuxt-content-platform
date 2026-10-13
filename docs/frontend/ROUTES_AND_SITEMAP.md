@@ -5,7 +5,7 @@
 ## 数据流与文件导览
 
 - Mock：`app/mock/data/catalog.ts` → `scripts/prepare-content-directory.ts` 写入快照 → `createContentDirectory` → 预渲染 / sitemap
-- 真实：`NUXT_CONTENT_API_USE_REAL=true` 时 prepare **一次**请求 Express `GET /api/content-directory`，失败则中止构建；预渲染与 sitemap 只读同一份 `.nuxt/content-directory-snapshot.json`，禁止各自独立请求
+- 真实：`NUXT_CONTENT_API_USE_REAL=true` 时 prepare **一次**请求 Express `GET /api/content-directory`，失败则中止构建；预渲染与 sitemap 只读同一份 `.cache/content-directory-snapshot.json`，禁止各自独立请求。快照放在 Nuxt 生成目录之外，避免 prepare/typecheck 清理它。
 
 - `createContentDirectory` 是纯函数：固定页面加上已发布文章，再展开三语。`publish_date` 支持 13 位毫秒或 Mock 本地时间字符串；lastmod 经 `toSitemapLastmod` 转为 `YYYY-MM-DD`（Asia/Hong_Kong）。
 - `nuxt.config.ts` 通过 `resolveContentArticlesForBuild()` 读快照（或 Mock 回退）；真实模式无快照会直接抛错。

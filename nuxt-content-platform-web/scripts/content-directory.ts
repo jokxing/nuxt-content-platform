@@ -13,7 +13,8 @@ const localEnvPath = join(projectRoot, '.env')
 if (existsSync(localEnvPath))
   process.loadEnvFile(localEnvPath)
 
-const snapshotPath = join(projectRoot, '.nuxt/content-directory-snapshot.json')
+// Nuxt prepare/typecheck may recreate .nuxt; retain the shared content snapshot outside it.
+const snapshotPath = join(projectRoot, '.cache/content-directory-snapshot.json')
 
 export interface ContentArticle {
   id: number

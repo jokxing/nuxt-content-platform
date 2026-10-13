@@ -25,7 +25,7 @@
 | --- | --- | --- |
 | `http://127.0.0.1:4000/api/...` | Apifox / 后端自测 | 见完整 Success/Error 外壳；含 `code`/`msg`/`data` |
 | 浏览器或 SSR → `/api/...` | 前端页面 | 仍同源；真实模式由 Nitro 代理。`useContentApi` 已解包，页面拿到的是 `data`（列表为 `{ items, total, ... }`） |
-| 构建 `prepare:content` | 预渲染 + sitemap | 真实模式直连一次 `GET /api/content-directory`（不经浏览器）；写入 `.nuxt/content-directory-snapshot.json` 供 prerender 与 sitemap **共用** |
+| 构建 `prepare:content` | 预渲染 + sitemap | 真实模式直连一次 `GET /api/content-directory`（不经浏览器）；写入 `.cache/content-directory-snapshot.json` 供 prerender 与 sitemap **共用**，避免 Nuxt 准备时清理快照 |
 
 开关：私有 `NUXT_CONTENT_API_USE_REAL` + `NUXT_CONTENT_API_BASE_URL`（见 `.env.example`），不会进入浏览器运行时配置。
 
