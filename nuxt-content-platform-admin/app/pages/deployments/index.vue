@@ -94,7 +94,9 @@ const columns = computed<DataTableColumns<Deployment>>(() => [
       const actions = []
       if (row.external_run_url) {
         actions.push(h(NButton, {
-          text: true,
+          type: 'primary',
+          ghost: true,
+          size: 'small',
           tag: 'a',
           href: row.external_run_url,
           target: '_blank',
