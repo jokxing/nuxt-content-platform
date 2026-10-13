@@ -16,7 +16,7 @@
 仓库 Actions secrets：
 
 - `CONTENT_API_BASE_URL`：GitHub Runner 可访问的后端公开地址。
-- `CLOUDFLARE_API_TOKEN`：只授予目标 Pages 项目部署权限。
+- `CLOUDFLARE_API_TOKEN`：仅指定账户的 Cloudflare Pages 编辑权限（账户级）。
 - `CLOUDFLARE_ACCOUNT_ID`。
 
 仓库 Actions variables：
@@ -34,6 +34,20 @@
 - 容器平台上的 API 服务设置 `HOST=0.0.0.0`；本地继续使用 `127.0.0.1`。
 
 工作流在 [content-deploy.yml](../../.github/workflows/content-deploy.yml)；UTC `17:00` 对应北京时间次日 `01:00`，也支持 GitHub 页面手动执行和 worker 的 `workflow_dispatch`。
+
+### Pages 静态页面与浏览器 API
+
+当前工作流构建预渲染页面，上传 `.output/public`。Node 模式的 `.output/server` 不会在 Pages 上运行；只上传静态页面时，刷新可能正常，而浏览器切页的 `/api/*` 请求会被 Pages 回退成 HTML，导致数据格式错误。
+
+公开站 `functions/api/[[path]].ts` 由 Wrangler 在部署时编译为 Pages Function，处理同源只读请求。它与 Nitro 共用 `app/api/upstream-routes.ts` 的路径及查询白名单，仅代理公开资讯和统计接口，不转发浏览器 Cookie/Authorization，不代理管理接口。上游失败返回 JSON 错误，禁止回退演示内容。
+
+在 Pages 项目生产与预览环境分别配置 `NUXT_CONTENT_API_BASE_URL`，值为 Express API 的 HTTPS 公网基址，不带 `/api`。GitHub Secret 同名用途不同：Runner 的 `CONTENT_API_BASE_URL` 提供构建时数据，Pages 的变量提供浏览器切页时数据；二者都必须配置。Direct Upload 项目的生产分支须与工作流 `master` 一致。
+
+保留 Function 源码和静态目录共同部署：在 `nuxt-content-platform-web` 目录运行 `wrangler pages deploy .output/public`。仅通过控制台拖放静态目录不会编译 `functions` 目录，不能替代该步骤。
+
+本机验证：先构建，再运行 `wrangler pages dev .output/public --port 4371 --binding NUXT_CONTENT_API_BASE_URL=<公开API基址>`，另一个终端执行 `node scripts/check-pages-api.mjs`。该检查验证 JSON 响应和不支持的路径、查询、方法被拒绝。还需在浏览器通过导航切页检查；刷新成功不能替代切页验收。
+
+Pages Function 请求使用 Workers 配额；Free 计划与其他 Workers 共用每日 100,000 请求。无需为该修复开启付费套餐。参见 [官方计费说明](https://developers.cloudflare.com/pages/functions/pricing/)。
 
 ## 启动与检查
 

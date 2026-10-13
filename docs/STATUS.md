@@ -1529,3 +1529,15 @@ Git 状态：未 commit/push
 - 首次运行 21 秒失败，具体失败步骤 pnpm install --frozen-lockfile：postinstall 的 nuxt prepare 加载配置时找不到 content-directory snapshot。typecheck/build/SEO/Pages 步骤全部跳过，公开站未上线。Node 弃用与 sharp build script 提示未被认定为此次失败原因。
 - 修复公开站 postinstall，先执行 tsx scripts/prepare-content-directory.ts 再 nuxt prepare；本地实际验证又发现 Nuxt 准备清理 .nuxt 导致快照丢失，故将共用快照移至已忽略的 .cache/content-directory-snapshot.json，同步 API_CLIENT 与 ROUTES_AND_SITEMAP 当前说明。保留真实内容来源匹配和获取失败中止保护，不提交内容快照。
 - 本地使用 Railway 公网只读 API、真实内容模式：修复后 pnpm run postinstall 获取 5 篇文章并生成 Nuxt 类型成功；后续 pnpm typecheck 退出码 0。此证据不代表 Linux Runner 安装、Nuxt 生产构建、SEO 或 Pages 部署已通过，仍需推送修复后重新触发云端运行。
+- 用户推送后手动触发 #22，dispatch_key=manual-first-deploy-check，master 提交 6217d03，event=workflow_dispatch；截图确认 Linux Runner frozen-lockfile 安装、typecheck、生产 build、audit:seo 均通过，快照修复已云端验证。总时长 1m54s，Pages 部署步骤失败，不能记为站点上线或定时通过。
+- Pages 步骤使用 Wrangler 3.90.0，命令 pages deploy .output/public --project-name=contentpulse-web --branch=master；Cloudflare 请求 /accounts/***/pages/projects/contentpulse-web 返回 code 7003（Could not route…perhaps your object identifier is invalid）。实际账户 ID 已被日志遮盖，原因尚未确认；先核对 GitHub CLOUDFLARE_ACCOUNT_ID 是否为同账户 ID（非密钥 ID/邮箱/URL），再核对项目状态。未因该错误升级依赖或重建 Token。
+- 用户确认更新 GitHub CLOUDFLARE_ACCOUNT_ID；同账户 Pages 项目页面确认 contentpulse-web 已存在。#22 第二次尝试截图 Success，总时长 1m57s，commit 6217d03、workflow_dispatch，手动构建及上传通过，不能计为 schedule 验收。
+- 主域名访问截图显示 Nothing is here yet；Pages 列表进一步确认 No production deployment yet，唯一成功部署为 Preview / master，部署地址 https://f7745034.contentpulse-web.pages.dev。公开站生产上线尚未完成，需将 Direct Upload 项目 production_branch 调整为 master 后再次部署。
+- 尝试从本地忽略 JSON 获取 Pages 凭据以核对/调整生产分支；api_token 为空，校验阶段停止，未发送 Cloudflare 请求、未更改项目。等待用户在本机补填 token，不在聊天中传递密钥。
+- 本机 Pages JSON 凭据修正后，Cloudflare API GET 确认 contentpulse-web 原 production_branch=main；经 PATCH 改为 master，再次 GET 返回 master，修改已核实。未在输出或文档记录凭据。此操作仅更改生产分支配置，现有 Preview 部署未计为生产上线，待重新部署并实际访问主域名。
+- 用户截图确认 #22 第三次尝试（Latest #3）Success，总时长 1m50s，master 提交 6217d03，仍为手动 workflow_dispatch。生产分支修正后，浏览器访问 https://contentpulse-web.pages.dev 已实际显示公开站首页（开发者工具 iPhone 16 / 393×852 模拟视口），主域名首页读取与渲染通过。文章 #101 新封面、其他路由/API 交互、worker 发布回写与定时 schedule 尚未据此验收；首页演示数据日期不等于定时部署触发时间。
+- 公开站真实切页验收失败：用户截图显示刷新可见数据、客户端导航后 Invalid articles/history/sample number data structure，Network 预览 API 响应为首页 HTML。定位为 Pages 只上传 Node 构建的 .output/public，Nitro 服务端未部署，浏览器 /api 请求被静态站回退。
+- 修复新增 Pages functions/api/[[path]].ts 处理同源只读 API；与 Nitro 共用 upstream-routes.ts 白名单，拒绝非 GET、管理路径、未知/空/重复查询，不转发 Cookie/Authorization，上游失败返回 JSON。保持原预渲染与 SEO 构建目录，Wrangler 自动编译 functions，工作流增加源文件存在检查。
+- 通过 Cloudflare API 更新并读取确认：现有 contentpulse-web 生产与预览环境 NUXT_CONTENT_API_BASE_URL 指向 Railway 公开 API。只修改变量，不变更套餐、不部署。Pages Function 使用 Workers Free 日额度，已向用户说明。
+- 最终本地真实内容 Node 构建成功；typecheck 与 audit:seo 通过（66 sitemap URLs）。Wrangler 3.90.0 本地 Pages 成功编译 Function；check-pages-api.mjs 验证 8 个真实 JSON 接口及 5 项路径/方法/查询拒绝通过。发现 Workerd 不支持 fetch redirect:error，改为 manual 并拒绝重定向，回归通过。
+- 无头 Edge 393×852 本机 Pages 验证：首页→资讯→数据图表→返回首页→文章 #101，全程仅初次一次 document 请求，10 次 API 响应均 200/application-json，无 pageerror，#101 R2 封面 complete/naturalWidth 验证通过。此为本地 Worker 验证，不代表新修复已推送、云端部署或线上切页验收；定时及 worker 发布回写仍未验收。

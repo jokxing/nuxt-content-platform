@@ -53,6 +53,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm build
+      - name: 检查 Pages API Function 源码
+        run: test -f 'functions/api/[[path]].ts'
       - run: pnpm audit:seo
       - name: 部署 Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
