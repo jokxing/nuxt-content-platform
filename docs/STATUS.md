@@ -1541,3 +1541,7 @@ Git 状态：未 commit/push
 - 通过 Cloudflare API 更新并读取确认：现有 contentpulse-web 生产与预览环境 NUXT_CONTENT_API_BASE_URL 指向 Railway 公开 API。只修改变量，不变更套餐、不部署。Pages Function 使用 Workers Free 日额度，已向用户说明。
 - 最终本地真实内容 Node 构建成功；typecheck 与 audit:seo 通过（66 sitemap URLs）。Wrangler 3.90.0 本地 Pages 成功编译 Function；check-pages-api.mjs 验证 8 个真实 JSON 接口及 5 项路径/方法/查询拒绝通过。发现 Workerd 不支持 fetch redirect:error，改为 manual 并拒绝重定向，回归通过。
 - 无头 Edge 393×852 本机 Pages 验证：首页→资讯→数据图表→返回首页→文章 #101，全程仅初次一次 document 请求，10 次 API 响应均 200/application-json，无 pageerror，#101 R2 封面 complete/naturalWidth 验证通过。此为本地 Worker 验证，不代表新修复已推送、云端部署或线上切页验收；定时及 worker 发布回写仍未验收。
+- 用户确认已推送 Pages API Function 修复并完成新部署后，反馈“这次已修复”；线上截图显示资讯列表实际文章、#101 新 R2 封面缩略图及详情大图、正文均正常。客户端导航问题由用户确认修复，公开站文章读取/新封面展示通过。未提供该次 Actions 运行截图，运行编号/提交/时长不作猜测；仍未验收定时 schedule、worker 发布回写。下一步修正管理端公开站链接的 localhost 默认基址。
+- 用户确认管理后台“查看资讯页”已跳到 Pages 公开站，公开站基址跳转验收通过；直接打开 #101 详情仍显示图片加载占位层，不能据此记为图片稳定展示已通过。
+- OptimizedImage 仅依赖 load/error 事件。补充容器内 img 在 mounted 与 src 更新后的 complete/naturalWidth 状态同步，以覆盖 SSR 图片在 hydration 绑定事件前已完成的情况；成功/失败事件清理相反状态。
+- 修复后真实内容生产构建、typecheck、目标 ESLint 均通过。Wrangler 本机 Pages + 无头 Edge 人为延迟客户端 JS，确认图片先完成再 hydration 时占位层透明、spinner 消失；直接刷新仍正常；模拟图片在 hydration 前失败时 warning 显示、spinner 消失。此为针对水合时序的本地验证，修复尚未推送部署，线上图片实际网络状态仍以新部署后验证为准。

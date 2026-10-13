@@ -20,13 +20,28 @@ const props = withDefaults(defineProps<Props>(), {
 
 const isLoaded = ref(false)
 const hasError = ref(false)
+const container = ref<HTMLElement | null>(null)
 const isExternal = computed(() => /^https?:\/\//.test(props.src))
 // SVG 本身可缩放；若再走 IPX 光栅化管线，会破坏离线预渲染。
 const useNativeImage = computed(() => isExternal.value || /\.svg(?:[?#]|$)/i.test(props.src))
 
-watch(() => props.src, () => {
+// SSR 图片可能在 hydration 绑定 load 事件前已从缓存加载完成。
+// 此时不能仅依赖 load 事件，否则占位层会一直盖住已显示的图片。
+function syncImageState() {
+  const image = container.value?.querySelector('img')
+  if (!image?.complete)
+    return
+  isLoaded.value = image.naturalWidth > 0
+  hasError.value = image.naturalWidth === 0
+}
+
+onMounted(syncImageState)
+
+watch(() => props.src, async () => {
   isLoaded.value = false
   hasError.value = false
+  await nextTick()
+  syncImageState()
 })
 
 const containerStyle = computed(() => ({
@@ -35,15 +50,17 @@ const containerStyle = computed(() => ({
 
 function onLoad() {
   isLoaded.value = true
+  hasError.value = false
 }
 
 function onError() {
+  isLoaded.value = false
   hasError.value = true
 }
 </script>
 
 <template>
-  <div class="optimized-image-container" :style="containerStyle">
+  <div ref="container" class="optimized-image-container" :style="containerStyle">
     <nuxt-img
       v-if="!useNativeImage"
       :src="src"
