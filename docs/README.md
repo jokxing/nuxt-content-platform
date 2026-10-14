@@ -1,22 +1,10 @@
 # 项目文档导航
 
-本目录是 Nuxt 全栈脱敏改造的交接入口。先读当前状态，再按计划推进，不能把计划当作已完成实现。
+优先阅读[项目导览与设计问答](PROJECT_GUIDE.md)，再按问题选择代码或专题。当前状态见[实现与验证范围](STATUS.md)，不将历史设计或计划当作验收结果。
 
-文档按用途分为四部分：
+- [前端专题](frontend/README.md)：API、路由、SEO 与部署。
+- [后端接口](backend/README.md)：接口契约、OpenAPI 与数据库。
+- [文章管理](admin/README.md)：管理契约、媒体与构建流程。
+- [公网浏览器记录](browser-live-review/README.md)：实际页面、切页与图片验证。
 
-- `frontend/`：前端审查、架构、SEO、Mock、部署、验证截图及前端 AI 接手提示词。
-- `backend/`：后端接口契约、OpenAPI、MySQL 准备和后端逐项提示词。
-- `admin/`：资讯管理后台范围、契约与一次一个任务的接手提示词。
-- 当前目录：整个项目共用的状态、实施计划和本导航。
-
-前端入口：[前端导览与简短问答](./frontend/FRONTEND_GUIDE.md)。
-
-后端入口（2026-09-19，设计阶段）：[第一批接口与模型](./backend/BACKEND_CONTRACT.md)、[Apifox 导入文件](./backend/openapi.json)、[每次一个任务的提示词](./backend/BACKEND_HANDOFF_PROMPTS.md)、[MySQL 准备说明](./backend/MYSQL_SETUP.md)。先执行 B1，后续任务逐项交付。
-
-1. [当前状态与交接记录](./STATUS.md)
-2. [实施顺序与验收标准](./IMPLEMENTATION_PLAN.md)
-3. [前端文档目录](./frontend/)
-4. [后端文档目录](./backend/)
-5. [资讯管理后台文档目录](./admin/)（A5.2 上传设计已定稿；下一步 A5.3 上传实现）
-
-每次结束开发前更新 STATUS.md，记录修改、验证结果、剩余问题和下一步。前端导览与问答集中维护在 FRONTEND_GUIDE.md；后端架构与接口确定后再补充对应说明，避免重复文档或提前编写与实现不符的内容。
+项目使用 Cursor/AI 辅助开发。文档围绕当前实现、设计取舍及验证，不将辅助实现写作个人独立完成全部工作。

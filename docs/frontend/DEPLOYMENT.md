@@ -1,6 +1,6 @@
 # 部署形态与运行说明
 
-2026-09-18。当前部署单元是 **Nuxt/Nitro Node 服务**：部分路由预渲染，运行时仍由 Nitro 提供 Mock API 和未预渲染页面。不是复制 public 或 .output/public 就能完整运行的纯静态站。独立 Node.js + MySQL 后端尚未实现。
+更新：2026-10-14。当前生产使用 Cloudflare Pages 托管预渲染产物并编译 functions 提供受限只读 API，Express / MySQL、管理端和 worker 在 Railway。配置与实际验证见[部署链路](../admin/DEPLOYMENT_PIPELINE.md)及[状态](../STATUS.md)。下方 Node 独立运行与 Docker 配置用于替代部署或本机验证，不代表当前生产拓扑；其中早期验证记录仅说明对应批次。
 
 ## Node 运行（本轮验证路径）
 

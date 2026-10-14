@@ -1,6 +1,6 @@
 # 讯览 ContentPulse 前端演示
 
-Nuxt 4、Vue 3、TypeScript、Vant、Pinia 与三语内容展示。默认本地 Mock；资讯与统计可经 Nitro 白名单代理联调 Express（`NUXT_CONTENT_API_USE_REAL`）。认证与发布闭环尚未接入。
+Nuxt 4、Vue 3、TypeScript、Vant、Pinia 与三语内容展示。本机支持 Mock / Nitro 真实 API，生产使用 Pages 预渲染产物及受限只读 Function。文章管理与发布链路已接入，整体阅读见[项目导览](../docs/PROJECT_GUIDE.md)。
 
 面试阅读入口：[前端导览与简短问答](../docs/frontend/FRONTEND_GUIDE.md)。按 API/SSR、路由与 sitemap、多语言 SEO、数据展示、脱敏清理五个主题提供源码入口。原在职职责为独立前端开发及后端联调，当前脱敏与个人扩展另行说明。
 
@@ -24,9 +24,9 @@ pnpm build
 pnpm preview
 ```
 
-构建包含三语预渲染；浏览器交互仍需要 Node 服务提供 Mock API，不能只复制静态目录便假定所有功能可用。
+构建包含三语预渲染。Node 模式由 Nitro 提供 API；当前 Pages 模式必须同时部署 functions，不能只上传静态目录便假定浏览器接口可用。
 
-部署完整 `.output`，以 `node .output/server/index.mjs` 或 `pnpm start` 运行。Node 独立产物验证与尚未实测的 Docker 配置边界见 [DEPLOYMENT.md](../docs/frontend/DEPLOYMENT.md)；本轮组件、图片、命名及依赖清理见 [P2_CLEANUP.md](../docs/frontend/P2_CLEANUP.md)。
+可选 Node 模式部署完整 `.output`，以 `node .output/server/index.mjs` 或 `pnpm start` 运行。当前生产采用 Pages，详见[部署说明](../docs/frontend/DEPLOYMENT.md)与[构建链路](../docs/admin/DEPLOYMENT_PIPELINE.md)。
 
 `node scripts/check-demo.mjs` 检查三语路由、旧详情跳转、404 与文章数据一致性。默认本地地址 http://127.0.0.1:4366，可通过 DEMO_CHECK_URL 指定本地端口。
 
@@ -38,7 +38,7 @@ pnpm preview
 - sitemap 在构建时从共享内容目录离线生成，也可单独运行 `pnpm update-sitemaps`；无需旧授权开关。生成不会启用收录，详见 [路由与 sitemap](../docs/frontend/ROUTES_AND_SITEMAP.md)。
 - 全量 lint 已通过；规则取舍和格式修复方式见 ../docs/frontend/LINT_POLICY.md。
 - Mock 统计、分页边界和浏览器回归说明见 [MOCK_DATA_CONTRACT.md](../docs/frontend/MOCK_DATA_CONTRACT.md)，三语截图与报告见 [browser-review](../docs/frontend/browser-review/)。
-- 后端工作暂缓，交接入口见 ../docs/README.md。
+- 后端与管理端已部署，导航见[文档目录](../docs/README.md)。
 
 本项目源于 Nuxt Vant Mobile 模板，保留原 LICENSE 和上游署名。原工作经历与个人全栈重构分别描述。
 

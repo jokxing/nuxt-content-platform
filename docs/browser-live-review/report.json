@@ -1,0 +1,103 @@
+{
+  "timestamp": "2026-10-13T14:25:30.214Z",
+  "base": "https://contentpulse-web.pages.dev",
+  "readOnly": true,
+  "pages": [
+    {
+      "width": 393,
+      "route": "/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 393,
+      "route": "/zh-CN/news/education/article/101/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 393,
+      "route": "/en-US/news/education/article/101/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 393,
+      "route": "/statistics/type/1/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "route": "/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "route": "/zh-CN/news/education/article/101/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "route": "/en-US/news/education/article/101/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "route": "/statistics/type/1/",
+      "status": 200,
+      "overflow": false
+    }
+  ],
+  "api": [
+    {
+      "url": "https://contentpulse-web.pages.dev/api/number-miss?period=10",
+      "status": 200,
+      "type": "application/json; charset=utf-8"
+    },
+    {
+      "url": "https://contentpulse-web.pages.dev/api/articles?category=education&lang=zh-HK&page=1&page_size=10",
+      "status": 200,
+      "type": "application/json; charset=utf-8"
+    },
+    {
+      "url": "https://contentpulse-web.pages.dev/api/number-miss?period=10",
+      "status": 200,
+      "type": "application/json; charset=utf-8"
+    },
+    {
+      "url": "https://contentpulse-web.pages.dev/api/articles?category=education&lang=zh-HK&page=1&page_size=10",
+      "status": 200,
+      "type": "application/json; charset=utf-8"
+    }
+  ],
+  "errors": [],
+  "checks": [
+    {
+      "width": 393,
+      "check": "published-v3-text-and-r2-cover",
+      "result": "pass"
+    },
+    {
+      "width": 393,
+      "check": "client-navigation-home-news-statistics-home",
+      "documentRequests": 0,
+      "result": "pass"
+    },
+    {
+      "width": 1280,
+      "check": "published-v3-text-and-r2-cover",
+      "result": "pass"
+    },
+    {
+      "width": 1280,
+      "check": "client-navigation-home-news-statistics-home",
+      "documentRequests": 0,
+      "result": "pass"
+    }
+  ],
+  "result": "pass"
+}

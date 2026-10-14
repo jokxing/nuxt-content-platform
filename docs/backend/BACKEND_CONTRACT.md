@@ -4,7 +4,7 @@
 
 ## 范围和衔接
 
-第一批已实现健康检查、分类、文章列表、文章详情、构建内容目录。B8 已设计数据期次、历史与统计查询以及明确不调用 AI 的固定组合样例；必须按逐项提示词分别实现。管理员登录和编辑发布仍在后续单任务中确定，不允许接手 AI 根据本文一次性完成全栈。执行入口见 [后端逐项提示词](./BACKEND_HANDOFF_PROMPTS.md)。
+已实现健康检查、资讯、内容目录、数据期次、历史统计和固定演示组合。本文聚焦公开 API，管理员认证、文章写操作及部署查询见[管理契约](../admin/ADMIN_CONTRACT.md)和[管理 OpenAPI](../admin/admin-openapi.json)，当前部署与验收见[项目导览](../PROJECT_GUIDE.md)。
 
 依据：前端 app/mock/index.ts、app/mock/data/catalog.ts、app/api/client.ts、server/api/[...].ts、新闻页面及 scripts/content-directory.ts。列表和详情字段沿用现有语义；响应统一为 SuccessEnvelope / ErrorEnvelope（B3.1）。新分类/目录接口不代表前端已接入。
 
