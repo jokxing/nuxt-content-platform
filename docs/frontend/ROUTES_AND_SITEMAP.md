@@ -28,7 +28,7 @@ NUXT_PUBLIC_SITE_URL 必须是 HTTP(S) 站点根地址，可有末尾斜杠，�
 
 真实接口下，构建开始获取一次已发布内容快照，校验 ID、分类和时间。预渲染与 sitemap 读取同一份快照。接口失败中止构建，避免发布不完整目录。运行时资讯与统计经 Nitro 白名单代理；未列入白名单的路径仍 Mock。不包含定时部署或发布触发器。
 
-## 验证与文字面试说明
+## 验证与阅读要点
 
 `pnpm exec tsx scripts/check-content-directory.ts` 验证新增文章自动扩展三语路由与 sitemap、草稿排除、重复 ID/非法分类/非法日期拒绝、毫秒 lastmod、站点地址约束、XML 转义和确定性输出。
 
